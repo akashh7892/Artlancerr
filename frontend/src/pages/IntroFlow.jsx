@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router";
 import { ArrowRight } from "lucide-react";
-import { ImageWithFallback } from "../components/ImageWithFallBack";
+import { ImageWithFallback } from "../components/common/ImageWithFallBack";
 
 const INTRO_SCREENS = [
   {

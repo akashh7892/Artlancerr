@@ -1,11 +1,11 @@
 import { Route, Routes } from "react-router-dom";
 import Landing from "./pages/Landing";
 import IntroFlow from "./pages/IntroFlow";
-import Signup from "./components/Signup";
-import Login from "./components/Login";
-import ForgotPassword from "./components/ForgotPassword";
-import VerifyOTP from "./components/VerifyOTP";
-import ResetPassword from "./components/ResetPassword";
+import Signup from "./components/auth/Signup";
+import Login from "./components/auth/Login";
+import ForgotPassword from "./components/auth/ForgotPassword";
+import VerifyOTP from "./components/auth/VerifyOTP";
+import ResetPassword from "./components/auth/ResetPassword";
 
 function App() {
   return (
