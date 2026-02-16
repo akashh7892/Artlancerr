@@ -1,19 +1,20 @@
-// frontend/src/components/Signup.jsx
+// frontend/src/components/ResetPassword.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router";
-import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { useNavigate, useLocation } from "react-router";
+import { Lock, ArrowLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
 
-export default function Signup() {
+export default function ResetPassword() {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
     password: "",
     confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const email = location.state?.email || "";
 
   const handleChange = (e) => {
     setFormData({
@@ -27,72 +28,81 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
+      // Simulate API call to reset password
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Signup data:", formData);
-      navigate("/auth/login");
+      console.log("Password reset for:", email);
+      setIsSuccess(true);
+
+      // Navigate to login after 2 seconds
+      setTimeout(() => {
+        navigate("/auth/login");
+      }, 2000);
     } catch (error) {
-      console.error("Signup failed:", error);
+      console.error("Password reset failed:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center p-4 animate-fadeIn">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+            <svg
+              className="w-8 h-8 sm:w-10 sm:h-10 text-green-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl sm:text-2xl text-[#e8e9eb] mb-2">
+            Password Reset Successful!
+          </h2>
+          <p className="text-sm sm:text-base text-[#808590] font-light mb-4">
+            Your password has been reset successfully. Redirecting to login...
+          </p>
+          <div className="w-8 h-8 mx-auto border-3 border-[#5f5641] border-t-[#c9a961] rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative animate-fadeIn">
-      {/* Signup Form */}
+      {/* Back button */}
+      <button
+        onClick={() => navigate("/auth/verify-otp", { state: { email } })}
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 lg:top-8 lg:left-8 text-[#808590] hover:text-[#c9a961] transition-colors flex items-center gap-2 text-sm sm:text-base"
+      >
+        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+        Back
+      </button>
+
+      {/* Reset Password Form */}
       <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg animate-contentFadeIn">
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-normal text-[#e8e9eb] mb-2 tracking-tight">
-            Create Account
+            Reset Password
           </h1>
           <p className="text-sm sm:text-base text-[#808590] font-light tracking-wide">
-            Join the creative community
+            Create a new password for{" "}
+            <span className="text-[#c9a961]">{email}</span>
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-          {/* Full Name */}
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+          {/* New Password */}
           <div>
             <label className="block text-xs sm:text-sm font-light text-[#808590] mb-1 sm:mb-2">
-              Full Name
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#808590]" />
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full bg-transparent border border-[#5f5641] rounded-lg py-2 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-sm sm:text-base text-[#e2e3e5] placeholder-[#808590]/50 focus:outline-none focus:border-[#c9a961] transition-colors font-light"
-                placeholder="John Doe"
-              />
-            </div>
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-xs sm:text-sm font-light text-[#808590] mb-1 sm:mb-2">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#808590]" />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full bg-transparent border border-[#5f5641] rounded-lg py-2 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-sm sm:text-base text-[#e2e3e5] placeholder-[#808590]/50 focus:outline-none focus:border-[#c9a961] transition-colors font-light"
-                placeholder="you@example.com"
-              />
-            </div>
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-xs sm:text-sm font-light text-[#808590] mb-1 sm:mb-2">
-              Password
+              New Password
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#808590]" />
@@ -123,7 +133,7 @@ export default function Signup() {
           {/* Confirm Password */}
           <div>
             <label className="block text-xs sm:text-sm font-light text-[#808590] mb-1 sm:mb-2">
-              Confirm Password
+              Confirm New Password
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#808590]" />
@@ -151,6 +161,29 @@ export default function Signup() {
             </div>
           </div>
 
+          {/* Password requirements */}
+          <div className="text-xs sm:text-sm text-[#808590] font-light space-y-1">
+            <p
+              className={formData.password.length >= 8 ? "text-green-500" : ""}
+            >
+              • At least 8 characters
+            </p>
+            <p
+              className={
+                /[A-Z]/.test(formData.password) ? "text-green-500" : ""
+              }
+            >
+              • At least one uppercase letter
+            </p>
+            <p
+              className={
+                /[0-9]/.test(formData.password) ? "text-green-500" : ""
+              }
+            >
+              • At least one number
+            </p>
+          </div>
+
           {/* Password match validation */}
           {formData.password && formData.confirmPassword && (
             <p
@@ -166,43 +199,24 @@ export default function Signup() {
             </p>
           )}
 
-          {/* Terms and Conditions */}
-          <div className="flex items-start gap-2 mt-4">
-            <input
-              type="checkbox"
-              id="terms"
-              required
-              className="w-3 h-3 sm:w-4 sm:h-4 mt-1 accent-[#5f5641]"
-            />
-            <label
-              htmlFor="terms"
-              className="text-xs sm:text-sm font-light text-[#808590]"
-            >
-              I agree to the{" "}
-              <a href="#" className="text-[#c9a961] hover:underline">
-                Terms of Service
-              </a>{" "}
-              and{" "}
-              <a href="#" className="text-[#c9a961] hover:underline">
-                Privacy Policy
-              </a>
-            </label>
-          </div>
-
-          {/* Submit Button - Exactly like Landing page buttons */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={
-              isLoading || formData.password !== formData.confirmPassword
+              isLoading ||
+              formData.password !== formData.confirmPassword ||
+              formData.password.length < 8 ||
+              !/[A-Z]/.test(formData.password) ||
+              !/[0-9]/.test(formData.password)
             }
-            className="group relative w-full mt-6 sm:mt-8 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base lg:text-lg text-[#e2e3e5] bg-transparent border border-[#5f5641] rounded-full transition-all duration-300 font-normal tracking-wide overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+            className="group relative w-full mt-4 sm:mt-6 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base lg:text-lg text-[#e2e3e5] bg-transparent border border-[#5f5641] rounded-full transition-all duration-300 font-normal tracking-wide overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               {isLoading ? (
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-[#808590] border-t-[#e2e3e5] rounded-full animate-spin" />
               ) : (
                 <>
-                  Create Account
+                  Reset Password
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </>
               )}
@@ -210,17 +224,6 @@ export default function Signup() {
             <span className="absolute inset-0 bg-[#5f5641] transform scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100"></span>
           </button>
         </form>
-
-        {/* Login Link */}
-        <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-[#808590] font-light">
-          Already have an account?{" "}
-          <button
-            onClick={() => navigate("/auth/login")}
-            className="text-[#c9a961] hover:underline font-normal"
-          >
-            Sign In
-          </button>
-        </p>
       </div>
 
       <style jsx="true">{`
@@ -252,12 +255,10 @@ export default function Signup() {
           animation: contentFadeIn 1.2s ease-in;
         }
 
-        /* Mobile touch improvements */
         @media (max-width: 640px) {
           button,
           a,
-          input,
-          [role="button"] {
+          input {
             min-height: 44px;
           }
         }

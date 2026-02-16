@@ -3,40 +3,58 @@ import { Link } from "react-router-dom";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-linear-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center relative animate-fadeIn">
-      <div className="text-center animate-contentFadeIn">
-        <div className="mb-16">
-          <div className="flex items-center justify-center gap-4 mb-5">
-            <img src="/logo.jpeg" alt="Logo" className="w-16 h-16" />
-            <h1 className="text-7xl font-normal text-[#e8e9eb] tracking-tight">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center relative animate-fadeIn px-4 sm:px-6 lg:px-8">
+      <div className="text-center animate-contentFadeIn w-full max-w-7xl mx-auto">
+        <div className="mb-12 sm:mb-16">
+          {/* Logo and Title - Responsive */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-5">
+            <img 
+              src="/logo.jpeg" 
+              alt="Logo" 
+              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" 
+            />
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal text-[#e8e9eb] tracking-tight text-center">
               Artlancing
             </h1>
           </div>
-          <span className="block text-2xl text-[#808590] font-light tracking-wide">
+          
+          {/* Tagline - Responsive */}
+          <span className="block text-lg sm:text-xl md:text-2xl text-[#808590] font-light tracking-wide px-4">
             Where talent meets the film industry.
           </span>
         </div>
 
-        <div className="flex gap-8 justify-center items-center">
+        {/* Buttons Container - Responsive */}
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8 justify-center items-center px-4">
+          {/* Artist Button */}
           <Link
             to="/intro"
-            className="group relative px-20 py-5 text-xl text-[#e2e3e5] bg-transparent border-[1.5px] border-[#5f5641] rounded-full cursor-pointer transition-all duration-300 font-normal tracking-wide overflow-hidden"
+            state={{ role: "artist" }}
+            className="group relative w-full sm:w-auto px-8 sm:px-12 md:px-16 lg:px-20 py-4 sm:py-5 text-base sm:text-lg md:text-xl text-[#e2e3e5] bg-transparent border-[1.5px] border-[#5f5641] rounded-full cursor-pointer transition-all duration-300 font-normal tracking-wide overflow-hidden"
           >
-            <span className="relative z-10">Artist</span>
+            <span className="relative z-10 block">Artist</span>
             <span className="absolute inset-0 bg-[#5f5641] transform scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100"></span>
           </Link>
 
+          {/* Hirer Button */}
           <Link
             to="/intro"
-            className="group relative px-20 py-5 text-xl text-[#e2e3e5] bg-transparent border-[1.5px] border-[#5f5641] rounded-full cursor-pointer transition-all duration-300 font-normal tracking-wide overflow-hidden"
+            state={{ role: "hirer" }}
+            className="group relative w-full sm:w-auto px-8 sm:px-12 md:px-16 lg:px-20 py-4 sm:py-5 text-base sm:text-lg md:text-xl text-[#e2e3e5] bg-transparent border-[1.5px] border-[#5f5641] rounded-full cursor-pointer transition-all duration-300 font-normal tracking-wide overflow-hidden"
           >
-            <span className="relative z-10">Hirer</span>
+            <span className="relative z-10 block">Hirer</span>
             <span className="absolute inset-0 bg-[#5f5641] transform scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100"></span>
           </Link>
         </div>
+
+        {/* Additional info for mobile - optional */}
+        <p className="mt-8 text-xs sm:text-sm text-[#808590]/60 font-light">
+          Choose your role to continue
+        </p>
       </div>
 
-      <div className="fixed bottom-8 right-8 w-11 h-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#808590] text-xl cursor-pointer transition-all duration-300 hover:bg-white/10 hover:border-white/20">
+      {/* Help Button - Responsive */}
+      <div className="fixed bottom-4 sm:bottom-6 md:bottom-8 right-4 sm:right-6 md:right-8 w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#808590] text-base sm:text-lg md:text-xl cursor-pointer transition-all duration-300 hover:bg-white/10 hover:border-white/20">
         ?
       </div>
 
@@ -67,6 +85,13 @@ const Landing = () => {
 
         .animate-contentFadeIn {
           animation: contentFadeIn 1.2s ease-in;
+        }
+
+        /* Mobile touch improvements */
+        @media (max-width: 640px) {
+          button, a {
+            min-height: 44px; /* Apple's recommended minimum touch target size */
+          }
         }
       `}</style>
     </div>
