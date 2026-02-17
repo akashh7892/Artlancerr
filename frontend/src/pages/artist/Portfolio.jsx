@@ -1,0 +1,345 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Upload, Video, Image as ImageIcon, X, ArrowLeft } from "lucide-react";
+import Sidebar from "../../components/common/Sidebar";
+
+// ─── Color tokens ────────────────────────────────────────────
+const C = {
+  bg: "#1a1d24",
+  card: "#22252e",
+  darkText: "#e8e9eb",
+  lightText: "#8ba390",
+  gold: "#b3a961",
+  border: "rgba(179,169,97,0.10)",
+  inputBorder: "rgba(255,255,255,0.08)",
+};
+
+const MOCK_PORTFOLIO = [
+  {
+    id: 1,
+    type: "image",
+    url: "https://images.unsplash.com/photo-1770413692756-0e6168a3fb2e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYW5jZSUyMHBlcmZvcm1hbmNlJTIwc3RhZ2V8ZW58MXx8fHwxNzcxMDE2NDc3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+    title: "Modern Dance Performance",
+  },
+  {
+    id: 2,
+    type: "image",
+    url: "https://images.unsplash.com/photo-1709316131422-35a5fb1e9eb2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaWxtJTIwcHJvZHVjdGlvbiUyMGJlaGluZCUyMHNjZW5lc3xlbnwxfHx8fDE3NzEwNDQwOTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+    title: "Behind the Scenes",
+  },
+  {
+    id: 3,
+    type: "image",
+    url: "https://images.unsplash.com/photo-1652823758063-a4d6057f8f8d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMHBob3RvZ3JhcGh5JTIwc3R1ZGlvfGVufDF8fHx8MTc3MDk4MTczMXww&ixlib=rb-4.1.0&q=80&w=1080",
+    title: "Portrait Session",
+  },
+  {
+    id: 4,
+    type: "image",
+    url: "https://images.unsplash.com/photo-1728890228535-a49c5e2f64f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtdXNpY2lhbiUyMG11c2ljJTIwdmlkZW8lMjBzaG9vdHxlbnwxfHx8fDE3NzEwNjEyODF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+    title: "Music Video Shoot",
+  },
+];
+
+export default function Portfolio() {
+  const navigate = useNavigate();
+  const [portfolio, setPortfolio] = useState(MOCK_PORTFOLIO);
+  const [hoveredId, setHoveredId] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const removeItem = (id) => {
+    setPortfolio((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+
+        .port-header  { animation: fadeUp 0.3s ease both; }
+        .port-upload  { animation: fadeUp 0.35s 0.05s ease both; }
+        .port-grid    { animation: fadeUp 0.4s 0.1s ease both; }
+
+        .grid-item { animation: fadeIn 0.4s ease both; }
+        .grid-item:nth-child(1) { animation-delay: 0.12s; }
+        .grid-item:nth-child(2) { animation-delay: 0.20s; }
+        .grid-item:nth-child(3) { animation-delay: 0.28s; }
+        .grid-item:nth-child(4) { animation-delay: 0.36s; }
+        .grid-item:nth-child(5) { animation-delay: 0.44s; }
+        .grid-item:nth-child(6) { animation-delay: 0.52s; }
+
+        .upload-zone {
+          transition: border-color 0.2s ease, background 0.2s ease;
+        }
+        .upload-zone:hover {
+          border-color: rgba(179,169,97,0.5) !important;
+          background: rgba(179,169,97,0.04) !important;
+        }
+
+        .upload-btn {
+          transition: filter 0.18s ease, transform 0.18s ease;
+        }
+        .upload-btn:hover {
+          filter: brightness(1.1);
+          transform: translateY(-1px);
+        }
+
+        .back-btn {
+          transition: background 0.15s ease, color 0.15s ease;
+        }
+        .back-btn:hover {
+          background: rgba(255,255,255,0.06) !important;
+          color: #b3a961 !important;
+        }
+
+        .card-img {
+          transition: transform 0.5s ease;
+        }
+        .grid-item:hover .card-img {
+          transform: scale(1.08);
+        }
+
+        .card-overlay {
+          transition: opacity 0.3s ease;
+        }
+
+        .action-btn {
+          transition: background 0.15s ease;
+        }
+        .action-btn:hover {
+          background: rgba(255,255,255,0.35) !important;
+        }
+
+        .type-badge {
+          transition: opacity 0.2s ease;
+        }
+      `}</style>
+
+      <Sidebar />
+
+      <div
+        className="min-h-screen lg:ml-[248px]"
+        style={{
+          background: C.bg,
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+        }}
+      >
+        <div className="px-8 py-8 max-w-[1200px]">
+          {/* ── Header ── */}
+          <div className="port-header flex items-center gap-4 mb-8">
+            <button
+              onClick={() => navigate("/artist/profile")}
+              className="back-btn flex items-center justify-center w-9 h-9 rounded-xl border-0 outline-none cursor-pointer flex-shrink-0"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                color: C.darkText,
+              }}
+            >
+              <ArrowLeft size={18} strokeWidth={2} />
+            </button>
+
+            <div className="flex-1">
+              <h1
+                className="text-[28px] font-bold leading-tight mb-1"
+                style={{
+                  color: C.darkText,
+                  fontFamily: "'Playfair Display', serif",
+                }}
+              >
+                Portfolio
+              </h1>
+              <p className="text-[13.5px]" style={{ color: C.lightText }}>
+                Showcase your best work to potential hirers
+              </p>
+            </div>
+
+            <button
+              className="upload-btn flex items-center gap-2 px-5 py-[10px] rounded-xl text-[13.5px] font-bold border-0 outline-none cursor-pointer"
+              style={{
+                background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
+                color: "#1a1d24",
+              }}
+            >
+              <Upload size={16} strokeWidth={2.2} />
+              Upload
+            </button>
+          </div>
+
+          {/* ── Upload Zone ── */}
+          <div
+            className="port-upload upload-zone mb-8 rounded-2xl p-12 text-center cursor-pointer"
+            style={{
+              border: `2px dashed rgba(255,255,255,0.12)`,
+              background: "rgba(34,37,46,0.4)",
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+            }}
+          >
+            <div className="flex justify-center mb-4">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(179,169,97,0.12)" }}
+              >
+                <Upload size={28} strokeWidth={1.8} style={{ color: C.gold }} />
+              </div>
+            </div>
+            <h3
+              className="text-[16px] font-semibold mb-2"
+              style={{ color: C.darkText }}
+            >
+              Drag &amp; drop files here
+            </h3>
+            <p className="text-[13px] mb-5" style={{ color: C.lightText }}>
+              or click to browse (Images and videos supported)
+            </p>
+            <div className="flex items-center justify-center gap-6">
+              <div
+                className="flex items-center gap-2"
+                style={{ color: C.lightText }}
+              >
+                <ImageIcon size={15} strokeWidth={1.8} />
+                <span className="text-[13px]">Images</span>
+              </div>
+              <div
+                className="flex items-center gap-2"
+                style={{ color: C.lightText }}
+              >
+                <Video size={15} strokeWidth={1.8} />
+                <span className="text-[13px]">Videos</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Portfolio Grid ── */}
+          <div className="port-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {portfolio.map((item) => (
+              <div
+                key={item.id}
+                className="grid-item relative rounded-xl overflow-hidden cursor-pointer"
+                style={{ aspectRatio: "4/3", background: C.card }}
+                onMouseEnter={() => setHoveredId(item.id)}
+                onMouseLeave={() => setHoveredId(null)}
+              >
+                {/* Image */}
+                <img
+                  src={item.url}
+                  alt={item.title}
+                  className="card-img w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
+                />
+
+                {/* Hover overlay */}
+                <div
+                  className="card-overlay absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.38) 50%, transparent 100%)",
+                    opacity: hoveredId === item.id ? 1 : 0,
+                  }}
+                >
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h4
+                      className="text-[14px] font-semibold mb-3"
+                      style={{ color: "#ffffff" }}
+                    >
+                      {item.title}
+                    </h4>
+                    <div className="flex gap-2">
+                      {/* View */}
+                      <button
+                        className="action-btn w-8 h-8 rounded-lg flex items-center justify-center border-0 outline-none cursor-pointer"
+                        style={{
+                          background: "rgba(255,255,255,0.2)",
+                          backdropFilter: "blur(6px)",
+                        }}
+                      >
+                        <ImageIcon size={15} color="#fff" strokeWidth={2} />
+                      </button>
+                      {/* Remove */}
+                      <button
+                        className="action-btn w-8 h-8 rounded-lg flex items-center justify-center border-0 outline-none cursor-pointer"
+                        style={{
+                          background: "rgba(255,255,255,0.2)",
+                          backdropFilter: "blur(6px)",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeItem(item.id);
+                        }}
+                      >
+                        <X size={15} color="#fff" strokeWidth={2} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Type badge — top right, always visible */}
+                <div className="type-badge absolute top-3 right-3">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{
+                      background: "rgba(0,0,0,0.5)",
+                      backdropFilter: "blur(6px)",
+                    }}
+                  >
+                    {item.type === "video" ? (
+                      <Video size={14} color="#fff" strokeWidth={2} />
+                    ) : (
+                      <ImageIcon size={14} color="#fff" strokeWidth={2} />
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Empty state */}
+          {portfolio.length === 0 && (
+            <div
+              className="text-center py-20 rounded-2xl mt-2"
+              style={{ background: C.card, border: `1px solid ${C.border}` }}
+            >
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: "rgba(179,169,97,0.08)" }}
+              >
+                <ImageIcon
+                  size={28}
+                  strokeWidth={1.5}
+                  style={{ color: "rgba(179,169,97,0.4)" }}
+                />
+              </div>
+              <p
+                className="text-[15px] font-semibold mb-1"
+                style={{ color: C.darkText }}
+              >
+                No portfolio items yet
+              </p>
+              <p className="text-[13px]" style={{ color: C.lightText }}>
+                Upload your work to start showcasing it to clients
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}

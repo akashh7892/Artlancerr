@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center relative animate-fadeIn px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linear-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center relative animate-fadeIn px-4 sm:px-6 lg:px-8">
       <div className="text-center animate-contentFadeIn w-full max-w-7xl mx-auto">
         <div className="mb-12 sm:mb-16">
           {/* Logo and Title - Responsive */}

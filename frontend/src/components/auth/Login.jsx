@@ -92,7 +92,7 @@ export default function Login() {
       // 4. Redirect based on user role
 
       // For demo, redirect to home
-      navigate("/");
+      navigate("/artist/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
       setErrors({
@@ -110,7 +110,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative animate-fadeIn">
+    <div className="min-h-screen bg-linear-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative animate-fadeIn">
       {/* Login Form */}
       <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg animate-contentFadeIn">
         {/* Header */}
