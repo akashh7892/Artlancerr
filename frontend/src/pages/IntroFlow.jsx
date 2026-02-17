@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useParams } from "react-router"; // <-- added useParams
 import { ArrowRight } from "lucide-react";
 import { ImageWithFallback } from "../components/common/ImageWithFallBack";
 
@@ -32,9 +32,8 @@ export default function IntroFlow() {
   const [currentScreen, setCurrentScreen] = useState(0);
   const [showEnter, setShowEnter] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  //   const { role } = useParams();
-
+  const { role } = useParams(); // <-- get role from URL
+  console.log("IntroFlow role:", role);
   useEffect(() => {
     if (currentScreen < INTRO_SCREENS.length - 1) {
       const timer = setTimeout(() => {
@@ -50,8 +49,8 @@ export default function IntroFlow() {
   }, [currentScreen]);
 
   const handleEnter = () => {
-    const { role } = location.state || {};
-    navigate("/auth/signup", { state: { role } });
+    // Navigate to signup with role from params
+    navigate(`/auth/${role}/signup`);
   };
 
   return (

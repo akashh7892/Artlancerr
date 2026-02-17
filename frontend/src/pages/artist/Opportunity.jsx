@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MapPin,
@@ -130,58 +130,9 @@ function StyledSelect({ value, onChange, options }) {
   );
 }
 
-function getPostedLabel(createdAt) {
-  if (!createdAt) return "Recently posted";
-  const created = new Date(createdAt);
-  if (Number.isNaN(created.getTime())) return "Recently posted";
-
-  const diffMs = Date.now() - created.getTime();
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (days <= 0) return "Today";
-  if (days === 1) return "1 day ago";
-  if (days < 7) return `${days} days ago`;
-  if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? "s" : ""} ago`;
-  return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? "s" : ""} ago`;
-}
-
-function matchesDuration(duration, durationFilter) {
-  if (durationFilter === "Any duration") return true;
-  const text = String(duration || "").toLowerCase();
-
-  if (durationFilter === "Less than 1 week") {
-    return text.includes("day") || text.includes("less than 1 week");
-  }
-  if (durationFilter === DURATIONS[2]) {
-    return text.includes("week");
-  }
-  if (durationFilter === "1+ months") {
-    return text.includes("month");
-  }
-
-  return true;
-}
-
-function matchesPosted(createdAt, postedFilter) {
-  if (postedFilter === "Any time") return true;
-  if (!createdAt) return true;
-
-  const created = new Date(createdAt);
-  if (Number.isNaN(created.getTime())) return true;
-
-  const diffMs = Date.now() - created.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-
-  if (postedFilter === "Last 24 hours") return diffDays <= 1;
-  if (postedFilter === "Last week") return diffDays <= 7;
-  if (postedFilter === "Last month") return diffDays <= 30;
-
-  return true;
-}
-
 export default function Opportunities() {
   const navigate = useNavigate();
-  const [opportunities, setOpportunities] = useState(MOCK_OPPORTUNITIES);
+  const [opportunities] = useState(MOCK_OPPORTUNITIES);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -190,104 +141,14 @@ export default function Opportunities() {
   const [postedFilter, setPostedFilter] = useState("Any time");
   const [budgetMin, setBudgetMin] = useState(0);
   const [budgetMax, setBudgetMax] = useState(15000);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [applyingId, setApplyingId] = useState(null);
-  const apiBaseUrl =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchOpportunities = async () => {
-      setIsLoading(true);
-      setError("");
-
-      try {
-        const params = new URLSearchParams();
-        if (selectedFilter !== "All") params.set("type", selectedFilter);
-        if (locationFilter !== "All locations") {
-          params.set("location", locationFilter);
-        }
-        if (searchQuery.trim()) params.set("search", searchQuery.trim());
-        params.set("minBudget", String(budgetMin));
-        params.set("maxBudget", String(budgetMax));
-
-        const query = params.toString();
-        const response = await fetch(
-          `${apiBaseUrl}/api/opportunities${query ? `?${query}` : ""}`,
-          { signal: controller.signal },
-        );
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to load opportunities");
-        }
-
-        setOpportunities(Array.isArray(data) ? data : []);
-      } catch (err) {
-        if (err.name === "AbortError") return;
-        setError(err.message || "Failed to load opportunities");
-        setOpportunities([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOpportunities();
-
-    return () => controller.abort();
-  }, [
-    apiBaseUrl,
-    budgetMax,
-    budgetMin,
-    locationFilter,
-    searchQuery,
-    selectedFilter,
-  ]);
-
-  const handleApply = async (opportunityId) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/auth/login");
-      return;
-    }
-
-    setApplyingId(opportunityId);
-    setError("");
-
-    try {
-      const response = await fetch(`${apiBaseUrl}/api/applications`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ opportunityId }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to apply");
-      }
-
-      setOpportunities((prev) =>
-        prev.map((opp) =>
-          opp._id === opportunityId ? { ...opp, hasApplied: true } : opp,
-        ),
-      );
-    } catch (err) {
-      setError(err.message || "Could not submit application");
-    } finally {
-      setApplyingId(null);
-    }
-  };
-
-  const filtered = opportunities.filter(
-    (o) =>
-      matchesDuration(o.duration, durationFilter) &&
-      matchesPosted(o.createdAt, postedFilter),
-  );
+  const filtered = opportunities.filter((o) => {
+    const matchType = selectedFilter === "All" || o.type === selectedFilter;
+    const matchSearch =
+      o.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.company.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchType && matchSearch;
+  });
 
   return (
     <>
@@ -647,29 +508,9 @@ export default function Opportunities() {
 
           {/* Opportunity cards */}
           <div className="flex flex-col gap-4">
-            {isLoading && (
-              <div
-                className="text-center py-10 rounded-2xl"
-                style={{ background: C.card, border: `1px solid ${C.border}` }}
-              >
-                <p className="text-[14px]" style={{ color: C.lightText }}>
-                  Loading opportunities...
-                </p>
-              </div>
-            )}
-
-            {error && (
-              <div
-                className="text-center py-4 rounded-2xl"
-                style={{ background: C.card, border: "1px solid rgba(239,68,68,0.25)" }}
-              >
-                <p className="text-[13px] text-red-400">{error}</p>
-              </div>
-            )}
-
             {filtered.map((opp, i) => (
               <div
-                key={opp._id || opp.id}
+                key={opp.id}
                 className="opp-card rounded-2xl p-6"
                 style={{
                   background: C.card,
@@ -701,7 +542,7 @@ export default function Opportunities() {
                     className="text-[12.5px] flex-shrink-0"
                     style={{ color: C.lightText }}
                   >
-                    {getPostedLabel(opp.createdAt)}
+                    {opp.posted}
                   </span>
                 </div>
 
@@ -769,23 +610,13 @@ export default function Opportunities() {
                 {/* Action buttons */}
                 <div className="flex gap-3">
                   <button
-                    onClick={() => handleApply(opp._id)}
-                    disabled={!opp._id || applyingId === opp._id || opp.hasApplied}
                     className="apply-btn px-5 py-[9px] rounded-xl text-[13px] font-bold border-0 outline-none cursor-pointer"
                     style={{
                       background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
                       color: "#1a1d24",
-                      opacity:
-                        !opp._id || applyingId === opp._id || opp.hasApplied
-                          ? 0.65
-                          : 1,
                     }}
                   >
-                    {opp.hasApplied
-                      ? "Applied"
-                      : applyingId === opp._id
-                        ? "Applying..."
-                        : "Apply Now"}
+                    Apply Now
                   </button>
                   <button
                     className="detail-btn px-5 py-[9px] rounded-xl text-[13px] font-semibold border-0 outline-none cursor-pointer"
@@ -802,7 +633,7 @@ export default function Opportunities() {
             ))}
 
             {/* Empty state */}
-            {!isLoading && filtered.length === 0 && (
+            {filtered.length === 0 && (
               <div
                 className="text-center py-16 rounded-2xl"
                 style={{ background: C.card, border: `1px solid ${C.border}` }}

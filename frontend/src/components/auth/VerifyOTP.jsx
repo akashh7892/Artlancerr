@@ -1,9 +1,9 @@
-// frontend/src/components/VerifyOTP.jsx
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useLocation, useParams } from "react-router";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 
 export default function VerifyOTP() {
+  const { role } = useParams(); // Get role from URL
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(60);
@@ -71,10 +71,12 @@ export default function VerifyOTP() {
     try {
       // Simulate API call to verify OTP
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("OTP verified:", otp.join(""));
+      console.log("OTP verified:", otp.join(""), "for role:", role);
 
-      // Navigate to reset password
-      navigate("/auth/reset-password", { state: { email, otp: otp.join("") } });
+      // Navigate to reset password with role
+      navigate(`/auth/${role}/reset-password`, {
+        state: { email, otp: otp.join("") },
+      });
     } catch (error) {
       console.error("OTP verification failed:", error);
     } finally {
@@ -90,7 +92,7 @@ export default function VerifyOTP() {
     try {
       // Simulate resending OTP
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("OTP resent to:", email);
+      console.log("OTP resent to:", email, "role:", role);
     } catch (error) {
       console.error("Failed to resend OTP:", error);
     }
@@ -102,7 +104,7 @@ export default function VerifyOTP() {
     <div className="min-h-screen bg-linear-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative animate-fadeIn">
       {/* Back button */}
       <button
-        onClick={() => navigate("/auth/forgot-password")}
+        onClick={() => navigate(`/auth/${role}/forgot-password`)}
         className="absolute top-4 left-4 sm:top-6 sm:left-6 lg:top-8 lg:left-8 text-[#808590] hover:text-[#c9a961] transition-colors flex items-center gap-2 text-sm sm:text-base"
       >
         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -201,7 +203,6 @@ export default function VerifyOTP() {
             opacity: 1;
           }
         }
-
         @keyframes contentFadeIn {
           from {
             opacity: 0;
@@ -212,23 +213,18 @@ export default function VerifyOTP() {
             transform: translateY(0);
           }
         }
-
         .animate-fadeIn {
           animation: fadeIn 1s ease-in;
         }
-
         .animate-contentFadeIn {
           animation: contentFadeIn 1.2s ease-in;
         }
-
         @media (max-width: 640px) {
           button,
           a,
           input {
             min-height: 44px;
           }
-
-          /* Hide spinner arrows on number inputs */
           input[type="number"]::-webkit-inner-spin-button,
           input[type="number"]::-webkit-outer-spin-button {
             -webkit-appearance: none;
