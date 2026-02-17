@@ -16,6 +16,7 @@ import {
   CalendarSearch,
   Sparkles,
   ArrowRight,
+  Badge,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -26,10 +27,11 @@ const NAV_ITEMS = [
   { label: "Nearby Artists", icon: Users, path: "/artist/near-by-artists" },
   { label: "Messages", icon: MessageSquare, path: "/artist/message" },
   { label: "Payments", icon: CreditCard, path: "/artist/payment" },
+  { label: "Promotions", icon: Badge, path: "/artist/promotion" },
 ];
 
 const BOTTOM_ITEMS = [
-  { label: "Settings", icon: Settings, path: "/artist/promotion" },
+  { label: "Settings", icon: Settings, path: "/artist/settings" },
   { label: "Logout", icon: LogOut, path: null },
 ];
 

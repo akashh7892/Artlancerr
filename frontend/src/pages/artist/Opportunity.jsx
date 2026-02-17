@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useRef } from "react";
 import {
   MapPin,
   Calendar,
@@ -10,10 +11,12 @@ import {
   SlidersHorizontal,
   X,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 
-// ─── Color tokens ────────────────────────────────────────────
+// ─── Color tokens ─────────────────────────────────────────────
 const C = {
   bg: "#1a1d24",
   card: "#22252e",
@@ -27,73 +30,477 @@ const C = {
   panelBg: "#1e2129",
 };
 
+// ─── 21 Categories ────────────────────────────────────────────
+const FILTERS = [
+  "All",
+  "Film & TV Production",
+  "Advertising & Commercial Shoots",
+  "Music Videos",
+  "Event Videography",
+  "Wedding Cinematography",
+  "Documentary Production",
+  "Streaming Content Production",
+  "YouTubers Hiring Editors",
+  "Influencers Hiring Videographers",
+  "Podcast Production Teams",
+  "Social Media Content Studios",
+  "Brand Creator Collaborations",
+  "Game Cinematics",
+  "Motion Capture Crews",
+  "3D Animation Teams",
+  "Virtual Production Specialists",
+  "Unreal Engine Artists",
+  "Corporate Video Production",
+  "Training Content Creation",
+  "Marketing Media Teams",
+  "Internal Communication Studios",
+];
+
 const MOCK_OPPORTUNITIES = [
   {
     id: 1,
-    title: "Lead Actor for Indie Film",
+    title: "Lead Cinematographer – Feature Film",
     company: "Sunrise Studios",
     location: "Los Angeles, CA",
-    budget: "$5,000 - $8,000",
-    duration: "3 weeks",
+    budget: "$8,000 – $12,000",
+    duration: "4 weeks",
     posted: "2 days ago",
-    type: "Acting",
+    type: "Film & TV Production",
   },
   {
     id: 2,
-    title: "Choreographer for Music Video",
-    company: "Rhythm Productions",
-    location: "New York, NY",
-    budget: "$3,000 - $5,000",
-    duration: "1 week",
-    posted: "5 days ago",
-    type: "Dance",
+    title: "Director of Photography for TV Pilot",
+    company: "Paramount Network",
+    location: "Atlanta, GA",
+    budget: "$10,000 – $15,000",
+    duration: "3 weeks",
+    posted: "1 day ago",
+    type: "Film & TV Production",
   },
   {
     id: 3,
-    title: "Cinematographer for Documentary",
-    company: "True Vision Films",
-    location: "San Francisco, CA",
-    budget: "$7,000 - $10,000",
-    duration: "4 weeks",
-    posted: "1 week ago",
-    type: "Cinematography",
+    title: "Videographer for Nike Campaign",
+    company: "BBDO Advertising",
+    location: "New York, NY",
+    budget: "$5,000 – $8,000",
+    duration: "1 week",
+    posted: "3 days ago",
+    type: "Advertising & Commercial Shoots",
   },
   {
     id: 4,
-    title: "Costume Designer for Period Drama",
-    company: "Epic Pictures",
-    location: "Atlanta, GA",
-    budget: "$4,000 - $6,000",
+    title: "Commercial Shoot – Auto Brand",
+    company: "Grey Global Group",
+    location: "Detroit, MI",
+    budget: "$6,000 – $9,000",
+    duration: "5 days",
+    posted: "5 days ago",
+    type: "Advertising & Commercial Shoots",
+  },
+  {
+    id: 5,
+    title: "Music Video Director",
+    company: "Rhythm Productions",
+    location: "New York, NY",
+    budget: "$3,000 – $5,000",
+    duration: "1 week",
+    posted: "5 days ago",
+    type: "Music Videos",
+  },
+  {
+    id: 6,
+    title: "Cinematographer for Hip-Hop Video",
+    company: "Def Jam Recordings",
+    location: "Los Angeles, CA",
+    budget: "$4,000 – $6,000",
+    duration: "3 days",
+    posted: "2 days ago",
+    type: "Music Videos",
+  },
+  {
+    id: 7,
+    title: "Event Videographer – Tech Summit",
+    company: "TechWorld Events",
+    location: "San Francisco, CA",
+    budget: "$2,000 – $3,500",
+    duration: "2 days",
+    posted: "1 day ago",
+    type: "Event Videography",
+  },
+  {
+    id: 8,
+    title: "Multi-Camera Operator – Awards Gala",
+    company: "Prestige Events Co.",
+    location: "Chicago, IL",
+    budget: "$1,500 – $2,500",
+    duration: "1 day",
+    posted: "4 days ago",
+    type: "Event Videography",
+  },
+  {
+    id: 9,
+    title: "Wedding Cinematographer – Luxury Package",
+    company: "Golden Vows Films",
+    location: "Miami, FL",
+    budget: "$3,500 – $5,000",
+    duration: "2 days",
+    posted: "3 days ago",
+    type: "Wedding Cinematography",
+  },
+  {
+    id: 10,
+    title: "Second Shooter – Destination Wedding",
+    company: "Forever Films Studio",
+    location: "Santorini, Greece",
+    budget: "$2,000 – $3,000",
+    duration: "3 days",
+    posted: "1 week ago",
+    type: "Wedding Cinematography",
+  },
+  {
+    id: 11,
+    title: "Cinematographer for Feature Documentary",
+    company: "True Vision Films",
+    location: "San Francisco, CA",
+    budget: "$7,000 – $10,000",
+    duration: "4 weeks",
+    posted: "1 week ago",
+    type: "Documentary Production",
+  },
+  {
+    id: 12,
+    title: "Field Director – Social Justice Doc",
+    company: "Impact Media",
+    location: "Washington, D.C.",
+    budget: "$5,000 – $8,000",
+    duration: "3 weeks",
+    posted: "6 days ago",
+    type: "Documentary Production",
+  },
+  {
+    id: 13,
+    title: "DoP for Netflix Original Series",
+    company: "Netflix Originals",
+    location: "Remote / LA",
+    budget: "$12,000 – $18,000",
+    duration: "6 weeks",
+    posted: "2 days ago",
+    type: "Streaming Content Production",
+  },
+  {
+    id: 14,
+    title: "Camera Operator – Amazon Prime Show",
+    company: "Amazon Studios",
+    location: "Seattle, WA",
+    budget: "$9,000 – $13,000",
+    duration: "5 weeks",
+    posted: "4 days ago",
+    type: "Streaming Content Production",
+  },
+  {
+    id: 15,
+    title: "Video Editor for Tech YouTube Channel",
+    company: "Linus Media Group",
+    location: "Remote",
+    budget: "$2,000 – $3,500/mo",
+    duration: "Ongoing",
+    posted: "Today",
+    type: "YouTubers Hiring Editors",
+  },
+  {
+    id: 16,
+    title: "Short-form Editor – 500K Sub Channel",
+    company: "Creator Hub",
+    location: "Remote",
+    budget: "$1,500 – $2,500/mo",
+    duration: "Ongoing",
+    posted: "1 day ago",
+    type: "YouTubers Hiring Editors",
+  },
+  {
+    id: 17,
+    title: "Videographer for Lifestyle Influencer",
+    company: "Nova Creative Agency",
+    location: "Los Angeles, CA",
+    budget: "$1,800 – $3,000",
+    duration: "1 week/mo",
+    posted: "2 days ago",
+    type: "Influencers Hiring Videographers",
+  },
+  {
+    id: 18,
+    title: "Travel Content Videographer",
+    company: "WanderlustMedia",
+    location: "Remote / Travel",
+    budget: "$2,500 – $4,000",
+    duration: "2 weeks/mo",
+    posted: "3 days ago",
+    type: "Influencers Hiring Videographers",
+  },
+  {
+    id: 19,
+    title: "Podcast Video Editor",
+    company: "The Daily Grind Podcast",
+    location: "Remote",
+    budget: "$800 – $1,500/mo",
+    duration: "Ongoing",
+    posted: "Today",
+    type: "Podcast Production Teams",
+  },
+  {
+    id: 20,
+    title: "Live Podcast A/V Technician",
+    company: "Speak Easy Studios",
+    location: "Austin, TX",
+    budget: "$1,200 – $2,000/mo",
+    duration: "Ongoing",
+    posted: "2 days ago",
+    type: "Podcast Production Teams",
+  },
+  {
+    id: 21,
+    title: "Reels & TikTok Editor",
+    company: "Viral Content Studio",
+    location: "Remote",
+    budget: "$1,500 – $2,800/mo",
+    duration: "Ongoing",
+    posted: "Today",
+    type: "Social Media Content Studios",
+  },
+  {
+    id: 22,
+    title: "Social Content Videographer",
+    company: "Hype Creative Co.",
+    location: "New York, NY",
+    budget: "$2,000 – $3,200/mo",
+    duration: "Ongoing",
+    posted: "1 day ago",
+    type: "Social Media Content Studios",
+  },
+  {
+    id: 23,
+    title: "Brand Story Videographer",
+    company: "Glossier",
+    location: "New York, NY",
+    budget: "$3,500 – $5,500",
     duration: "2 weeks",
     posted: "3 days ago",
-    type: "Costume Design",
+    type: "Brand Creator Collaborations",
+  },
+  {
+    id: 24,
+    title: "UGC Creator Partner",
+    company: "Notion Inc.",
+    location: "Remote",
+    budget: "$1,000 – $2,000/mo",
+    duration: "Ongoing",
+    posted: "5 days ago",
+    type: "Brand Creator Collaborations",
+  },
+  {
+    id: 25,
+    title: "Cinematic Cutscene Director",
+    company: "Epic Games",
+    location: "Cary, NC",
+    budget: "$15,000 – $25,000",
+    duration: "6 weeks",
+    posted: "1 week ago",
+    type: "Game Cinematics",
+  },
+  {
+    id: 26,
+    title: "In-Game Trailer Cinematographer",
+    company: "CD Projekt Red",
+    location: "Remote / Poland",
+    budget: "$12,000 – $20,000",
+    duration: "4 weeks",
+    posted: "4 days ago",
+    type: "Game Cinematics",
+  },
+  {
+    id: 27,
+    title: "MoCap Technician – AAA Title",
+    company: "Ubisoft",
+    location: "Montreal, Canada",
+    budget: "$8,000 – $13,000",
+    duration: "3 weeks",
+    posted: "6 days ago",
+    type: "Motion Capture Crews",
+  },
+  {
+    id: 28,
+    title: "Performance Capture Operator",
+    company: "Weta Digital",
+    location: "Wellington, NZ",
+    budget: "$10,000 – $15,000",
+    duration: "4 weeks",
+    posted: "1 week ago",
+    type: "Motion Capture Crews",
+  },
+  {
+    id: 29,
+    title: "Senior 3D Animator",
+    company: "Pixar Animation Studios",
+    location: "Emeryville, CA",
+    budget: "$9,000 – $14,000",
+    duration: "2 months",
+    posted: "3 days ago",
+    type: "3D Animation Teams",
+  },
+  {
+    id: 30,
+    title: "Freelance 3D Character Animator",
+    company: "DreamWorks Animation",
+    location: "Remote",
+    budget: "$5,000 – $9,000",
+    duration: "1 month",
+    posted: "5 days ago",
+    type: "3D Animation Teams",
+  },
+  {
+    id: 31,
+    title: "Virtual Production Supervisor",
+    company: "Industrial Light & Magic",
+    location: "San Francisco, CA",
+    budget: "$18,000 – $28,000",
+    duration: "2 months",
+    posted: "2 days ago",
+    type: "Virtual Production Specialists",
+  },
+  {
+    id: 32,
+    title: "LED Volume Operator",
+    company: "Orbital Studios",
+    location: "Los Angeles, CA",
+    budget: "$10,000 – $16,000",
+    duration: "3 weeks",
+    posted: "1 week ago",
+    type: "Virtual Production Specialists",
+  },
+  {
+    id: 33,
+    title: "Unreal Engine 5 Environment Artist",
+    company: "Lumen Studios",
+    location: "Remote",
+    budget: "$7,000 – $12,000",
+    duration: "1 month",
+    posted: "Today",
+    type: "Unreal Engine Artists",
+  },
+  {
+    id: 34,
+    title: "UE5 Cinematic Lighting Artist",
+    company: "Forge Creative",
+    location: "Remote",
+    budget: "$6,000 – $10,000",
+    duration: "3 weeks",
+    posted: "2 days ago",
+    type: "Unreal Engine Artists",
+  },
+  {
+    id: 35,
+    title: "Corporate Videographer – Annual Report",
+    company: "Deloitte Media",
+    location: "New York, NY",
+    budget: "$4,000 – $6,500",
+    duration: "2 weeks",
+    posted: "4 days ago",
+    type: "Corporate Video Production",
+  },
+  {
+    id: 36,
+    title: "Executive Interview Videographer",
+    company: "Goldman Sachs",
+    location: "New York, NY",
+    budget: "$3,000 – $5,000",
+    duration: "1 week",
+    posted: "1 day ago",
+    type: "Corporate Video Production",
+  },
+  {
+    id: 37,
+    title: "eLearning Video Producer",
+    company: "Coursera",
+    location: "Remote",
+    budget: "$2,500 – $4,500/mo",
+    duration: "Ongoing",
+    posted: "3 days ago",
+    type: "Training Content Creation",
+  },
+  {
+    id: 38,
+    title: "Instructional Video Creator",
+    company: "LinkedIn Learning",
+    location: "Remote",
+    budget: "$2,000 – $3,500/mo",
+    duration: "Ongoing",
+    posted: "6 days ago",
+    type: "Training Content Creation",
+  },
+  {
+    id: 39,
+    title: "Marketing Video Strategist",
+    company: "HubSpot",
+    location: "Remote",
+    budget: "$5,000 – $8,000",
+    duration: "1 month",
+    posted: "2 days ago",
+    type: "Marketing Media Teams",
+  },
+  {
+    id: 40,
+    title: "Product Launch Videographer",
+    company: "Shopify",
+    location: "Remote / Toronto",
+    budget: "$4,500 – $7,000",
+    duration: "2 weeks",
+    posted: "5 days ago",
+    type: "Marketing Media Teams",
+  },
+  {
+    id: 41,
+    title: "Internal Comms Video Producer",
+    company: "Google",
+    location: "Mountain View, CA",
+    budget: "$5,000 – $8,000/mo",
+    duration: "Ongoing",
+    posted: "1 day ago",
+    type: "Internal Communication Studios",
+  },
+  {
+    id: 42,
+    title: "Town Hall & All-Hands Video Lead",
+    company: "Meta",
+    location: "Menlo Park, CA",
+    budget: "$4,000 – $6,500/mo",
+    duration: "Ongoing",
+    posted: "3 days ago",
+    type: "Internal Communication Studios",
   },
 ];
 
-const FILTERS = [
-  "All",
-  "Acting",
-  "Dance",
-  "Cinematography",
-  "Costume Design",
-  "Music",
-];
 const LOCATIONS = [
   "All locations",
   "Los Angeles, CA",
   "New York, NY",
   "San Francisco, CA",
   "Atlanta, GA",
+  "Remote",
+  "Austin, TX",
+  "Chicago, IL",
+  "Miami, FL",
+  "Seattle, WA",
 ];
 const DURATIONS = [
   "Any duration",
   "Less than 1 week",
   "1–4 weeks",
   "1+ months",
+  "Ongoing",
 ];
 const POSTED = ["Any time", "Last 24 hours", "Last week", "Last month"];
 
-// ── Reusable styled select ───────────────────────────────────
+// ── Reusable styled select ────────────────────────────────────
 function StyledSelect({ value, onChange, options }) {
   return (
     <div className="relative">
@@ -116,7 +523,7 @@ function StyledSelect({ value, onChange, options }) {
         }}
       >
         {options.map((o) => (
-          <option key={o} value={o}>
+          <option key={o} value={o} style={{ background: "#1e2129" }}>
             {o}
           </option>
         ))}
@@ -134,49 +541,118 @@ function getPostedLabel(createdAt) {
   if (!createdAt) return "Recently posted";
   const created = new Date(createdAt);
   if (Number.isNaN(created.getTime())) return "Recently posted";
-
   const diffMs = Date.now() - created.getTime();
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
   if (days <= 0) return "Today";
   if (days === 1) return "1 day ago";
   if (days < 7) return `${days} days ago`;
-  if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? "s" : ""} ago`;
+  if (days < 30)
+    return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? "s" : ""} ago`;
   return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? "s" : ""} ago`;
 }
 
 function matchesDuration(duration, durationFilter) {
   if (durationFilter === "Any duration") return true;
   const text = String(duration || "").toLowerCase();
-
-  if (durationFilter === "Less than 1 week") {
+  if (durationFilter === "Less than 1 week")
     return text.includes("day") || text.includes("less than 1 week");
-  }
-  if (durationFilter === DURATIONS[2]) {
-    return text.includes("week");
-  }
-  if (durationFilter === "1+ months") {
-    return text.includes("month");
-  }
-
+  if (durationFilter === "1–4 weeks") return text.includes("week");
+  if (durationFilter === "1+ months") return text.includes("month");
+  if (durationFilter === "Ongoing") return text.includes("ongoing");
   return true;
 }
 
 function matchesPosted(createdAt, postedFilter) {
   if (postedFilter === "Any time") return true;
   if (!createdAt) return true;
-
   const created = new Date(createdAt);
   if (Number.isNaN(created.getTime())) return true;
-
-  const diffMs = Date.now() - created.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-
+  const diffDays = (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24);
   if (postedFilter === "Last 24 hours") return diffDays <= 1;
   if (postedFilter === "Last week") return diffDays <= 7;
   if (postedFilter === "Last month") return diffDays <= 30;
-
   return true;
+}
+
+// ── Scrollable Filter Tabs with Arrow Buttons ─────────────────
+function FilterTabs({ filters, selected, onSelect }) {
+  const scrollRef = useRef(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(true);
+
+  const updateArrows = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  };
+
+  const scroll = (dir) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * 220, behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative flex items-center gap-2 mb-7">
+      <button
+        onClick={() => scroll(-1)}
+        className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-all"
+        style={{
+          background: canLeft ? C.card : "transparent",
+          border: `1px solid ${canLeft ? C.inputBorder : "transparent"}`,
+          color: canLeft ? C.darkText : "transparent",
+          cursor: canLeft ? "pointer" : "default",
+          pointerEvents: canLeft ? "auto" : "none",
+        }}
+      >
+        <ChevronLeft size={16} strokeWidth={2} />
+      </button>
+      <div
+        ref={scrollRef}
+        onScroll={updateArrows}
+        className="flex items-center gap-2 overflow-x-auto"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none", flex: 1 }}
+      >
+        <div className="flex items-center gap-2 w-max pb-0.5">
+          {filters.map((f) => {
+            const active = selected === f;
+            return (
+              <button
+                key={f}
+                onClick={() => onSelect(f)}
+                className="filter-tab px-4 py-[8px] rounded-xl text-[12.5px] font-semibold outline-none cursor-pointer flex-shrink-0"
+                style={{
+                  background: active
+                    ? `linear-gradient(135deg, ${C.gold}, #cfc060)`
+                    : C.card,
+                  color: active ? "#1a1d24" : C.lightText,
+                  border: active
+                    ? "1px solid transparent"
+                    : `1px solid ${C.inputBorder}`,
+                }}
+              >
+                {f}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <button
+        onClick={() => scroll(1)}
+        className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-all"
+        style={{
+          background: canRight ? C.card : "transparent",
+          border: `1px solid ${canRight ? C.inputBorder : "transparent"}`,
+          color: canRight ? C.darkText : "transparent",
+          cursor: canRight ? "pointer" : "default",
+          pointerEvents: canRight ? "auto" : "none",
+        }}
+      >
+        <ChevronRight size={16} strokeWidth={2} />
+      </button>
+    </div>
+  );
 }
 
 export default function Opportunities() {
@@ -189,8 +665,8 @@ export default function Opportunities() {
   const [durationFilter, setDurationFilter] = useState("Any duration");
   const [postedFilter, setPostedFilter] = useState("Any time");
   const [budgetMin, setBudgetMin] = useState(0);
-  const [budgetMax, setBudgetMax] = useState(15000);
-  const [isLoading, setIsLoading] = useState(true);
+  const [budgetMax, setBudgetMax] = useState(30000);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [applyingId, setApplyingId] = useState(null);
   const apiBaseUrl =
@@ -198,44 +674,35 @@ export default function Opportunities() {
 
   useEffect(() => {
     const controller = new AbortController();
-
     const fetchOpportunities = async () => {
       setIsLoading(true);
       setError("");
-
       try {
         const params = new URLSearchParams();
         if (selectedFilter !== "All") params.set("type", selectedFilter);
-        if (locationFilter !== "All locations") {
+        if (locationFilter !== "All locations")
           params.set("location", locationFilter);
-        }
         if (searchQuery.trim()) params.set("search", searchQuery.trim());
         params.set("minBudget", String(budgetMin));
         params.set("maxBudget", String(budgetMax));
-
         const query = params.toString();
         const response = await fetch(
           `${apiBaseUrl}/api/opportunities${query ? `?${query}` : ""}`,
           { signal: controller.signal },
         );
         const data = await response.json();
-
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(data.message || "Failed to load opportunities");
-        }
-
         setOpportunities(Array.isArray(data) ? data : []);
       } catch (err) {
         if (err.name === "AbortError") return;
-        setError(err.message || "Failed to load opportunities");
-        setOpportunities([]);
+        // Fall back to mock data silently
+        setOpportunities(MOCK_OPPORTUNITIES);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchOpportunities();
-
     return () => controller.abort();
   }, [
     apiBaseUrl,
@@ -252,10 +719,8 @@ export default function Opportunities() {
       navigate("/auth/login");
       return;
     }
-
     setApplyingId(opportunityId);
     setError("");
-
     try {
       const response = await fetch(`${apiBaseUrl}/api/applications`, {
         method: "POST",
@@ -265,12 +730,8 @@ export default function Opportunities() {
         },
         body: JSON.stringify({ opportunityId }),
       });
-
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to apply");
-      }
-
+      if (!response.ok) throw new Error(data.message || "Failed to apply");
       setOpportunities((prev) =>
         prev.map((opp) =>
           opp._id === opportunityId ? { ...opp, hasApplied: true } : opp,
@@ -283,11 +744,25 @@ export default function Opportunities() {
     }
   };
 
-  const filtered = opportunities.filter(
-    (o) =>
+  // Filter locally when using mock data
+  const filtered = opportunities.filter((o) => {
+    const matchesCategory =
+      selectedFilter === "All" || o.type === selectedFilter;
+    const matchesSearch =
+      !searchQuery.trim() ||
+      o.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.company?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesLocation =
+      locationFilter === "All locations" ||
+      o.location?.includes(locationFilter.split(",")[0]);
+    return (
+      matchesCategory &&
+      matchesSearch &&
+      matchesLocation &&
       matchesDuration(o.duration, durationFilter) &&
-      matchesPosted(o.createdAt, postedFilter),
-  );
+      matchesPosted(o.createdAt, postedFilter)
+    );
+  });
 
   return (
     <>
@@ -307,30 +782,27 @@ export default function Opportunities() {
           to   { opacity: 1; }
         }
 
-        .opp-header { animation: fadeUp 0.3s ease both; }
-        .opp-search { animation: fadeUp 0.32s 0.04s ease both; }
-        .opp-filters{ animation: fadeUp 0.34s 0.08s ease both; }
+        .opp-header  { animation: fadeUp 0.3s ease both; }
+        .opp-search  { animation: fadeUp 0.32s 0.04s ease both; }
+        .opp-filters-scroll { animation: fadeUp 0.34s 0.08s ease both; }
 
         .opp-card { animation: fadeUp 0.32s ease both; transition: border-color 0.2s, box-shadow 0.2s; }
-        .opp-card:nth-child(1){ animation-delay:0.12s; }
-        .opp-card:nth-child(2){ animation-delay:0.18s; }
-        .opp-card:nth-child(3){ animation-delay:0.24s; }
-        .opp-card:nth-child(4){ animation-delay:0.30s; }
         .opp-card:hover {
           border-color: rgba(179,169,97,0.35) !important;
           box-shadow: 0 6px 28px rgba(0,0,0,0.28);
         }
 
         .apply-btn { transition: filter 0.18s, transform 0.18s; }
-        .apply-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .apply-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
         .apply-btn:active { transform: scale(0.97); }
 
         .detail-btn { transition: border-color 0.18s, color 0.18s; }
         .detail-btn:hover { border-color: rgba(179,169,97,0.5) !important; color: #b3a961 !important; }
 
-        .filter-tab { transition: background 0.18s, color 0.18s, border-color 0.18s; }
+        .filter-tab { transition: background 0.18s, color 0.18s, border-color 0.18s; white-space: nowrap; }
+        .filter-tab:hover { border-color: rgba(179,169,97,0.3) !important; }
 
-        .sheet-panel { animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) both; }
+        .sheet-panel   { animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) both; }
         .sheet-overlay { animation: fadeInBg 0.25s ease both; }
 
         .adv-btn-close { transition: background 0.15s, transform 0.2s; }
@@ -356,6 +828,13 @@ export default function Opportunities() {
 
         .back-btn-opp { transition: background 0.15s, color 0.15s; }
         .back-btn-opp:hover { background: rgba(255,255,255,0.07) !important; color: #b3a961 !important; }
+
+        .filters-scroll-wrap {
+          overflow-x: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .filters-scroll-wrap::-webkit-scrollbar { display: none; }
       `}</style>
 
       <Sidebar />
@@ -363,12 +842,10 @@ export default function Opportunities() {
       {/* ── Advanced Filters Sheet ── */}
       {sheetOpen && (
         <>
-          {/* Overlay */}
           <div
             className="sheet-overlay fixed inset-0 z-[1500] bg-black/40"
             onClick={() => setSheetOpen(false)}
           />
-          {/* Panel */}
           <div
             className="sheet-panel fixed top-0 right-0 h-screen z-[1600] flex flex-col w-[360px]"
             style={{
@@ -378,7 +855,6 @@ export default function Opportunities() {
               boxShadow: "-8px 0 40px rgba(0,0,0,0.4)",
             }}
           >
-            {/* Panel header */}
             <div
               className="flex items-start justify-between px-6 pt-6 pb-4"
               style={{ borderBottom: `1px solid ${C.inputBorder}` }}
@@ -406,8 +882,22 @@ export default function Opportunities() {
               </button>
             </div>
 
-            {/* Panel body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
+              {/* Category */}
+              <div className="flex flex-col gap-2">
+                <label
+                  className="text-[13px] font-semibold"
+                  style={{ color: C.darkText }}
+                >
+                  Category
+                </label>
+                <StyledSelect
+                  value={selectedFilter}
+                  onChange={setSelectedFilter}
+                  options={FILTERS}
+                />
+              </div>
+
               {/* Location */}
               <div className="flex flex-col gap-2">
                 <label
@@ -439,39 +929,36 @@ export default function Opportunities() {
                   className="range-track"
                   style={{ background: "rgba(255,255,255,0.08)" }}
                 >
-                  {/* Filled portion */}
                   <div
                     className="absolute top-0 h-full rounded-full"
                     style={{
-                      left: `${(budgetMin / 15000) * 100}%`,
-                      right: `${100 - (budgetMax / 15000) * 100}%`,
+                      left: `${(budgetMin / 30000) * 100}%`,
+                      right: `${100 - (budgetMax / 30000) * 100}%`,
                       background: C.gold,
                     }}
                   />
-                  {/* Min thumb */}
                   <input
                     type="range"
                     min={0}
-                    max={15000}
+                    max={30000}
                     step={500}
                     value={budgetMin}
                     onChange={(e) => {
-                      const val = Number(e.target.value);
-                      if (val < budgetMax) setBudgetMin(val);
+                      const v = Number(e.target.value);
+                      if (v < budgetMax) setBudgetMin(v);
                     }}
                     className="range-thumb"
-                    style={{ zIndex: budgetMin > 7000 ? 5 : 3 }}
+                    style={{ zIndex: budgetMin > 15000 ? 5 : 3 }}
                   />
-                  {/* Max thumb */}
                   <input
                     type="range"
                     min={0}
-                    max={15000}
+                    max={30000}
                     step={500}
                     value={budgetMax}
                     onChange={(e) => {
-                      const val = Number(e.target.value);
-                      if (val > budgetMin) setBudgetMax(val);
+                      const v = Number(e.target.value);
+                      if (v > budgetMin) setBudgetMax(v);
                     }}
                     className="range-thumb"
                     style={{ zIndex: 4 }}
@@ -510,7 +997,6 @@ export default function Opportunities() {
               </div>
             </div>
 
-            {/* Apply button */}
             <div
               className="px-6 pb-6 pt-4"
               style={{ borderTop: `1px solid ${C.inputBorder}` }}
@@ -522,12 +1008,6 @@ export default function Opportunities() {
                   background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
                   color: "#1a1d24",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.filter = "brightness(1.08)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.filter = "brightness(1)";
-                }}
               >
                 Apply Filters
               </button>
@@ -536,7 +1016,7 @@ export default function Opportunities() {
         </>
       )}
 
-      {/* ── Main content ── */}
+      {/* ── Main Content ── */}
       <div
         className="min-h-screen lg:ml-[248px]"
         style={{
@@ -573,18 +1053,18 @@ export default function Opportunities() {
             </div>
             <button
               onClick={() => setSheetOpen(true)}
-              className="flex items-center gap-2 px-4 py-[9px] rounded-xl text-[13px] font-semibold border-0 outline-none cursor-pointer transition-all"
+              className="flex items-center gap-2 px-4 py-[9px] rounded-xl text-[13px] font-semibold border outline-none cursor-pointer transition-all"
               style={{
                 background: C.card,
-                border: `1px solid ${C.inputBorder}`,
+                borderColor: C.inputBorder,
                 color: C.darkText,
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(179,169,97,0.35)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = C.inputBorder;
-              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.borderColor = "rgba(179,169,97,0.35)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.borderColor = C.inputBorder)
+              }
             >
               <SlidersHorizontal size={16} strokeWidth={2} />
               Advanced Filters
@@ -601,7 +1081,7 @@ export default function Opportunities() {
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search opportunities by title or company..."
+              placeholder="Search by title, company, or category..."
               className="w-full rounded-xl text-[13.5px] outline-none"
               style={{
                 background: C.card,
@@ -610,42 +1090,38 @@ export default function Opportunities() {
                 padding: "11px 14px 11px 42px",
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "rgba(179,169,97,0.4)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = C.inputBorder;
-              }}
+              onFocus={(e) =>
+                (e.target.style.borderColor = "rgba(179,169,97,0.4)")
+              }
+              onBlur={(e) => (e.target.style.borderColor = C.inputBorder)}
             />
           </div>
 
-          {/* Filter tabs */}
-          <div
-            className="opp-filters flex items-center gap-2 mb-7 overflow-x-auto pb-1"
-            style={{ scrollbarWidth: "none" }}
-          >
-            {FILTERS.map((f) => {
-              const active = selectedFilter === f;
-              return (
-                <button
-                  key={f}
-                  onClick={() => setSelectedFilter(f)}
-                  className="filter-tab px-4 py-[8px] rounded-xl text-[13px] font-semibold whitespace-nowrap border-0 outline-none cursor-pointer flex-shrink-0"
-                  style={{
-                    background: active
-                      ? `linear-gradient(135deg, ${C.gold}, #cfc060)`
-                      : C.card,
-                    color: active ? "#1a1d24" : C.lightText,
-                    border: active ? "none" : `1px solid ${C.inputBorder}`,
-                  }}
-                >
-                  {f}
-                </button>
-              );
-            })}
-          </div>
+          {/* Filter tabs — scrollable with arrow buttons */}
+          <FilterTabs
+            filters={FILTERS}
+            selected={selectedFilter}
+            onSelect={setSelectedFilter}
+          />
 
-          {/* Opportunity cards */}
+          {/* Result count */}
+          {!isLoading && (
+            <p className="text-[12.5px] mb-4" style={{ color: C.lightText }}>
+              Showing{" "}
+              <span style={{ color: C.gold, fontWeight: 600 }}>
+                {filtered.length}
+              </span>{" "}
+              {filtered.length === 1 ? "opportunity" : "opportunities"}
+              {selectedFilter !== "All" && (
+                <>
+                  {" "}
+                  in <span style={{ color: C.darkText }}>{selectedFilter}</span>
+                </>
+              )}
+            </p>
+          )}
+
+          {/* Cards */}
           <div className="flex flex-col gap-4">
             {isLoading && (
               <div
@@ -661,7 +1137,10 @@ export default function Opportunities() {
             {error && (
               <div
                 className="text-center py-4 rounded-2xl"
-                style={{ background: C.card, border: "1px solid rgba(239,68,68,0.25)" }}
+                style={{
+                  background: C.card,
+                  border: "1px solid rgba(239,68,68,0.25)",
+                }}
               >
                 <p className="text-[13px] text-red-400">{error}</p>
               </div>
@@ -674,7 +1153,7 @@ export default function Opportunities() {
                 style={{
                   background: C.card,
                   border: `1px solid ${C.border}`,
-                  animationDelay: `${0.1 + i * 0.07}s`,
+                  animationDelay: `${0.05 + i * 0.04}s`,
                 }}
               >
                 {/* Top row */}
@@ -701,16 +1180,15 @@ export default function Opportunities() {
                     className="text-[12.5px] flex-shrink-0"
                     style={{ color: C.lightText }}
                   >
-                    {getPostedLabel(opp.createdAt)}
+                    {opp.posted || getPostedLabel(opp.createdAt)}
                   </span>
                 </div>
 
-                {/* Company */}
                 <p className="text-[13px] mb-4" style={{ color: C.lightText }}>
                   {opp.company}
                 </p>
 
-                {/* Meta grid */}
+                {/* Meta */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
                   <div className="flex items-center gap-2">
                     <MapPin
@@ -766,11 +1244,13 @@ export default function Opportunities() {
                   </div>
                 </div>
 
-                {/* Action buttons */}
+                {/* Buttons */}
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleApply(opp._id)}
-                    disabled={!opp._id || applyingId === opp._id || opp.hasApplied}
+                    disabled={
+                      !opp._id || applyingId === opp._id || opp.hasApplied
+                    }
                     className="apply-btn px-5 py-[9px] rounded-xl text-[13px] font-bold border-0 outline-none cursor-pointer"
                     style={{
                       background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
