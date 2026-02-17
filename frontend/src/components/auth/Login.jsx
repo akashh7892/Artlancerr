@@ -1,9 +1,9 @@
-// frontend/src/components/Login.jsx
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useLocation, useParams } from "react-router";
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
+  const { role } = useParams(); // Get role from URL
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -14,10 +14,8 @@ export default function Login() {
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
-  const apiBaseUrl =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-  // Check for saved email if "remember me" was checked previously
+  // Load saved email if "remember me" was checked previously
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
     if (savedEmail) {
@@ -26,7 +24,7 @@ export default function Login() {
     }
   }, []);
 
-  // Get email from forgot password flow if available
+  // Prefill email from forgot password flow if available
   useEffect(() => {
     if (location.state?.email) {
       setFormData((prev) => ({ ...prev, email: location.state.email }));
@@ -38,7 +36,6 @@ export default function Login() {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Clear error for this field when user starts typing
     if (errors[e.target.name]) {
       setErrors({
         ...errors,
@@ -74,7 +71,6 @@ export default function Login() {
     }
 
     setIsLoading(true);
-    setErrors({});
 
     try {
       // Handle remember me
@@ -84,30 +80,16 @@ export default function Login() {
         localStorage.removeItem("rememberedEmail");
       }
 
-      const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      console.log("Login data:", { ...formData, role });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data));
-
-      navigate(data.role === "hirer" ? "/hirer/dashboard" : "/artist/dashboard");
+      // Redirect to the role-specific dashboard
+      navigate(`/${role}/dashboard`);
     } catch (error) {
       console.error("Login failed:", error);
       setErrors({
-        general: error.message || "Invalid email or password. Please try again.",
+        general: "Invalid email or password. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -115,26 +97,23 @@ export default function Login() {
   };
 
   const handleForgotPassword = () => {
-    navigate("/auth/forgot-password", {
-      state: { email: formData.email }, // Pass email if user already typed it
+    navigate(`/auth/${role}/forgot-password`, {
+      state: { email: formData.email },
     });
   };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative animate-fadeIn">
-      {/* Login Form */}
       <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg animate-contentFadeIn">
-        {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-normal text-[#e8e9eb] mb-2 tracking-tight">
             Welcome Back
           </h1>
           <p className="text-sm sm:text-base text-[#808590] font-light tracking-wide">
-            Sign in to continue your journey
+            Sign in as {role === "artist" ? "an Artist" : "a Hirer"}
           </p>
         </div>
 
-        {/* Error Message */}
         {errors.general && (
           <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
             <p className="text-xs sm:text-sm text-red-500 text-center">
@@ -256,7 +235,7 @@ export default function Login() {
         <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-[#808590] font-light">
           Don't have an account?{" "}
           <button
-            onClick={() => navigate("/auth/signup")}
+            onClick={() => navigate(`/auth/${role}/signup`)}
             className="text-[#c9a961] hover:underline font-normal transition-colors"
           >
             Sign Up
@@ -273,7 +252,6 @@ export default function Login() {
             opacity: 1;
           }
         }
-
         @keyframes contentFadeIn {
           from {
             opacity: 0;
@@ -284,16 +262,12 @@ export default function Login() {
             transform: translateY(0);
           }
         }
-
         .animate-fadeIn {
           animation: fadeIn 1s ease-in;
         }
-
         .animate-contentFadeIn {
           animation: contentFadeIn 1.2s ease-in;
         }
-
-        /* Mobile touch improvements */
         @media (max-width: 640px) {
           button,
           a,
@@ -301,17 +275,6 @@ export default function Login() {
           [role="button"] {
             min-height: 44px;
           }
-        }
-
-        /* Smooth transitions */
-        input,
-        button {
-          transition: all 0.3s ease;
-        }
-
-        /* Custom checkbox style */
-        input[type="checkbox"] {
-          cursor: pointer;
         }
       `}</style>
     </div>

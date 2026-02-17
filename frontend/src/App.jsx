@@ -1,11 +1,15 @@
 import { Route, Routes } from "react-router-dom";
 import Landing from "./pages/Landing";
 import IntroFlow from "./pages/IntroFlow";
+
+// Auth components (role‑aware)
 import Signup from "./components/auth/Signup";
 import Login from "./components/auth/Login";
 import ForgotPassword from "./components/auth/ForgotPassword";
 import VerifyOTP from "./components/auth/VerifyOTP";
 import ResetPassword from "./components/auth/ResetPassword";
+
+// Artist pages
 import Dashboard from "./pages/artist/Dashboard";
 import Messages from "./pages/artist/Messages";
 import Nearbyartists from "./pages/artist/Nearbyartists";
@@ -17,28 +21,32 @@ import Profile from "./pages/artist/Profile";
 import Promotions from "./pages/artist/Promotions";
 import Settings from "./pages/artist/Settings";
 
-function HirerPlaceholder({ title }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#1a1d24] text-[#e8e9eb] px-4">
-      <p className="text-lg">{title} page is coming soon.</p>
-    </div>
-  );
-}
+// Hirer pages
+// import HirerDashboard from "./pages/hirer/HirerDashboard";
+// import HirerMessages from "./pages/hirer/HirerMessages";
+// import HirerPayment from "./pages/hirer/HirerPayment";
+// import HirerPlusicon from "./pages/hirer/HirerPlusicon";
+// import HirerPromotions from "./pages/hirer/HirerPromotions";
+// import HirerSettings from "./pages/hirer/HirerSettings";
+// import Booking from "./pages/hirer/Booking";
+// import BrowseArtist from "./pages/hirer/Browseartist";
+// import PostRequirement from "./pages/hirer/PostRequiriment";
 
 function App() {
   return (
     <Routes>
+      {/* Public */}
       <Route path="/" element={<Landing />} />
-      <Route path="/intro" element={<IntroFlow />} />
+      <Route path="/intro/:role" element={<IntroFlow />} />
 
-      {/* Auth */}
-      <Route path="/auth/signup" element={<Signup />} />
-      <Route path="/auth/login" element={<Login />} />
-      <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-      <Route path="/auth/verify-otp" element={<VerifyOTP />} />
-      <Route path="/auth/reset-password" element={<ResetPassword />} />
+      {/* Auth role in URL */}
+      <Route path="/auth/:role/signup" element={<Signup />} />
+      <Route path="/auth/:role/login" element={<Login />} />
+      <Route path="/auth/:role/forgot-password" element={<ForgotPassword />} />
+      <Route path="/auth/:role/verify-otp" element={<VerifyOTP />} />
+      <Route path="/auth/:role/reset-password" element={<ResetPassword />} />
 
-      {/* Artists */}
+      {/* Artist routes */}
       <Route path="/artist/dashboard" element={<Dashboard />} />
       <Route path="/artist/message" element={<Messages />} />
       <Route path="/artist/near-by-artists" element={<Nearbyartists />} />
@@ -50,39 +58,16 @@ function App() {
       <Route path="/artist/promotion" element={<Promotions />} />
       <Route path="/artist/settings" element={<Settings />} />
 
-      {/* Hirers */}
-      <Route
-        path="/hirer/dashboard"
-        element={<HirerPlaceholder title="Hirer Dashboard" />}
-      />
-      <Route
-        path="/hirer/message"
-        element={<HirerPlaceholder title="Hirer Messages" />}
-      />
-      <Route
-        path="/hirer/browse-artist"
-        element={<HirerPlaceholder title="Browse Artists" />}
-      />
-      <Route
-        path="/hirer/booking"
-        element={<HirerPlaceholder title="Hirer Booking" />}
-      />
-      <Route
-        path="/hirer/payment"
-        element={<HirerPlaceholder title="Hirer Payment" />}
-      />
-      <Route
-        path="/hirer/promotion"
-        element={<HirerPlaceholder title="Hirer Promotions" />}
-      />
-      <Route
-        path="/hirer/post-requirement"
-        element={<HirerPlaceholder title="Post Requirement" />}
-      />
-      <Route
-        path="/hirer/plusicon"
-        element={<HirerPlaceholder title="Hirer Quick Actions" />}
-      />
+      {/* Hirer routes */}
+      {/* <Route path="/hirer/dashboard" element={<HirerDashboard />} /> */}
+      {/* <Route path="/hirer/messages" element={<HirerMessages />} />
+      <Route path="/hirer/payment" element={<HirerPayment />} />
+      <Route path="/hirer/plusicon" element={<HirerPlusicon />} />
+      <Route path="/hirer/promotion" element={<HirerPromotions />} />
+      <Route path="/hirer/settings" element={<HirerSettings />} />
+      <Route path="/hirer/booking" element={<Booking />} />
+      <Route path="/hirer/browse-artists" element={<BrowseArtist />} />
+      <Route path="/hirer/post-requirement" element={<PostRequirement />} /> */}
     </Routes>
   );
 }

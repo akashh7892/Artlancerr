@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
 import {
@@ -541,123 +541,54 @@ function getPostedLabel(createdAt) {
   if (!createdAt) return "Recently posted";
   const created = new Date(createdAt);
   if (Number.isNaN(created.getTime())) return "Recently posted";
+
   const diffMs = Date.now() - created.getTime();
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
   if (days <= 0) return "Today";
   if (days === 1) return "1 day ago";
   if (days < 7) return `${days} days ago`;
-  if (days < 30)
-    return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? "s" : ""} ago`;
+  if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? "s" : ""} ago`;
   return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? "s" : ""} ago`;
 }
 
 function matchesDuration(duration, durationFilter) {
   if (durationFilter === "Any duration") return true;
   const text = String(duration || "").toLowerCase();
-  if (durationFilter === "Less than 1 week")
+
+  if (durationFilter === "Less than 1 week") {
     return text.includes("day") || text.includes("less than 1 week");
-  if (durationFilter === "1–4 weeks") return text.includes("week");
-  if (durationFilter === "1+ months") return text.includes("month");
-  if (durationFilter === "Ongoing") return text.includes("ongoing");
+  }
+  if (durationFilter === DURATIONS[2]) {
+    return text.includes("week");
+  }
+  if (durationFilter === "1+ months") {
+    return text.includes("month");
+  }
+
   return true;
 }
 
 function matchesPosted(createdAt, postedFilter) {
   if (postedFilter === "Any time") return true;
   if (!createdAt) return true;
+
   const created = new Date(createdAt);
   if (Number.isNaN(created.getTime())) return true;
-  const diffDays = (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24);
+
+  const diffMs = Date.now() - created.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
   if (postedFilter === "Last 24 hours") return diffDays <= 1;
   if (postedFilter === "Last week") return diffDays <= 7;
   if (postedFilter === "Last month") return diffDays <= 30;
+
   return true;
-}
-
-// ── Scrollable Filter Tabs with Arrow Buttons ─────────────────
-function FilterTabs({ filters, selected, onSelect }) {
-  const scrollRef = useRef(null);
-  const [canLeft, setCanLeft] = useState(false);
-  const [canRight, setCanRight] = useState(true);
-
-  const updateArrows = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanLeft(el.scrollLeft > 4);
-    setCanRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
-  };
-
-  const scroll = (dir) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * 220, behavior: "smooth" });
-  };
-
-  return (
-    <div className="relative flex items-center gap-2 mb-7">
-      <button
-        onClick={() => scroll(-1)}
-        className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-all"
-        style={{
-          background: canLeft ? C.card : "transparent",
-          border: `1px solid ${canLeft ? C.inputBorder : "transparent"}`,
-          color: canLeft ? C.darkText : "transparent",
-          cursor: canLeft ? "pointer" : "default",
-          pointerEvents: canLeft ? "auto" : "none",
-        }}
-      >
-        <ChevronLeft size={16} strokeWidth={2} />
-      </button>
-      <div
-        ref={scrollRef}
-        onScroll={updateArrows}
-        className="flex items-center gap-2 overflow-x-auto"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none", flex: 1 }}
-      >
-        <div className="flex items-center gap-2 w-max pb-0.5">
-          {filters.map((f) => {
-            const active = selected === f;
-            return (
-              <button
-                key={f}
-                onClick={() => onSelect(f)}
-                className="filter-tab px-4 py-[8px] rounded-xl text-[12.5px] font-semibold outline-none cursor-pointer flex-shrink-0"
-                style={{
-                  background: active
-                    ? `linear-gradient(135deg, ${C.gold}, #cfc060)`
-                    : C.card,
-                  color: active ? "#1a1d24" : C.lightText,
-                  border: active
-                    ? "1px solid transparent"
-                    : `1px solid ${C.inputBorder}`,
-                }}
-              >
-                {f}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <button
-        onClick={() => scroll(1)}
-        className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-all"
-        style={{
-          background: canRight ? C.card : "transparent",
-          border: `1px solid ${canRight ? C.inputBorder : "transparent"}`,
-          color: canRight ? C.darkText : "transparent",
-          cursor: canRight ? "pointer" : "default",
-          pointerEvents: canRight ? "auto" : "none",
-        }}
-      >
-        <ChevronRight size={16} strokeWidth={2} />
-      </button>
-    </div>
-  );
 }
 
 export default function Opportunities() {
   const navigate = useNavigate();
-  const [opportunities, setOpportunities] = useState(MOCK_OPPORTUNITIES);
+  const [opportunities] = useState(MOCK_OPPORTUNITIES);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -665,8 +596,8 @@ export default function Opportunities() {
   const [durationFilter, setDurationFilter] = useState("Any duration");
   const [postedFilter, setPostedFilter] = useState("Any time");
   const [budgetMin, setBudgetMin] = useState(0);
-  const [budgetMax, setBudgetMax] = useState(30000);
-  const [isLoading, setIsLoading] = useState(false);
+  const [budgetMax, setBudgetMax] = useState(15000);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [applyingId, setApplyingId] = useState(null);
   const apiBaseUrl =
@@ -674,35 +605,44 @@ export default function Opportunities() {
 
   useEffect(() => {
     const controller = new AbortController();
+
     const fetchOpportunities = async () => {
       setIsLoading(true);
       setError("");
+
       try {
         const params = new URLSearchParams();
         if (selectedFilter !== "All") params.set("type", selectedFilter);
-        if (locationFilter !== "All locations")
+        if (locationFilter !== "All locations") {
           params.set("location", locationFilter);
+        }
         if (searchQuery.trim()) params.set("search", searchQuery.trim());
         params.set("minBudget", String(budgetMin));
         params.set("maxBudget", String(budgetMax));
+
         const query = params.toString();
         const response = await fetch(
           `${apiBaseUrl}/api/opportunities${query ? `?${query}` : ""}`,
           { signal: controller.signal },
         );
         const data = await response.json();
-        if (!response.ok)
+
+        if (!response.ok) {
           throw new Error(data.message || "Failed to load opportunities");
+        }
+
         setOpportunities(Array.isArray(data) ? data : []);
       } catch (err) {
         if (err.name === "AbortError") return;
-        // Fall back to mock data silently
-        setOpportunities(MOCK_OPPORTUNITIES);
+        setError(err.message || "Failed to load opportunities");
+        setOpportunities([]);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchOpportunities();
+
     return () => controller.abort();
   }, [
     apiBaseUrl,
@@ -719,8 +659,10 @@ export default function Opportunities() {
       navigate("/auth/login");
       return;
     }
+
     setApplyingId(opportunityId);
     setError("");
+
     try {
       const response = await fetch(`${apiBaseUrl}/api/applications`, {
         method: "POST",
@@ -730,8 +672,12 @@ export default function Opportunities() {
         },
         body: JSON.stringify({ opportunityId }),
       });
+
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Failed to apply");
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to apply");
+      }
+
       setOpportunities((prev) =>
         prev.map((opp) =>
           opp._id === opportunityId ? { ...opp, hasApplied: true } : opp,
@@ -744,25 +690,11 @@ export default function Opportunities() {
     }
   };
 
-  // Filter locally when using mock data
-  const filtered = opportunities.filter((o) => {
-    const matchesCategory =
-      selectedFilter === "All" || o.type === selectedFilter;
-    const matchesSearch =
-      !searchQuery.trim() ||
-      o.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.company?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesLocation =
-      locationFilter === "All locations" ||
-      o.location?.includes(locationFilter.split(",")[0]);
-    return (
-      matchesCategory &&
-      matchesSearch &&
-      matchesLocation &&
+  const filtered = opportunities.filter(
+    (o) =>
       matchesDuration(o.duration, durationFilter) &&
-      matchesPosted(o.createdAt, postedFilter)
-    );
-  });
+      matchesPosted(o.createdAt, postedFilter),
+  );
 
   return (
     <>
@@ -1137,10 +1069,7 @@ export default function Opportunities() {
             {error && (
               <div
                 className="text-center py-4 rounded-2xl"
-                style={{
-                  background: C.card,
-                  border: "1px solid rgba(239,68,68,0.25)",
-                }}
+                style={{ background: C.card, border: "1px solid rgba(239,68,68,0.25)" }}
               >
                 <p className="text-[13px] text-red-400">{error}</p>
               </div>
@@ -1148,7 +1077,7 @@ export default function Opportunities() {
 
             {filtered.map((opp, i) => (
               <div
-                key={opp._id || opp.id}
+                key={opp.id}
                 className="opp-card rounded-2xl p-6"
                 style={{
                   background: C.card,
@@ -1180,7 +1109,7 @@ export default function Opportunities() {
                     className="text-[12.5px] flex-shrink-0"
                     style={{ color: C.lightText }}
                   >
-                    {opp.posted || getPostedLabel(opp.createdAt)}
+                    {getPostedLabel(opp.createdAt)}
                   </span>
                 </div>
 
@@ -1248,24 +1177,14 @@ export default function Opportunities() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleApply(opp._id)}
-                    disabled={
-                      !opp._id || applyingId === opp._id || opp.hasApplied
-                    }
+                    disabled={!opp._id || applyingId === opp._id || opp.hasApplied}
                     className="apply-btn px-5 py-[9px] rounded-xl text-[13px] font-bold border-0 outline-none cursor-pointer"
                     style={{
                       background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
                       color: "#1a1d24",
-                      opacity:
-                        !opp._id || applyingId === opp._id || opp.hasApplied
-                          ? 0.65
-                          : 1,
                     }}
                   >
-                    {opp.hasApplied
-                      ? "Applied"
-                      : applyingId === opp._id
-                        ? "Applying..."
-                        : "Apply Now"}
+                    Apply Now
                   </button>
                   <button
                     className="detail-btn px-5 py-[9px] rounded-xl text-[13px] font-semibold border-0 outline-none cursor-pointer"
@@ -1282,7 +1201,7 @@ export default function Opportunities() {
             ))}
 
             {/* Empty state */}
-            {!isLoading && filtered.length === 0 && (
+            {filtered.length === 0 && (
               <div
                 className="text-center py-16 rounded-2xl"
                 style={{ background: C.card, border: `1px solid ${C.border}` }}

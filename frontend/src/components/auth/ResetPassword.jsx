@@ -1,9 +1,9 @@
-// frontend/src/components/ResetPassword.jsx
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useLocation, useParams } from "react-router";
 import { Lock, ArrowLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 export default function ResetPassword() {
+  const { role } = useParams(); // Get role from URL
   const [formData, setFormData] = useState({
     password: "",
     confirmPassword: "",
@@ -30,12 +30,12 @@ export default function ResetPassword() {
     try {
       // Simulate API call to reset password
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Password reset for:", email);
+      console.log("Password reset for:", email, "role:", role);
       setIsSuccess(true);
 
       // Navigate to login after 2 seconds
       setTimeout(() => {
-        navigate("/auth/login");
+        navigate(`/auth/${role}/login`);
       }, 2000);
     } catch (error) {
       console.error("Password reset failed:", error);
@@ -79,7 +79,9 @@ export default function ResetPassword() {
     <div className="min-h-screen bg-linear-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative animate-fadeIn">
       {/* Back button */}
       <button
-        onClick={() => navigate("/auth/verify-otp", { state: { email } })}
+        onClick={() =>
+          navigate(`/auth/${role}/verify-otp`, { state: { email } })
+        }
         className="absolute top-4 left-4 sm:top-6 sm:left-6 lg:top-8 lg:left-8 text-[#808590] hover:text-[#c9a961] transition-colors flex items-center gap-2 text-sm sm:text-base"
       >
         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -235,7 +237,6 @@ export default function ResetPassword() {
             opacity: 1;
           }
         }
-
         @keyframes contentFadeIn {
           from {
             opacity: 0;
@@ -246,15 +247,12 @@ export default function ResetPassword() {
             transform: translateY(0);
           }
         }
-
         .animate-fadeIn {
           animation: fadeIn 1s ease-in;
         }
-
         .animate-contentFadeIn {
           animation: contentFadeIn 1.2s ease-in;
         }
-
         @media (max-width: 640px) {
           button,
           a,

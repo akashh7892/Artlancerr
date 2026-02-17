@@ -1,9 +1,9 @@
-// frontend/src/components/Signup.jsx
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 export default function Signup() {
+  const { role } = useParams(); // Get role from URL
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -13,17 +13,9 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
-  const location = useLocation();
-  const apiBaseUrl =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
   const handleChange = (e) => {
-    if (errors[e.target.name]) {
-      setErrors((prev) => ({ ...prev, [e.target.name]: null }));
-    }
-
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -32,47 +24,17 @@ export default function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const role = location.state?.role;
-
-    if (!role || !["artist", "hirer"].includes(role)) {
-      setErrors({ general: "Please start signup from role selection." });
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setErrors({ confirmPassword: "Passwords do not match." });
-      return;
-    }
-
     setIsLoading(true);
-    setErrors({});
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/auth/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role,
-        }),
-      });
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      console.log("Signup data:", { ...formData, role });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Signup failed");
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data));
-
-      navigate(data.role === "hirer" ? "/hirer/dashboard" : "/artist/dashboard");
+      // After successful signup, go to login for the same role
+      navigate(`/auth/${role}/login`);
     } catch (error) {
       console.error("Signup failed:", error);
-      setErrors({ general: error.message || "Signup failed. Please try again." });
     } finally {
       setIsLoading(false);
     }
@@ -80,24 +42,15 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative animate-fadeIn">
-      {/* Signup Form */}
       <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg animate-contentFadeIn">
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-normal text-[#e8e9eb] mb-2 tracking-tight">
             Create Account
           </h1>
           <p className="text-sm sm:text-base text-[#808590] font-light tracking-wide">
-            Join the creative community
+            Join as {role === "artist" ? "an Artist" : "a Hirer"}
           </p>
         </div>
-
-        {errors.general && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <p className="text-xs sm:text-sm text-red-500 text-center">
-              {errors.general}
-            </p>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {/* Full Name */}
@@ -215,12 +168,6 @@ export default function Signup() {
             </p>
           )}
 
-          {errors.confirmPassword && (
-            <p className="text-xs sm:text-sm text-red-500">
-              {errors.confirmPassword}
-            </p>
-          )}
-
           {/* Terms and Conditions */}
           <div className="flex items-start gap-2 mt-4">
             <input
@@ -244,7 +191,7 @@ export default function Signup() {
             </label>
           </div>
 
-          {/* Submit Button - Exactly like Landing page buttons */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={
@@ -270,7 +217,7 @@ export default function Signup() {
         <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-[#808590] font-light">
           Already have an account?{" "}
           <button
-            onClick={() => navigate("/auth/login")}
+            onClick={() => navigate(`/auth/${role}/login`)}
             className="text-[#c9a961] hover:underline font-normal"
           >
             Sign In
@@ -287,7 +234,6 @@ export default function Signup() {
             opacity: 1;
           }
         }
-
         @keyframes contentFadeIn {
           from {
             opacity: 0;
@@ -298,16 +244,12 @@ export default function Signup() {
             transform: translateY(0);
           }
         }
-
         .animate-fadeIn {
           animation: fadeIn 1s ease-in;
         }
-
         .animate-contentFadeIn {
           animation: contentFadeIn 1.2s ease-in;
         }
-
-        /* Mobile touch improvements */
         @media (max-width: 640px) {
           button,
           a,

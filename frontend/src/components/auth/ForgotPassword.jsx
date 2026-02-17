@@ -1,9 +1,9 @@
-// frontend/src/components/ForgotPassword.jsx
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation, useParams } from "react-router";
 import { Mail, ArrowLeft, ArrowRight } from "lucide-react";
 
 export default function ForgotPassword() {
+  const { role } = useParams(); // Get role from URL
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -12,11 +12,11 @@ export default function ForgotPassword() {
   const location = useLocation();
 
   // Pre-fill email if passed from login page
-  useState(() => {
+  useEffect(() => {
     if (location.state?.email) {
       setEmail(location.state.email);
     }
-  }, []);
+  }, [location.state]);
 
   const validateEmail = (email) => {
     const re = /\S+@\S+\.\S+/;
@@ -26,7 +26,6 @@ export default function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate email
     if (!email) {
       setError("Email is required");
       return;
@@ -43,12 +42,12 @@ export default function ForgotPassword() {
     try {
       // Simulate API call to send OTP
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("OTP sent to:", email);
+      console.log("OTP sent to:", email, "for role:", role);
       setIsSubmitted(true);
 
-      // Navigate to OTP verification after showing success message
+      // Navigate to OTP verification with email and role
       setTimeout(() => {
-        navigate("/auth/verify-otp", {
+        navigate(`/auth/${role}/verify-otp`, {
           state: { email: email },
         });
       }, 1500);
@@ -64,7 +63,7 @@ export default function ForgotPassword() {
     <div className="min-h-screen bg-linear-to-br from-[#1a1d24] to-[#2d3139] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative animate-fadeIn">
       {/* Back button */}
       <button
-        onClick={() => navigate("/auth/login")}
+        onClick={() => navigate(`/auth/${role}/login`)}
         className="absolute top-4 left-4 sm:top-6 sm:left-6 lg:top-8 lg:left-8 text-[#808590] hover:text-[#c9a961] transition-colors flex items-center gap-2 text-sm sm:text-base z-10"
       >
         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -182,7 +181,6 @@ export default function ForgotPassword() {
             opacity: 1;
           }
         }
-
         @keyframes contentFadeIn {
           from {
             opacity: 0;
@@ -193,15 +191,12 @@ export default function ForgotPassword() {
             transform: translateY(0);
           }
         }
-
         .animate-fadeIn {
           animation: fadeIn 1s ease-in;
         }
-
         .animate-contentFadeIn {
           animation: contentFadeIn 1.2s ease-in;
         }
-
         @media (max-width: 640px) {
           button,
           a,
