@@ -1,6 +1,6 @@
 // frontend/src/components/Signup.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 export default function Signup() {
@@ -13,9 +13,17 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const location = useLocation();
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
   const handleChange = (e) => {
+    if (errors[e.target.name]) {
+      setErrors((prev) => ({ ...prev, [e.target.name]: null }));
+    }
+
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -24,14 +32,47 @@ export default function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const role = location.state?.role;
+
+    if (!role || !["artist", "hirer"].includes(role)) {
+      setErrors({ general: "Please start signup from role selection." });
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrors({ confirmPassword: "Passwords do not match." });
+      return;
+    }
+
     setIsLoading(true);
+    setErrors({});
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Signup data:", formData);
-      navigate("/auth/login");
+      const response = await fetch(`${apiBaseUrl}/api/auth/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Signup failed");
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data));
+
+      navigate(data.role === "hirer" ? "/hirer/dashboard" : "/artist/dashboard");
     } catch (error) {
       console.error("Signup failed:", error);
+      setErrors({ general: error.message || "Signup failed. Please try again." });
     } finally {
       setIsLoading(false);
     }
@@ -49,6 +90,14 @@ export default function Signup() {
             Join the creative community
           </p>
         </div>
+
+        {errors.general && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-xs sm:text-sm text-red-500 text-center">
+              {errors.general}
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {/* Full Name */}
@@ -163,6 +212,12 @@ export default function Signup() {
               {formData.password === formData.confirmPassword
                 ? "✓ Passwords match"
                 : "✗ Passwords do not match"}
+            </p>
+          )}
+
+          {errors.confirmPassword && (
+            <p className="text-xs sm:text-sm text-red-500">
+              {errors.confirmPassword}
             </p>
           )}
 

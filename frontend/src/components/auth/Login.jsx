@@ -14,6 +14,8 @@ export default function Login() {
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
   // Check for saved email if "remember me" was checked previously
   useEffect(() => {
@@ -72,6 +74,7 @@ export default function Login() {
     }
 
     setIsLoading(true);
+    setErrors({});
 
     try {
       // Handle remember me
@@ -81,22 +84,30 @@ export default function Login() {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Login data:", formData);
+      const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-      // Here you would typically:
-      // 1. Send login request to your backend
-      // 2. Receive user data and token
-      // 3. Store token in localStorage/sessionStorage
-      // 4. Redirect based on user role
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
 
-      // For demo, redirect to home
-      navigate("/artist/dashboard");
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data));
+
+      navigate(data.role === "hirer" ? "/hirer/dashboard" : "/artist/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
       setErrors({
-        general: "Invalid email or password. Please try again.",
+        general: error.message || "Invalid email or password. Please try again.",
       });
     } finally {
       setIsLoading(false);

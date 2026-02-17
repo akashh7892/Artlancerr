@@ -17,6 +17,14 @@ import Profile from "./pages/artist/Profile";
 import Promotions from "./pages/artist/Promotions";
 import Settings from "./pages/artist/Settings";
 
+function HirerPlaceholder({ title }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#1a1d24] text-[#e8e9eb] px-4">
+      <p className="text-lg">{title} page is coming soon.</p>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Routes>
@@ -41,6 +49,40 @@ function App() {
       <Route path="/artist/profile" element={<Profile />} />
       <Route path="/artist/promotion" element={<Promotions />} />
       <Route path="/artist/settings" element={<Settings />} />
+
+      {/* Hirers */}
+      <Route
+        path="/hirer/dashboard"
+        element={<HirerPlaceholder title="Hirer Dashboard" />}
+      />
+      <Route
+        path="/hirer/message"
+        element={<HirerPlaceholder title="Hirer Messages" />}
+      />
+      <Route
+        path="/hirer/browse-artist"
+        element={<HirerPlaceholder title="Browse Artists" />}
+      />
+      <Route
+        path="/hirer/booking"
+        element={<HirerPlaceholder title="Hirer Booking" />}
+      />
+      <Route
+        path="/hirer/payment"
+        element={<HirerPlaceholder title="Hirer Payment" />}
+      />
+      <Route
+        path="/hirer/promotion"
+        element={<HirerPlaceholder title="Hirer Promotions" />}
+      />
+      <Route
+        path="/hirer/post-requirement"
+        element={<HirerPlaceholder title="Post Requirement" />}
+      />
+      <Route
+        path="/hirer/plusicon"
+        element={<HirerPlaceholder title="Hirer Quick Actions" />}
+      />
     </Routes>
   );
 }

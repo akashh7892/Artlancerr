@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { ArrowRight } from "lucide-react";
 import { ImageWithFallback } from "../components/common/ImageWithFallBack";
 
@@ -32,6 +32,7 @@ export default function IntroFlow() {
   const [currentScreen, setCurrentScreen] = useState(0);
   const [showEnter, setShowEnter] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   //   const { role } = useParams();
 
   useEffect(() => {
@@ -49,8 +50,8 @@ export default function IntroFlow() {
   }, [currentScreen]);
 
   const handleEnter = () => {
-    // navigate(`/auth/${role}/signup`);
-    navigate("/auth/signup"); // for now later on update with role
+    const { role } = location.state || {};
+    navigate("/auth/signup", { state: { role } });
   };
 
   return (
