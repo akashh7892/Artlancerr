@@ -1,470 +1,466 @@
-import { useState, useEffect } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router";
 import {
-LayoutDashboard,
-Users,
-MessageSquare,
-CreditCard,
-Briefcase,
-CalendarSearch,
-Sparkles,
-Settings,
-LogOut,
-Menu,
-X,
-Plus,
-ArrowRight,
+  Film,
+  FileText,
+  Users,
+  Megaphone,
+  MessageSquare,
+  CreditCard,
+  Settings,
+  LogOut,
+  LayoutDashboard,
+  Plus,
+  Menu,
+  X,
+  Calendar,
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { useState } from "react";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/hirer/dashboard" },
-  { label: "Browse Artists", icon: Users, path: "/hirer/browse-artists" },
-  { label: "Messages", icon: MessageSquare, path: "/hirer/messages" },
-  { label: "Payments", icon: CreditCard, path: "/hirer/payment" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/hirer" },
   {
+    icon: FileText,
     label: "Post Requirement",
-    icon: Briefcase,
     path: "/hirer/post-requirement",
   },
-  { label: "Bookings", icon: CalendarSearch, path: "/hirer/booking" },
-  { label: "Promotions", icon: Sparkles, path: "/hirer/promotion" }, // <-- now in main nav
-];
-
-const BOTTOM_ITEMS = [
-  { label: "Settings", icon: Settings, path: "/hirer/settings" },
-  { label: "Logout", icon: LogOut, path: null }, // path null triggers logout
-];
-
-const ACTIONS = [
-  {
-    label: "Post a Requirement",
-    desc: "Find the right artist for your project",
-    icon: Briefcase,
-    path: "/hirer/post-requirement",
-    tag: "Post",
-  },
-  {
-    label: "Browse Artists",
-    desc: "Discover talented professionals",
-    icon: Users,
-    path: "/hirer/browse-artists",
-    tag: "Explore",
-  },
-  {
-    label: "Check Messages",
-    desc: "Stay in touch with artists",
-    icon: MessageSquare,
-    path: "/hirer/messages",
-    tag: "Inbox",
-  },
-];
-
-const SIDEBAR_PATHS = [
-  "/hirer/dashboard",
-  "/hirer/browse-artists",
-  "/hirer/messages",
-  "/hirer/payment",
-  "/hirer/post-requirement",
-  "/hirer/booking",
-  "/hirer/promotion",
-  "/hirer/settings",
-  "/hirer/plusicon",
+  { icon: Users, label: "Browse Artists", path: "/hirer/browse-artists" },
+  { icon: Calendar, label: "Bookings", path: "/hirer/bookings" },
+  { icon: MessageSquare, label: "Messages", path: "/hirer/messages" },
+  { icon: CreditCard, label: "Payments", path: "/hirer/payments" },
+  { icon: Megaphone, label: "Promotions", path: "/hirer/promotions" },
 ];
 
 export default function HirerSidebar() {
-const [open, setOpen] = useState(false);
-const [modalOpen, setModalOpen] = useState(false);
-const location = useLocation();
-const navigate = useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [fabDialogOpen, setFabDialogOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-const showFloating = SIDEBAR_PATHS.some((p) =>
-    location.pathname.startsWith("/hirer"),
-);
-
-  // Open modal when route is /hirer/plusicon
-useEffect(() => {
-    if (location.pathname === "/hirer/plusicon") {
-      setModalOpen(true);
-    } else {
-      setModalOpen(false);
-    }
-  }, [location.pathname]);
-
-  const closeModal = () => {
-    setModalOpen(false);
-    navigate(-1);
+  const handleLogout = () => {
+    navigate("/");
   };
 
-  useEffect(() => {
-    document.body.style.overflow = open || modalOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open, modalOpen]);
-
-  const NavItem = ({ label, icon: Icon, path }) => {
-    if (!path) {
-      // Logout button
-      return (
-        <button
-          className="relative flex items-center gap-3 w-full px-4 py-[11px] rounded-xl text-left transition-all duration-200 cursor-pointer border-0 outline-none"
-          style={{ background: "transparent" }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "rgba(255,255,255,0.04)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "transparent")
-          }
-          onClick={() => {
-            // Add your logout logic here
-            console.log("Logout");
-            navigate("/auth/hirer/login");
-          }}
-        >
-          <Icon
-            size={19}
-            strokeWidth={1.7}
-            style={{ color: "#6b7f8f", flexShrink: 0 }}
-          />
-          <span
-            className="text-[15px]"
-            style={{
-              color: "#8a9faf",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontWeight: 400,
-            }}
-          >
-            {label}
-          </span>
-        </button>
-      );
-    }
-
-    return (
-      <NavLink
-        to={path}
-        onClick={() => setOpen(false)}
-        className="relative flex items-center gap-3 w-full px-4 py-[11px] rounded-xl text-left transition-all duration-200 cursor-pointer border-0 outline-none no-underline"
-        style={({ isActive }) => ({
-          background: isActive ? "rgba(201,169,97,0.10)" : "transparent",
-          textDecoration: "none",
-        })}
-      >
-        {({ isActive }) => (
-          <>
-            {isActive && (
-              <span
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full"
-                style={{ background: "#c9a961", height: "55%" }}
-              />
-            )}
-            <Icon
-              size={19}
-              strokeWidth={isActive ? 2.2 : 1.7}
-              style={{
-                color: isActive ? "#c9a961" : "#6b7f8f",
-                flexShrink: 0,
-                transition: "color 0.2s",
-              }}
-            />
-            <span
-              className="text-[15px] tracking-[0.01em]"
-              style={{
-                color: isActive ? "#c4d5e0" : "#8a9faf",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontWeight: isActive ? 600 : 400,
-                transition: "color 0.2s",
-              }}
-            >
-              {label}
-            </span>
-          </>
-        )}
-      </NavLink>
-    );
+  const handleNavigation = (path) => {
+    navigate(path);
+    setSidebarOpen(false);
   };
+
+  const quickActions = [
+    {
+      icon: FileText,
+      label: "Post New Requirement",
+      description: "Create a new job posting",
+      action: () => {
+        setFabDialogOpen(false);
+        navigate("/hirer/post-requirement");
+      },
+    },
+    {
+      icon: Users,
+      label: "Browse Artists",
+      description: "Find talented artists",
+      action: () => {
+        setFabDialogOpen(false);
+        navigate("/hirer/browse-artists");
+      },
+    },
+    {
+      icon: Megaphone,
+      label: "Create Promotion",
+      description: "Launch a new campaign",
+      action: () => {
+        setFabDialogOpen(false);
+        navigate("/hirer/promotions");
+      },
+    },
+  ];
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-        .scrollbar-none::-webkit-scrollbar { display: none; }
-        .scrollbar-none { scrollbar-width: none; }
-
-        @keyframes float {
-          0%,100% { transform: translateY(0); }
-          50%      { transform: translateY(-6px); }
-        }
-        @keyframes pulse-ring {
-          0%  { box-shadow: 0 0 0 0 rgba(201,169,97,0.5), 0 8px 32px rgba(0,0,0,0.4); }
-          70% { box-shadow: 0 0 0 10px rgba(201,169,97,0), 0 8px 32px rgba(0,0,0,0.4); }
-          100%{ box-shadow: 0 0 0 0 rgba(201,169,97,0),   0 8px 32px rgba(0,0,0,0.4); }
-        }
-        @keyframes overlayIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes cardIn {
-          from { opacity: 0; transform: translateY(20px) scale(0.96); }
-          to   { opacity: 1; transform: translateY(0)    scale(1);    }
-        }
-        @keyframes itemIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .fab-btn { animation: float 3s ease-in-out infinite, pulse-ring 2.5s ease-out infinite; }
-        .fab-btn:hover { animation: none !important; transform: scale(1.13) rotate(90deg) !important; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
-
-        .modal-overlay { animation: overlayIn 0.22s ease forwards; }
-        .modal-card    { animation: cardIn 0.3s cubic-bezier(0.34,1.4,0.64,1) forwards; }
-
-        .action-item { opacity: 0; }
-        .action-item:nth-child(1) { animation: itemIn 0.28s 0.10s ease forwards; }
-        .action-item:nth-child(2) { animation: itemIn 0.28s 0.18s ease forwards; }
-        .action-item:nth-child(3) { animation: itemIn 0.28s 0.26s ease forwards; }
-
-        .action-row { transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease; }
-        .action-row:hover { background: rgba(201,169,97,0.08) !important; transform: translateX(5px); border-color: rgba(201,169,97,0.22) !important; }
-        .action-row:hover .action-arrow { opacity: 1 !important; transform: translateX(0) !important; }
-        .action-arrow { opacity: 0; transform: translateX(-4px); transition: opacity 0.18s ease, transform 0.18s ease; }
-
-        .close-btn { transition: background 0.15s ease, transform 0.2s ease; }
-        .close-btn:hover { background: rgba(255,255,255,0.1) !important; transform: rotate(90deg); }
-      `}</style>
-
-      {/* Mobile toggle */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="lg:hidden fixed top-4 left-4 z-[1100] flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200"
-        style={{
-          background: "#1f2229",
-          border: "1px solid rgba(201,169,97,0.2)",
-          color: "#c4d5e0",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-        }}
-        aria-label="Toggle navigation"
-      >
-        {open ? <X size={19} /> : <Menu size={19} />}
-      </button>
-
-      {/* Backdrop */}
-      {open && (
-        <div
-          className="lg:hidden fixed inset-0 z-[999] bg-black/65 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
+      {/* Fixed Sidebar for Desktop */}
       <aside
-        className={`fixed top-0 left-0 h-screen z-[1000] flex flex-col w-[248px] transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className="hidden lg:flex w-72 flex-col fixed left-0 top-0 h-screen"
         style={{
-          background: "#1f2229",
-          borderRight: "1px solid rgba(201,169,97,0.10)",
+          backgroundColor: "#2d3139",
+          borderRight: "1px solid rgba(201, 169, 97, 0.1)",
         }}
       >
         {/* Logo */}
         <div
-          className="flex-shrink-0 px-5 pt-6 pb-5"
-          style={{ borderBottom: "1px solid rgba(201,169,97,0.10)" }}
+          className="p-6"
+          style={{ borderBottom: "1px solid rgba(201, 169, 97, 0.1)" }}
         >
-          <NavLink
-            to="/hirer/dashboard"
-            className="flex items-center gap-3 no-underline"
-            onClick={() => setOpen(false)}
-          >
-            <img
-              src="/logo.jpeg"
-              alt="Artlancing"
-              className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
-              style={{ border: "1.5px solid rgba(201,169,97,0.3)" }}
-            />
+          <div className="flex items-center gap-2">
+            <Film className="w-6 h-6" style={{ color: "#c9a961" }} />
             <span
-              className="text-[22px] leading-none"
-              style={{
-                color: "#c9a961",
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 700,
-                letterSpacing: "0.01em",
-              }}
+              className="text-lg font-semibold"
+              style={{ color: "#ffffff" }}
             >
               Artlancing
             </span>
-          </NavLink>
-          <p
-            className="mt-[7px] text-[10.5px] font-semibold tracking-[0.18em] uppercase"
-            style={{
-              color: "rgba(201,169,97,0.5)",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              paddingLeft: "48px",
-            }}
-          >
+          </div>
+          <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>
             Hirer Mode
           </p>
         </div>
 
-        {/* Main nav */}
-        <nav className="flex-1 overflow-y-auto scrollbar-none px-3 py-4 flex flex-col gap-[3px]">
-          {NAV_ITEMS.map((item) => (
-            <NavItem key={item.label} {...item} />
-          ))}
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              location.pathname === item.path ||
+              location.pathname.startsWith(item.path + "/");
+
+            return (
+              <motion.button
+                key={item.path}
+                whileHover={{ x: 4 }}
+                onClick={() => handleNavigation(item.path)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200"
+                style={{
+                  backgroundColor: isActive
+                    ? "rgba(201, 169, 97, 0.15)"
+                    : "transparent",
+                  color: "#ffffff",
+                }}
+              >
+                <Icon
+                  className="w-5 h-5"
+                  style={{ color: isActive ? "#c9a961" : "#9ca3af" }}
+                />
+                <span style={{ color: isActive ? "#ffffff" : "#9ca3af" }}>
+                  {item.label}
+                </span>
+              </motion.button>
+            );
+          })}
         </nav>
 
-        {/* Bottom nav */}
+        {/* Bottom actions */}
         <div
-          className="px-3 pb-5 pt-3 flex flex-col gap-[3px]"
-          style={{ borderTop: "1px solid rgba(201,169,97,0.10)" }}
+          className="p-4 space-y-1"
+          style={{ borderTop: "1px solid rgba(201, 169, 97, 0.1)" }}
         >
-          {BOTTOM_ITEMS.map((item) => (
-            <NavItem key={item.label} {...item} />
-          ))}
+          <button
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 hover:bg-opacity-10"
+            style={{ color: "#9ca3af" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor =
+                "rgba(201, 169, 97, 0.1)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
+          >
+            <Settings className="w-5 h-5" />
+            <span>Settings</span>
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200"
+            style={{ color: "#9ca3af" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor =
+                "rgba(201, 169, 97, 0.1)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
-      {/* FAB */}
-      {showFloating && (
-        <button
-          onClick={() => navigate("/hirer/plusicon")}
-          className="fab-btn fixed bottom-8 right-8 z-[1200] flex items-center justify-center w-14 h-14 rounded-full cursor-pointer border-0 outline-none"
-          style={{
-            background:
-              "linear-gradient(135deg, #c9a961 0%, #e0c07a 50%, #b8923f 100%)",
-            color: "#1f2229",
-          }}
-          aria-label="Quick Actions"
-        >
-          <Plus size={26} strokeWidth={2.8} />
-        </button>
-      )}
-
-      {/* Quick Actions Modal */}
-      {modalOpen && (
-        <div
-          className="modal-overlay fixed inset-0 z-[2000] flex items-center justify-center"
-          style={{
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
-            background: "rgba(10,12,16,0.45)",
-          }}
-          onClick={closeModal}
-        >
-          <div
-            className="modal-card relative w-[340px] rounded-2xl p-7"
-            style={{
-              background: "#1f2229",
-              border: "1px solid rgba(201,169,97,0.18)",
-              boxShadow:
-                "0 32px 80px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.03)",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-            }}
-            onClick={(e) => e.stopPropagation()}
+      {/* Top Navbar (Mobile & Tablet) */}
+      <header
+        className="sticky top-0 z-40 lg:hidden"
+        style={{
+          backgroundColor: "#2d3139",
+          borderBottom: "1px solid rgba(201, 169, 97, 0.1)",
+        }}
+      >
+        <div className="flex items-center justify-between px-4 py-4">
+          {/* Hamburger Menu Button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: "#ffffff" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor =
+                "rgba(201, 169, 97, 0.1)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
           >
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <Film className="w-6 h-6" style={{ color: "#c9a961" }} />
+            <span
+              className="text-lg font-semibold"
+              style={{ color: "#ffffff" }}
+            >
+              Artlancing
+            </span>
+            <span className="text-xs ml-2" style={{ color: "#9ca3af" }}>
+              Hirer Mode
+            </span>
+          </div>
+
+          {/* Right side actions */}
+          <div className="flex items-center gap-2">
             <button
-              className="close-btn absolute top-4 right-4 flex items-center justify-center w-7 h-7 rounded-full border-0 outline-none cursor-pointer"
-              style={{ background: "rgba(255,255,255,0.05)", color: "#6b7f8f" }}
-              onClick={closeModal}
+              onClick={() => navigate("/hirer")}
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: "#ffffff" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor =
+                  "rgba(201, 169, 97, 0.1)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
             >
-              <X size={15} strokeWidth={2.2} />
+              <LayoutDashboard className="w-5 h-5" />
             </button>
-
-            <div className="mb-1 flex items-center gap-2">
-              <Sparkles size={15} style={{ color: "#c9a961" }} />
-              <span
-                className="text-[11px] font-semibold tracking-[0.16em] uppercase"
-                style={{ color: "rgba(201,169,97,0.65)" }}
-              >
-                Hirer Tools
-              </span>
-            </div>
-            <h2
-              className="text-[20px] font-bold mb-1"
-              style={{ color: "#c4d5e0" }}
-            >
-              Quick Actions
-            </h2>
-            <p
-              className="text-[13px] mb-6 leading-relaxed"
-              style={{ color: "#5a6e7d" }}
-            >
-              Jump straight to what matters — post a requirement, find artists,
-              or check messages.
-            </p>
-
-            <div className="flex flex-col gap-[10px]">
-              {ACTIONS.map(({ label, desc, icon: Icon, path, tag }) => (
-                <button
-                  key={label}
-                  className="action-item action-row flex items-center gap-4 w-full px-4 py-[13px] rounded-xl border-0 outline-none cursor-pointer text-left"
-                  style={{
-                    background: "rgba(255,255,255,0.025)",
-                    border: "1px solid rgba(201,169,97,0.07)",
-                  }}
-                  onClick={() => {
-                    setModalOpen(false);
-                    navigate(path);
-                  }}
-                >
-                  <span
-                    className="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0"
-                    style={{ background: "rgba(201,169,97,0.10)" }}
-                  >
-                    <Icon
-                      size={17}
-                      strokeWidth={1.8}
-                      style={{ color: "#c9a961" }}
-                    />
-                  </span>
-                  <span className="flex flex-col flex-1 min-w-0">
-                    <span
-                      className="text-[14.5px] font-semibold leading-tight"
-                      style={{ color: "#c4d5e0" }}
-                    >
-                      {label}
-                    </span>
-                    <span
-                      className="text-[12px] mt-[3px] leading-snug"
-                      style={{ color: "#5a6e7d" }}
-                    >
-                      {desc}
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-2 flex-shrink-0">
-                    <span
-                      className="text-[10.5px] font-semibold px-2 py-[3px] rounded-full"
-                      style={{
-                        background: "rgba(201,169,97,0.10)",
-                        color: "rgba(201,169,97,0.75)",
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      {tag}
-                    </span>
-                    <ArrowRight
-                      size={14}
-                      className="action-arrow"
-                      style={{ color: "#c9a961" }}
-                    />
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <p
-              className="mt-5 text-center text-[11.5px]"
-              style={{ color: "#3a4e5e" }}
-            >
-              Press{" "}
-              <span className="font-semibold" style={{ color: "#5a6e7d" }}>
-                Esc
-              </span>{" "}
-              or click outside to dismiss
-            </p>
           </div>
         </div>
-      )}
+      </header>
+
+      {/* Mobile/Tablet Sidebar Overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+              className="fixed inset-0 z-40 lg:hidden"
+              style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
+            />
+
+            {/* Sidebar */}
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 left-0 h-full w-72 flex flex-col z-50 lg:hidden"
+              style={{
+                backgroundColor: "#2d3139",
+                borderRight: "1px solid rgba(201, 169, 97, 0.1)",
+              }}
+            >
+              {/* Logo & Close Button */}
+              <div
+                className="p-6 flex items-center justify-between"
+                style={{ borderBottom: "1px solid rgba(201, 169, 97, 0.1)" }}
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Film className="w-6 h-6" style={{ color: "#c9a961" }} />
+                    <span
+                      className="text-lg font-semibold"
+                      style={{ color: "#ffffff" }}
+                    >
+                      Artlancing
+                    </span>
+                  </div>
+                  <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>
+                    Hirer Mode
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-2 rounded-lg transition-colors"
+                  style={{ color: "#ffffff" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      "rgba(201, 169, 97, 0.1)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Navigation */}
+              <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                {NAV_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  const isActive =
+                    location.pathname === item.path ||
+                    location.pathname.startsWith(item.path + "/");
+
+                  return (
+                    <motion.button
+                      key={item.path}
+                      whileHover={{ x: 4 }}
+                      onClick={() => handleNavigation(item.path)}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200"
+                      style={{
+                        backgroundColor: isActive
+                          ? "rgba(201, 169, 97, 0.15)"
+                          : "transparent",
+                        color: "#ffffff",
+                      }}
+                    >
+                      <Icon
+                        className="w-5 h-5"
+                        style={{ color: isActive ? "#c9a961" : "#9ca3af" }}
+                      />
+                      <span style={{ color: isActive ? "#ffffff" : "#9ca3af" }}>
+                        {item.label}
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </nav>
+
+              {/* Bottom actions */}
+              <div
+                className="p-4 space-y-1"
+                style={{ borderTop: "1px solid rgba(201, 169, 97, 0.1)" }}
+              >
+                <button
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200"
+                  style={{ color: "#9ca3af" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      "rgba(201, 169, 97, 0.1)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                >
+                  <Settings className="w-5 h-5" />
+                  <span>Settings</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200"
+                  style={{ color: "#9ca3af" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      "rgba(201, 169, 97, 0.1)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Action Button */}
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setFabDialogOpen(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-30 transition-shadow hover:shadow-xl"
+        style={{
+          backgroundColor: "#c9a961",
+          color: "#1a1d24",
+        }}
+      >
+        <Plus className="w-6 h-6" />
+      </motion.button>
+
+      {/* Quick Actions Modal */}
+      <AnimatePresence>
+        {fabDialogOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setFabDialogOpen(false)}
+              className="fixed inset-0 z-50 flex items-center justify-center"
+              style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
+            >
+              {/* Modal Content */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md mx-4 rounded-lg shadow-xl p-6"
+                style={{
+                  backgroundColor: "#2d3139",
+                  border: "1px solid rgba(201, 169, 97, 0.2)",
+                }}
+              >
+                <div className="mb-4">
+                  <h2 className="text-xl mb-2" style={{ color: "#ffffff" }}>
+                    Quick Actions
+                  </h2>
+                  <p style={{ color: "#9ca3af" }}>What would you like to do?</p>
+                </div>
+
+                <div className="space-y-2">
+                  {quickActions.map((action, index) => {
+                    const Icon = action.icon;
+                    return (
+                      <motion.button
+                        key={index}
+                        whileHover={{ x: 4 }}
+                        onClick={action.action}
+                        className="w-full flex items-start gap-4 p-4 rounded-lg transition-all duration-200 text-left"
+                        style={{ backgroundColor: "#1a1d24" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "rgba(201, 169, 97, 0.1)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor = "#1a1d24")
+                        }
+                      >
+                        <div
+                          className="p-2 rounded-lg"
+                          style={{ backgroundColor: "rgba(201, 169, 97, 0.1)" }}
+                        >
+                          <Icon
+                            className="w-5 h-5"
+                            style={{ color: "#c9a961" }}
+                          />
+                        </div>
+                        <div>
+                          <h3
+                            className="font-medium mb-1"
+                            style={{ color: "#ffffff" }}
+                          >
+                            {action.label}
+                          </h3>
+                          <p className="text-sm" style={{ color: "#9ca3af" }}>
+                            {action.description}
+                          </p>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

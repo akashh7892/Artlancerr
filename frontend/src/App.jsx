@@ -22,7 +22,7 @@ import Promotions from "./pages/artist/Promotions";
 import Settings from "./pages/artist/Settings";
 
 // Hirer pages
-// import HirerDashboard from "./pages/hirer/HirerDashboard";
+import HirerDashboard from "./pages/hirer/HirerDashboard";
 // import HirerMessages from "./pages/hirer/HirerMessages";
 // import HirerPayment from "./pages/hirer/HirerPayment";
 // import HirerPlusicon from "./pages/hirer/HirerPlusicon";
@@ -59,7 +59,7 @@ function App() {
       <Route path="/artist/settings" element={<Settings />} />
 
       {/* Hirer routes */}
-      {/* <Route path="/hirer/dashboard" element={<HirerDashboard />} /> */}
+      <Route path="/hirer/dashboard" element={<HirerDashboard />} />
       {/* <Route path="/hirer/messages" element={<HirerMessages />} />
       <Route path="/hirer/payment" element={<HirerPayment />} />
       <Route path="/hirer/plusicon" element={<HirerPlusicon />} />
