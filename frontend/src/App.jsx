@@ -25,8 +25,7 @@ import Opportunities from "./pages/artist/Opportunity";
 // Hirer pages
 import HirerDashboard from "./pages/hirer/HirerDashboard";
 import HirerMessages from "./pages/hirer/HirerMessages";
-// import HirerPayment from "./pages/hirer/HirerPayment";
-// import HirerPlusicon from "./pages/hirer/HirerPlusicon";
+import HirerPayment from "./pages/hirer/HirerPayment";
 import HirerPromotions from "./pages/hirer/HirerPromotions";
 import HirerSettings from "./pages/hirer/HirerSettings";
 import Booking from "./pages/hirer/Booking";
@@ -74,7 +73,7 @@ function App() {
       <Route path="/hirer/browse-artists/:id" element={<ArtistProfile />} />
       <Route path="/hirer/bookings" element={<Booking />} />
       <Route path="/hirer/messages" element={<HirerMessages />} />
-      {/* <Route path="/hirer/payment" element={<HirerPayment />} /> */}
+      <Route path="/hirer/payments" element={<HirerPayment />} />
     </Routes>
   );
 }
