@@ -13,7 +13,6 @@ import ResetPassword from "./components/auth/ResetPassword";
 import Dashboard from "./pages/artist/Dashboard";
 import Messages from "./pages/artist/Messages";
 import Nearbyartists from "./pages/artist/Nearbyartists";
-import Opportunity from "./pages/artist/Opportunity";
 import Payment from "./pages/artist/Payment";
 import Plusicon from "./pages/artist/Plusicon";
 import Portfolio from "./pages/artist/Portfolio";
@@ -21,6 +20,7 @@ import Profile from "./pages/artist/Profile";
 import Promotions from "./pages/artist/Promotions";
 import Settings from "./pages/artist/Settings";
 import ArtistProfileView from "./pages/artist/Artistviewprofile";
+import Opportunities from "./pages/artist/Opportunity";
 
 // Hirer pages
 import HirerDashboard from "./pages/hirer/HirerDashboard";
@@ -56,17 +56,13 @@ function App() {
         path="/artist/near-by-artists/:id"
         element={<ArtistProfileView />}
       />
-      <Route path="/artist/opportunity" element={<Opportunity />} />
+      <Route path="/artist/opportunity" element={<Opportunities />} />
       <Route path="/artist/payment" element={<Payment />} />
       <Route path="/artist/plusicon" element={<Plusicon />} />
       <Route path="/artist/portfolio" element={<Portfolio />} />
       <Route path="/artist/profile" element={<Profile />} />
       <Route path="/artist/promotion" element={<Promotions />} />
       <Route path="/artist/settings" element={<Settings />} />
-      <Route
-        path="/artist/near-by-artists/:id"
-        element={<ArtistProfileView />}
-      />
 
       {/* Hirer routes */}
       <Route path="/hirer/dashboard" element={<HirerDashboard />} />

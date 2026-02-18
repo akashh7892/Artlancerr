@@ -104,6 +104,21 @@ export default function Sidebar() {
     };
   }, [open, modalOpen]);
 
+  const handleLogout = () => {
+    // Remove token / user data
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    // Optional: clear everything
+    // localStorage.clear();
+
+    // Redirect to signin page
+    navigate("/");
+
+    // Close sidebar if open
+    setOpen(false);
+  };
+
   const NavItem = ({ label, icon: Icon, path }) => {
     if (!path) {
       return (
@@ -116,7 +131,7 @@ export default function Sidebar() {
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "transparent";
           }}
-          onClick={() => console.log("Logout")}
+          onClick={handleLogout}
         >
           <Icon
             size={19}
