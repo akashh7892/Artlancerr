@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useRef } from "react";
 import {
   MapPin,
   Calendar,
@@ -500,7 +499,9 @@ const DURATIONS = [
 ];
 const POSTED = ["Any time", "Last 24 hours", "Last week", "Last month"];
 
-// ── Reusable styled select ────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// StyledSelect
+// ─────────────────────────────────────────────────────────────
 function StyledSelect({ value, onChange, options }) {
   return (
     <div className="relative">
@@ -537,58 +538,140 @@ function StyledSelect({ value, onChange, options }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// FilterTabs  ← THIS IS THE MISSING COMPONENT THAT CAUSED THE ERROR
+// ─────────────────────────────────────────────────────────────
+function FilterTabs({ filters, selected, onSelect }) {
+  const scrollRef = useRef(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(true);
+
+  const updateArrows = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  };
+
+  const scroll = (dir) => {
+    scrollRef.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
+  };
+
+  const arrowStyle = (active) => ({
+    background: active ? C.card : "transparent",
+    border: `1px solid ${active ? C.inputBorder : "transparent"}`,
+    color: active ? C.darkText : "transparent",
+    cursor: active ? "pointer" : "default",
+    pointerEvents: active ? "auto" : "none",
+    flexShrink: 0,
+    transition: "all 0.15s",
+  });
+
+  return (
+    <div className="flex items-center gap-2 mb-7">
+      {/* Left arrow */}
+      <button
+        onClick={() => scroll(-1)}
+        className="flex items-center justify-center w-8 h-8 rounded-xl border-0 outline-none"
+        style={arrowStyle(canLeft)}
+      >
+        <ChevronLeft size={16} strokeWidth={2} />
+      </button>
+
+      {/* Scrollable strip */}
+      <div
+        ref={scrollRef}
+        onScroll={updateArrows}
+        className="flex items-center gap-2 overflow-x-auto flex-1"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {/* Hide webkit scrollbar via inline style tag */}
+        <style>{`
+          .ft-no-scroll::-webkit-scrollbar { display: none; }
+        `}</style>
+        <div className="ft-no-scroll flex items-center gap-2 w-max">
+          {filters.map((f) => {
+            const active = selected === f;
+            return (
+              <button
+                key={f}
+                onClick={() => onSelect(f)}
+                className="filter-tab px-4 py-[8px] rounded-xl text-[12.5px] font-semibold outline-none cursor-pointer flex-shrink-0"
+                style={{
+                  background: active
+                    ? `linear-gradient(135deg, ${C.gold}, #cfc060)`
+                    : C.card,
+                  color: active ? "#1a1d24" : C.lightText,
+                  border: active
+                    ? "1px solid transparent"
+                    : `1px solid ${C.inputBorder}`,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {f}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Right arrow */}
+      <button
+        onClick={() => scroll(1)}
+        className="flex items-center justify-center w-8 h-8 rounded-xl border-0 outline-none"
+        style={arrowStyle(canRight)}
+      >
+        <ChevronRight size={16} strokeWidth={2} />
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────
 function getPostedLabel(createdAt) {
   if (!createdAt) return "Recently posted";
-  const created = new Date(createdAt);
-  if (Number.isNaN(created.getTime())) return "Recently posted";
-
-  const diffMs = Date.now() - created.getTime();
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
+  const d = new Date(createdAt);
+  if (isNaN(d.getTime())) return "Recently posted";
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
   if (days <= 0) return "Today";
   if (days === 1) return "1 day ago";
   if (days < 7) return `${days} days ago`;
-  if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? "s" : ""} ago`;
+  if (days < 30)
+    return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? "s" : ""} ago`;
   return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? "s" : ""} ago`;
 }
 
-function matchesDuration(duration, durationFilter) {
-  if (durationFilter === "Any duration") return true;
-  const text = String(duration || "").toLowerCase();
-
-  if (durationFilter === "Less than 1 week") {
-    return text.includes("day") || text.includes("less than 1 week");
-  }
-  if (durationFilter === DURATIONS[2]) {
-    return text.includes("week");
-  }
-  if (durationFilter === "1+ months") {
-    return text.includes("month");
-  }
-
+function matchesDuration(duration, filter) {
+  if (filter === "Any duration") return true;
+  const t = String(duration || "").toLowerCase();
+  if (filter === "Less than 1 week") return t.includes("day");
+  if (filter === "1–4 weeks") return t.includes("week");
+  if (filter === "1+ months") return t.includes("month");
+  if (filter === "Ongoing") return t.includes("ongoing");
   return true;
 }
 
-function matchesPosted(createdAt, postedFilter) {
-  if (postedFilter === "Any time") return true;
-  if (!createdAt) return true;
-
-  const created = new Date(createdAt);
-  if (Number.isNaN(created.getTime())) return true;
-
-  const diffMs = Date.now() - created.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-
-  if (postedFilter === "Last 24 hours") return diffDays <= 1;
-  if (postedFilter === "Last week") return diffDays <= 7;
-  if (postedFilter === "Last month") return diffDays <= 30;
-
+function matchesPosted(createdAt, filter) {
+  if (filter === "Any time" || !createdAt) return true;
+  const d = new Date(createdAt);
+  if (isNaN(d.getTime())) return true;
+  const days = (Date.now() - d.getTime()) / 86400000;
+  if (filter === "Last 24 hours") return days <= 1;
+  if (filter === "Last week") return days <= 7;
+  if (filter === "Last month") return days <= 30;
   return true;
 }
 
+// ─────────────────────────────────────────────────────────────
+// Main page component
+// ─────────────────────────────────────────────────────────────
 export default function Opportunities() {
   const navigate = useNavigate();
-  const [opportunities] = useState(MOCK_OPPORTUNITIES);
+
+  // Use local state — API fetches into this, falls back to mock
+  const [opportunities, setOpportunities] = useState(MOCK_OPPORTUNITIES);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -596,53 +679,43 @@ export default function Opportunities() {
   const [durationFilter, setDurationFilter] = useState("Any duration");
   const [postedFilter, setPostedFilter] = useState("Any time");
   const [budgetMin, setBudgetMin] = useState(0);
-  const [budgetMax, setBudgetMax] = useState(15000);
-  const [isLoading, setIsLoading] = useState(true);
+  const [budgetMax, setBudgetMax] = useState(30000);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [applyingId, setApplyingId] = useState(null);
+
   const apiBaseUrl =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
+  // Try API, silently fall back to mock on failure
   useEffect(() => {
     const controller = new AbortController();
-
-    const fetchOpportunities = async () => {
+    (async () => {
       setIsLoading(true);
-      setError("");
-
       try {
         const params = new URLSearchParams();
         if (selectedFilter !== "All") params.set("type", selectedFilter);
-        if (locationFilter !== "All locations") {
+        if (locationFilter !== "All locations")
           params.set("location", locationFilter);
-        }
         if (searchQuery.trim()) params.set("search", searchQuery.trim());
         params.set("minBudget", String(budgetMin));
         params.set("maxBudget", String(budgetMax));
 
-        const query = params.toString();
-        const response = await fetch(
-          `${apiBaseUrl}/api/opportunities${query ? `?${query}` : ""}`,
+        const res = await fetch(
+          `${apiBaseUrl}/api/opportunities${params.toString() ? `?${params}` : ""}`,
           { signal: controller.signal },
         );
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to load opportunities");
-        }
-
-        setOpportunities(Array.isArray(data) ? data : []);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Failed to load");
+        setOpportunities(Array.isArray(data) ? data : MOCK_OPPORTUNITIES);
       } catch (err) {
         if (err.name === "AbortError") return;
-        setError(err.message || "Failed to load opportunities");
-        setOpportunities([]);
+        // API unavailable — keep showing mock data, no error banner
+        setOpportunities(MOCK_OPPORTUNITIES);
       } finally {
         setIsLoading(false);
       }
-    };
-
-    fetchOpportunities();
-
+    })();
     return () => controller.abort();
   }, [
     apiBaseUrl,
@@ -659,12 +732,9 @@ export default function Opportunities() {
       navigate("/auth/login");
       return;
     }
-
     setApplyingId(opportunityId);
-    setError("");
-
     try {
-      const response = await fetch(`${apiBaseUrl}/api/applications`, {
+      const res = await fetch(`${apiBaseUrl}/api/applications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -672,15 +742,11 @@ export default function Opportunities() {
         },
         body: JSON.stringify({ opportunityId }),
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to apply");
-      }
-
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to apply");
       setOpportunities((prev) =>
-        prev.map((opp) =>
-          opp._id === opportunityId ? { ...opp, hasApplied: true } : opp,
+        prev.map((o) =>
+          o._id === opportunityId ? { ...o, hasApplied: true } : o,
         ),
       );
     } catch (err) {
@@ -690,11 +756,21 @@ export default function Opportunities() {
     }
   };
 
-  const filtered = opportunities.filter(
-    (o) =>
+  // Local filter (works on both API data and mock data)
+  const filtered = opportunities.filter((o) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      (selectedFilter === "All" || o.type === selectedFilter) &&
+      (locationFilter === "All locations" ||
+        (o.location || "").includes(locationFilter.split(",")[0])) &&
+      (!q ||
+        (o.title || "").toLowerCase().includes(q) ||
+        (o.company || "").toLowerCase().includes(q) ||
+        (o.type || "").toLowerCase().includes(q)) &&
       matchesDuration(o.duration, durationFilter) &&
-      matchesPosted(o.createdAt, postedFilter),
-  );
+      matchesPosted(o.createdAt, postedFilter)
+    );
+  });
 
   return (
     <>
@@ -706,19 +782,19 @@ export default function Opportunities() {
           to   { opacity:1; transform:translateY(0); }
         }
         @keyframes slideInRight {
-          from { transform: translateX(100%); opacity: 0; }
-          to   { transform: translateX(0);    opacity: 1; }
+          from { transform:translateX(100%); opacity:0; }
+          to   { transform:translateX(0);    opacity:1; }
         }
         @keyframes fadeInBg {
-          from { opacity: 0; }
-          to   { opacity: 1; }
+          from { opacity:0; } to { opacity:1; }
         }
 
         .opp-header  { animation: fadeUp 0.3s ease both; }
         .opp-search  { animation: fadeUp 0.32s 0.04s ease both; }
-        .opp-filters-scroll { animation: fadeUp 0.34s 0.08s ease both; }
-
-        .opp-card { animation: fadeUp 0.32s ease both; transition: border-color 0.2s, box-shadow 0.2s; }
+        .opp-card    {
+          animation: fadeUp 0.32s ease both;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
         .opp-card:hover {
           border-color: rgba(179,169,97,0.35) !important;
           box-shadow: 0 6px 28px rgba(0,0,0,0.28);
@@ -729,44 +805,60 @@ export default function Opportunities() {
         .apply-btn:active { transform: scale(0.97); }
 
         .detail-btn { transition: border-color 0.18s, color 0.18s; }
-        .detail-btn:hover { border-color: rgba(179,169,97,0.5) !important; color: #b3a961 !important; }
+        .detail-btn:hover {
+          border-color: rgba(179,169,97,0.5) !important;
+          color: #b3a961 !important;
+        }
 
-        .filter-tab { transition: background 0.18s, color 0.18s, border-color 0.18s; white-space: nowrap; }
-        .filter-tab:hover { border-color: rgba(179,169,97,0.3) !important; }
+        .filter-tab {
+          transition: background 0.18s, color 0.18s, border-color 0.18s;
+          white-space: nowrap;
+        }
 
         .sheet-panel   { animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) both; }
         .sheet-overlay { animation: fadeInBg 0.25s ease both; }
 
         .adv-btn-close { transition: background 0.15s, transform 0.2s; }
-        .adv-btn-close:hover { background: rgba(255,255,255,0.1) !important; transform: rotate(90deg); }
+        .adv-btn-close:hover {
+          background: rgba(255,255,255,0.1) !important;
+          transform: rotate(90deg);
+        }
 
-        .range-track { position:relative; height:4px; border-radius:9999px; cursor:pointer; }
+        .range-track {
+          position: relative;
+          height: 4px;
+          border-radius: 9999px;
+        }
         .range-thumb {
           -webkit-appearance: none; appearance: none;
-          width:100%; height:4px; background:transparent;
-          outline:none; position:absolute; top:0; left:0; pointer-events:none;
+          width: 100%; height: 4px;
+          background: transparent;
+          outline: none;
+          position: absolute; top: 0; left: 0;
+          pointer-events: none;
         }
         .range-thumb::-webkit-slider-thumb {
-          -webkit-appearance:none; appearance:none;
-          width:16px; height:16px; border-radius:50%;
-          background:#b3a961; cursor:pointer; pointer-events:all;
-          box-shadow:0 1px 6px rgba(0,0,0,0.4);
+          -webkit-appearance: none;
+          width: 16px; height: 16px;
+          border-radius: 50%;
+          background: #b3a961;
+          cursor: pointer;
+          pointer-events: all;
+          box-shadow: 0 1px 6px rgba(0,0,0,0.4);
         }
         .range-thumb::-moz-range-thumb {
-          width:16px; height:16px; border-radius:50%;
-          background:#b3a961; cursor:pointer; border:none;
-          box-shadow:0 1px 6px rgba(0,0,0,0.4);
+          width: 16px; height: 16px;
+          border-radius: 50%;
+          background: #b3a961;
+          cursor: pointer; border: none;
+          box-shadow: 0 1px 6px rgba(0,0,0,0.4);
         }
 
         .back-btn-opp { transition: background 0.15s, color 0.15s; }
-        .back-btn-opp:hover { background: rgba(255,255,255,0.07) !important; color: #b3a961 !important; }
-
-        .filters-scroll-wrap {
-          overflow-x: auto;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+        .back-btn-opp:hover {
+          background: rgba(255,255,255,0.07) !important;
+          color: #b3a961 !important;
         }
-        .filters-scroll-wrap::-webkit-scrollbar { display: none; }
       `}</style>
 
       <Sidebar />
@@ -787,6 +879,7 @@ export default function Opportunities() {
               boxShadow: "-8px 0 40px rgba(0,0,0,0.4)",
             }}
           >
+            {/* Sheet header */}
             <div
               className="flex items-start justify-between px-6 pt-6 pb-4"
               style={{ borderBottom: `1px solid ${C.inputBorder}` }}
@@ -814,8 +907,8 @@ export default function Opportunities() {
               </button>
             </div>
 
+            {/* Sheet body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
-              {/* Category */}
               <div className="flex flex-col gap-2">
                 <label
                   className="text-[13px] font-semibold"
@@ -829,8 +922,6 @@ export default function Opportunities() {
                   options={FILTERS}
                 />
               </div>
-
-              {/* Location */}
               <div className="flex flex-col gap-2">
                 <label
                   className="text-[13px] font-semibold"
@@ -844,8 +935,6 @@ export default function Opportunities() {
                   options={LOCATIONS}
                 />
               </div>
-
-              {/* Budget Range */}
               <div className="flex flex-col gap-3">
                 <label
                   className="text-[13px] font-semibold"
@@ -876,7 +965,7 @@ export default function Opportunities() {
                     step={500}
                     value={budgetMin}
                     onChange={(e) => {
-                      const v = Number(e.target.value);
+                      const v = +e.target.value;
                       if (v < budgetMax) setBudgetMin(v);
                     }}
                     className="range-thumb"
@@ -889,7 +978,7 @@ export default function Opportunities() {
                     step={500}
                     value={budgetMax}
                     onChange={(e) => {
-                      const v = Number(e.target.value);
+                      const v = +e.target.value;
                       if (v > budgetMin) setBudgetMax(v);
                     }}
                     className="range-thumb"
@@ -897,8 +986,6 @@ export default function Opportunities() {
                   />
                 </div>
               </div>
-
-              {/* Project Duration */}
               <div className="flex flex-col gap-2">
                 <label
                   className="text-[13px] font-semibold"
@@ -912,8 +999,6 @@ export default function Opportunities() {
                   options={DURATIONS}
                 />
               </div>
-
-              {/* Posted Within */}
               <div className="flex flex-col gap-2">
                 <label
                   className="text-[13px] font-semibold"
@@ -929,6 +1014,7 @@ export default function Opportunities() {
               </div>
             </div>
 
+            {/* Sheet footer */}
             <div
               className="px-6 pb-6 pt-4"
               style={{ borderTop: `1px solid ${C.inputBorder}` }}
@@ -985,7 +1071,7 @@ export default function Opportunities() {
             </div>
             <button
               onClick={() => setSheetOpen(true)}
-              className="flex items-center gap-2 px-4 py-[9px] rounded-xl text-[13px] font-semibold border outline-none cursor-pointer transition-all"
+              className="flex items-center gap-2 px-4 py-[9px] rounded-xl text-[13px] font-semibold border outline-none cursor-pointer"
               style={{
                 background: C.card,
                 borderColor: C.inputBorder,
@@ -1029,7 +1115,7 @@ export default function Opportunities() {
             />
           </div>
 
-          {/* Filter tabs — scrollable with arrow buttons */}
+          {/* ── Filter Tabs (scrollable with arrows) ── */}
           <FilterTabs
             filters={FILTERS}
             selected={selectedFilter}
@@ -1037,47 +1123,50 @@ export default function Opportunities() {
           />
 
           {/* Result count */}
-          {!isLoading && (
-            <p className="text-[12.5px] mb-4" style={{ color: C.lightText }}>
-              Showing{" "}
-              <span style={{ color: C.gold, fontWeight: 600 }}>
-                {filtered.length}
-              </span>{" "}
-              {filtered.length === 1 ? "opportunity" : "opportunities"}
-              {selectedFilter !== "All" && (
-                <>
-                  {" "}
-                  in <span style={{ color: C.darkText }}>{selectedFilter}</span>
-                </>
-              )}
-            </p>
+          <p className="text-[12.5px] mb-4" style={{ color: C.lightText }}>
+            Showing{" "}
+            <span style={{ color: C.gold, fontWeight: 600 }}>
+              {filtered.length}
+            </span>{" "}
+            {filtered.length === 1 ? "opportunity" : "opportunities"}
+            {selectedFilter !== "All" && (
+              <>
+                {" "}
+                in <span style={{ color: C.darkText }}>{selectedFilter}</span>
+              </>
+            )}
+          </p>
+
+          {/* Loading */}
+          {isLoading && (
+            <div
+              className="text-center py-10 rounded-2xl mb-4"
+              style={{ background: C.card, border: `1px solid ${C.border}` }}
+            >
+              <p className="text-[14px]" style={{ color: C.lightText }}>
+                Loading opportunities...
+              </p>
+            </div>
           )}
 
-          {/* Cards */}
+          {/* Error */}
+          {error && (
+            <div
+              className="text-center py-4 rounded-2xl mb-4"
+              style={{
+                background: C.card,
+                border: "1px solid rgba(239,68,68,0.25)",
+              }}
+            >
+              <p className="text-[13px] text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* Opportunity Cards */}
           <div className="flex flex-col gap-4">
-            {isLoading && (
-              <div
-                className="text-center py-10 rounded-2xl"
-                style={{ background: C.card, border: `1px solid ${C.border}` }}
-              >
-                <p className="text-[14px]" style={{ color: C.lightText }}>
-                  Loading opportunities...
-                </p>
-              </div>
-            )}
-
-            {error && (
-              <div
-                className="text-center py-4 rounded-2xl"
-                style={{ background: C.card, border: "1px solid rgba(239,68,68,0.25)" }}
-              >
-                <p className="text-[13px] text-red-400">{error}</p>
-              </div>
-            )}
-
             {filtered.map((opp, i) => (
               <div
-                key={opp.id}
+                key={opp._id || opp.id}
                 className="opp-card rounded-2xl p-6"
                 style={{
                   background: C.card,
@@ -1109,7 +1198,7 @@ export default function Opportunities() {
                     className="text-[12.5px] flex-shrink-0"
                     style={{ color: C.lightText }}
                   >
-                    {getPostedLabel(opp.createdAt)}
+                    {opp.posted || getPostedLabel(opp.createdAt)}
                   </span>
                 </div>
 
@@ -1117,74 +1206,49 @@ export default function Opportunities() {
                   {opp.company}
                 </p>
 
-                {/* Meta */}
+                {/* Meta grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-                  <div className="flex items-center gap-2">
-                    <MapPin
-                      size={14}
-                      strokeWidth={1.8}
-                      style={{ color: C.lightText, flexShrink: 0 }}
-                    />
-                    <span
-                      className="text-[12.5px]"
-                      style={{ color: C.lightText }}
-                    >
-                      {opp.location}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign
-                      size={14}
-                      strokeWidth={1.8}
-                      style={{ color: C.lightText, flexShrink: 0 }}
-                    />
-                    <span
-                      className="text-[12.5px]"
-                      style={{ color: C.lightText }}
-                    >
-                      {opp.budget}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock
-                      size={14}
-                      strokeWidth={1.8}
-                      style={{ color: C.lightText, flexShrink: 0 }}
-                    />
-                    <span
-                      className="text-[12.5px]"
-                      style={{ color: C.lightText }}
-                    >
-                      {opp.duration}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar
-                      size={14}
-                      strokeWidth={1.8}
-                      style={{ color: C.lightText, flexShrink: 0 }}
-                    />
-                    <span
-                      className="text-[12.5px]"
-                      style={{ color: C.lightText }}
-                    >
-                      ASAP
-                    </span>
-                  </div>
+                  {[
+                    { Icon: MapPin, val: opp.location },
+                    { Icon: DollarSign, val: opp.budget },
+                    { Icon: Clock, val: opp.duration },
+                    { Icon: Calendar, val: "ASAP" },
+                  ].map(({ Icon, val }, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Icon
+                        size={14}
+                        strokeWidth={1.8}
+                        style={{ color: C.lightText, flexShrink: 0 }}
+                      />
+                      <span
+                        className="text-[12.5px]"
+                        style={{ color: C.lightText }}
+                      >
+                        {val}
+                      </span>
+                    </div>
+                  ))}
                 </div>
 
-                {/* Buttons */}
+                {/* Action buttons */}
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleApply(opp._id)}
-                    disabled={!opp._id || applyingId === opp._id || opp.hasApplied}
+                    disabled={
+                      !opp._id || applyingId === opp._id || opp.hasApplied
+                    }
                     className="apply-btn px-5 py-[9px] rounded-xl text-[13px] font-bold border-0 outline-none cursor-pointer"
                     style={{
                       background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
                       color: "#1a1d24",
+                      opacity: !opp._id || opp.hasApplied ? 0.65 : 1,
                     }}
                   >
-                    Apply Now
+                    {opp.hasApplied
+                      ? "Applied"
+                      : applyingId === opp._id
+                        ? "Applying..."
+                        : "Apply Now"}
                   </button>
                   <button
                     className="detail-btn px-5 py-[9px] rounded-xl text-[13px] font-semibold border-0 outline-none cursor-pointer"
@@ -1201,7 +1265,7 @@ export default function Opportunities() {
             ))}
 
             {/* Empty state */}
-            {filtered.length === 0 && (
+            {!isLoading && filtered.length === 0 && (
               <div
                 className="text-center py-16 rounded-2xl"
                 style={{ background: C.card, border: `1px solid ${C.border}` }}

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   Search,
   Paperclip,
@@ -7,11 +8,86 @@ import {
   ArrowLeft,
   Check,
   CheckCheck,
-  Circle,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 
-const CONVERSATIONS = [
+// ── Nearby artists mapped so their IDs match what ArtistNearby passes ──
+const NEARBY_ARTISTS_AS_CONVS = {
+  1: {
+    id: 101,
+    name: "Marcus Lee",
+    avatar: "ML",
+    online: true,
+    time: "Just now",
+    preview: "Start a conversation with Marcus Lee",
+    unread: 0,
+  },
+  2: {
+    id: 102,
+    name: "Alex Rivera",
+    avatar: "AR",
+    online: true,
+    time: "Just now",
+    preview: "Start a conversation with Alex Rivera",
+    unread: 0,
+  },
+  3: {
+    id: 103,
+    name: "Emma Chen",
+    avatar: "EC",
+    online: false,
+    time: "Just now",
+    preview: "Start a conversation with Emma Chen",
+    unread: 0,
+  },
+  4: {
+    id: 104,
+    name: "Jordan White",
+    avatar: "JW",
+    online: false,
+    time: "Just now",
+    preview: "Start a conversation with Jordan White",
+    unread: 0,
+  },
+  5: {
+    id: 105,
+    name: "Sofia Martinez",
+    avatar: "SM",
+    online: true,
+    time: "Just now",
+    preview: "Start a conversation with Sofia Martinez",
+    unread: 0,
+  },
+  6: {
+    id: 106,
+    name: "David Kim",
+    avatar: "DK",
+    online: false,
+    time: "Just now",
+    preview: "Start a conversation with David Kim",
+    unread: 0,
+  },
+  7: {
+    id: 107,
+    name: "Rachel Green",
+    avatar: "RG",
+    online: true,
+    time: "Just now",
+    preview: "Start a conversation with Rachel Green",
+    unread: 0,
+  },
+  8: {
+    id: 108,
+    name: "Michael Chen",
+    avatar: "MC",
+    online: false,
+    time: "Just now",
+    preview: "Start a conversation with Michael Chen",
+    unread: 0,
+  },
+};
+
+const BASE_CONVERSATIONS = [
   {
     id: 1,
     name: "Paramount Studios",
@@ -19,7 +95,6 @@ const CONVERSATIONS = [
     time: "30m ago",
     preview: "We'd love to discuss the cinematog...",
     unread: 2,
-    active: true,
     online: true,
   },
   {
@@ -29,7 +104,6 @@ const CONVERSATIONS = [
     time: "2h ago",
     preview: "When are you available for the shoot",
     unread: 0,
-    active: false,
     online: false,
   },
   {
@@ -39,7 +113,6 @@ const CONVERSATIONS = [
     time: "1d ago",
     preview: "Thanks for the quick response!",
     unread: 0,
-    active: false,
     online: true,
   },
   {
@@ -49,12 +122,11 @@ const CONVERSATIONS = [
     time: "2d ago",
     preview: "Looking forward to our collaboration",
     unread: 0,
-    active: false,
     online: false,
   },
 ];
 
-const MESSAGES = {
+const BASE_MESSAGES = {
   1: [
     {
       id: 1,
@@ -72,7 +144,7 @@ const MESSAGES = {
     {
       id: 3,
       from: "them",
-      text: "We'd love to discuss the cinematography role",
+      text: "We'd love to discuss the cinematography role.",
       time: "30m ago",
     },
   ],
@@ -93,7 +165,7 @@ const MESSAGES = {
     {
       id: 3,
       from: "them",
-      text: "When are you available for the shoot",
+      text: "When are you available for the shoot?",
       time: "2h ago",
     },
   ],
@@ -129,23 +201,68 @@ const MESSAGES = {
     {
       id: 3,
       from: "them",
-      text: "Looking forward to our collaboration",
+      text: "Looking forward to our collaboration.",
       time: "2d ago",
     },
   ],
 };
 
 export default function Messages() {
+  const location = useLocation();
+
+  // ── Build conversation list, injecting nearby artist if ?userId= param present ──
+  const [conversations, setConversations] = useState(BASE_CONVERSATIONS);
+  const [messages, setMessages] = useState(BASE_MESSAGES);
   const [selectedId, setSelectedId] = useState(1);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState(MESSAGES);
   const [search, setSearch] = useState("");
-  const [mobileView, setMobileView] = useState("list"); // "list" | "chat"
+  const [mobileView, setMobileView] = useState("list");
 
-  const selected = CONVERSATIONS.find((c) => c.id === selectedId);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const rawId = params.get("userId");
+    const artistId = rawId ? Number(rawId) : null;
+
+    if (!artistId) return;
+
+    const nearby = NEARBY_ARTISTS_AS_CONVS[artistId];
+    if (!nearby) return;
+
+    // Check if conversation already exists
+    setConversations((prev) => {
+      const exists = prev.find((c) => c.id === nearby.id);
+      if (exists) {
+        setSelectedId(nearby.id);
+        setMobileView("chat");
+        return prev;
+      }
+      // Inject at top of list
+      const updated = [{ ...nearby }, ...prev];
+      setSelectedId(nearby.id);
+      setMobileView("chat");
+      return updated;
+    });
+
+    // Seed empty conversation if no messages exist for this ID
+    setMessages((prev) => {
+      if (prev[nearby.id]) return prev;
+      return {
+        ...prev,
+        [nearby.id]: [
+          {
+            id: 1,
+            from: "them",
+            text: `Hi! I'm ${nearby.name}. Thanks for reaching out — I'd love to explore a collaboration!`,
+            time: "Just now",
+          },
+        ],
+      };
+    });
+  }, [location.search]);
+
+  const selected = conversations.find((c) => c.id === selectedId);
   const currentMessages = messages[selectedId] || [];
-
-  const filteredConvs = CONVERSATIONS.filter((c) =>
+  const filteredConvs = conversations.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -186,13 +303,15 @@ export default function Messages() {
         .msg-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(201,169,97,0.15) transparent; }
         .conv-item { transition: background 0.15s ease; }
         .conv-item:hover { background: rgba(255,255,255,0.03); }
-        .send-btn { transition: opacity 0.15s ease, transform 0.15s ease; }
+        .send-btn { transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease; }
         .send-btn:hover { opacity: 0.85; transform: scale(1.05); }
         .input-field:focus { outline: none; border-color: rgba(201,169,97,0.35) !important; }
         .attach-btn { transition: color 0.15s ease; }
         .attach-btn:hover { color: #c9a961 !important; }
       `}</style>
+
       <Sidebar />
+
       <div
         className="flex h-screen overflow-hidden lg:ml-[248px]"
         style={{
@@ -202,7 +321,7 @@ export default function Messages() {
       >
         {/* ── Conversation List ── */}
         <div
-          className={`flex flex-col w-full lg:w-[300px] lg:flex flex-shrink-0 ${mobileView === "chat" ? "hidden lg:flex" : "flex"}`}
+          className={`flex flex-col w-full lg:w-[300px] flex-shrink-0 ${mobileView === "chat" ? "hidden lg:flex" : "flex"}`}
           style={{
             borderRight: "1px solid rgba(201,169,97,0.10)",
             background: "#1a1d24",
@@ -212,10 +331,7 @@ export default function Messages() {
           <div className="px-5 pt-7 pb-4 flex-shrink-0">
             <h1
               className="text-[22px] font-bold leading-tight"
-              style={{
-                color: "#c4d5e0",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}
+              style={{ color: "#c4d5e0" }}
             >
               Messages
             </h1>
@@ -253,7 +369,7 @@ export default function Messages() {
             {filteredConvs.map((conv) => (
               <div
                 key={conv.id}
-                className="conv-item flex items-center gap-3 px-4 py-[13px] cursor-pointer relative"
+                className="conv-item flex items-center gap-3 px-4 py-[13px] cursor-pointer"
                 style={{
                   background:
                     conv.id === selectedId
@@ -267,7 +383,6 @@ export default function Messages() {
                 }}
                 onClick={() => selectConv(conv.id)}
               >
-                {/* Avatar */}
                 <div className="relative flex-shrink-0">
                   <div
                     className="w-11 h-11 rounded-xl flex items-center justify-center text-[13px] font-bold"
@@ -282,8 +397,6 @@ export default function Messages() {
                     />
                   )}
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-[3px]">
                     <span
@@ -338,7 +451,6 @@ export default function Messages() {
                   background: "#1a1d24",
                 }}
               >
-                {/* Mobile back */}
                 <button
                   className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg mr-1"
                   style={{
@@ -349,8 +461,6 @@ export default function Messages() {
                 >
                   <ArrowLeft size={16} />
                 </button>
-
-                {/* Avatar */}
                 <div className="relative flex-shrink-0">
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold"
@@ -365,7 +475,6 @@ export default function Messages() {
                     />
                   )}
                 </div>
-
                 <div className="flex-1 min-w-0">
                   <h3
                     className="text-[15px] font-semibold leading-tight"
@@ -380,7 +489,6 @@ export default function Messages() {
                     {selected.online ? "● Active now" : "● Offline"}
                   </span>
                 </div>
-
                 <button
                   className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
                   style={{
@@ -450,7 +558,6 @@ export default function Messages() {
                 >
                   <Paperclip size={17} />
                 </button>
-
                 <input
                   type="text"
                   value={input}
@@ -465,14 +572,11 @@ export default function Messages() {
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                   }}
                 />
-
                 <button
                   className="send-btn flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0"
                   style={{
                     background: input.trim() ? "#c9a961" : "#2d3139",
                     color: input.trim() ? "#1a1d24" : "#3a4e5e",
-                    transition:
-                      "background 0.2s ease, color 0.2s ease, transform 0.15s ease",
                   }}
                   onClick={handleSend}
                 >

@@ -20,6 +20,7 @@ import Portfolio from "./pages/artist/Portfolio";
 import Profile from "./pages/artist/Profile";
 import Promotions from "./pages/artist/Promotions";
 import Settings from "./pages/artist/Settings";
+import ArtistProfileView from "./pages/artist/Artistviewprofile";
 
 // Hirer pages
 import HirerDashboard from "./pages/hirer/HirerDashboard";
@@ -49,7 +50,12 @@ function App() {
       {/* Artist routes */}
       <Route path="/artist/dashboard" element={<Dashboard />} />
       <Route path="/artist/message" element={<Messages />} />
+      <Route path="/artist/messages" element={<Messages />} />
       <Route path="/artist/near-by-artists" element={<Nearbyartists />} />
+      <Route
+        path="/artist/near-by-artists/:id"
+        element={<ArtistProfileView />}
+      />
       <Route path="/artist/opportunity" element={<Opportunity />} />
       <Route path="/artist/payment" element={<Payment />} />
       <Route path="/artist/plusicon" element={<Plusicon />} />
@@ -57,6 +63,10 @@ function App() {
       <Route path="/artist/profile" element={<Profile />} />
       <Route path="/artist/promotion" element={<Promotions />} />
       <Route path="/artist/settings" element={<Settings />} />
+      <Route
+        path="/artist/near-by-artists/:id"
+        element={<ArtistProfileView />}
+      />
 
       {/* Hirer routes */}
       <Route path="/hirer/dashboard" element={<HirerDashboard />} />
