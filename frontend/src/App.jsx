@@ -28,7 +28,7 @@ import HirerDashboard from "./pages/hirer/HirerDashboard";
 // import HirerPayment from "./pages/hirer/HirerPayment";
 // import HirerPlusicon from "./pages/hirer/HirerPlusicon";
 // import HirerPromotions from "./pages/hirer/HirerPromotions";
-// import HirerSettings from "./pages/hirer/HirerSettings";
+import HirerSettings from "./pages/hirer/HirerSettings";
 // import Booking from "./pages/hirer/Booking";
 // import BrowseArtist from "./pages/hirer/Browseartist";
 // import PostRequirement from "./pages/hirer/PostRequiriment";
@@ -66,11 +66,11 @@ function App() {
 
       {/* Hirer routes */}
       <Route path="/hirer/dashboard" element={<HirerDashboard />} />
+      <Route path="/hirer/settings" element={<HirerSettings />} />
       {/* <Route path="/hirer/messages" element={<HirerMessages />} />
       <Route path="/hirer/payment" element={<HirerPayment />} />
       <Route path="/hirer/plusicon" element={<HirerPlusicon />} />
       <Route path="/hirer/promotion" element={<HirerPromotions />} />
-      <Route path="/hirer/settings" element={<HirerSettings />} />
       <Route path="/hirer/booking" element={<Booking />} />
       <Route path="/hirer/browse-artists" element={<BrowseArtist />} />
       <Route path="/hirer/post-requirement" element={<PostRequirement />} /> */}

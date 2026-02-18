@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 
 const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/hirer" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/hirer/dashboard" },
   {
     icon: FileText,
     label: "Post Requirement",
@@ -146,6 +146,7 @@ export default function HirerSidebar() {
           <button
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 hover:bg-opacity-10"
             style={{ color: "#9ca3af" }}
+            onClick={() => navigate("/hirer/settings")}
             onMouseEnter={(e) =>
               (e.currentTarget.style.backgroundColor =
                 "rgba(201, 169, 97, 0.1)")

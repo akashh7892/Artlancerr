@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState } from "react";
-import HirerSidebar from "../../components/common/HirerSidebar";
+import HirerSidebar from "./HirerSidebar";
 
 const MOCK_TASKS = [
   {
