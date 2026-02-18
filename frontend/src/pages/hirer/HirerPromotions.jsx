@@ -1,0 +1,1501 @@
+import { motion, AnimatePresence } from "motion/react";
+import {
+  Upload,
+  Clock,
+  Users,
+  DollarSign,
+  ArrowLeft,
+  Instagram,
+  CheckCircle,
+  AlertCircle,
+  Calendar,
+  Film,
+  Eye,
+  ThumbsUp,
+  ThumbsDown,
+  X,
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import HirerSidebar from "./HirerSidebar";
+
+// ─── Design tokens ─────────────────────────────────────────────
+const C = {
+  bg: "#1a1d24",
+  card: "#2d3139",
+  cardInner: "#1a1d24",
+  border: "rgba(201,169,97,0.2)",
+  borderSub: "rgba(201,169,97,0.08)",
+  gold: "#c9a961",
+  text: "#ffffff",
+  muted: "#9ca3af",
+  inputBg: "#22252e",
+  inputBorder: "rgba(255,255,255,0.08)",
+  green: "#4ade80",
+  greenDim: "rgba(74,222,128,0.10)",
+  yellow: "#facc15",
+  yellowDim: "rgba(250,204,21,0.10)",
+  red: "#f87171",
+  redDim: "rgba(248,113,113,0.10)",
+};
+
+// ─── Mock Data ─────────────────────────────────────────────────
+const ALL_PROMOTIONS = [
+  {
+    id: 1,
+    projectName: "Midnight Echo",
+    poster:
+      "https://images.unsplash.com/photo-1620153850780-0883dd907257?w=600&q=80",
+    promotionType: "Instagram Story",
+    reward: "$25",
+    totalSlots: 50,
+    filledSlots: 32,
+    deadline: "2026-02-20T23:59:59",
+    description:
+      "Share our movie poster on your Instagram story with the hashtag #MidnightEcho",
+    requirements: [
+      "Post must be visible for 24 hours",
+      "Must include project hashtag",
+      "Tag @midnightechomovie",
+    ],
+    createdBy: "Warner Bros Studios",
+  },
+  {
+    id: 2,
+    projectName: "The Last Horizon",
+    poster:
+      "https://images.unsplash.com/photo-1574267432644-f74f897cb112?w=600&q=80",
+    promotionType: "Instagram Post",
+    reward: "$50",
+    totalSlots: 50,
+    filledSlots: 45,
+    deadline: "2026-02-18T23:59:59",
+    description: "Create a feed post about our upcoming thriller film",
+    requirements: [
+      "Minimum 100 followers",
+      "Include movie poster",
+      "Caption must be at least 50 words",
+    ],
+    createdBy: "Paramount Pictures",
+  },
+  {
+    id: 3,
+    projectName: "Dance Revolution",
+    poster:
+      "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=600&q=80",
+    promotionType: "Instagram Reel",
+    reward: "$75",
+    totalSlots: 50,
+    filledSlots: 12,
+    deadline: "2026-02-25T23:59:59",
+    description:
+      "Create a 15-30 second reel featuring our dance film soundtrack",
+    requirements: [
+      "Reel must be 15-30 seconds",
+      "Use official soundtrack",
+      "Include dance moves",
+    ],
+    createdBy: "Universal Studios",
+  },
+];
+
+const INIT_MY_PROMOS = [
+  {
+    id: 1,
+    projectName: "Midnight Echo",
+    poster:
+      "https://images.unsplash.com/photo-1620153850780-0883dd907257?w=600&q=80",
+    promotionType: "Instagram Story",
+    reward: "$25",
+    totalSlots: 50,
+    acceptedCount: 32,
+    submittedCount: 18,
+    approvedCount: 12,
+    rejectedCount: 2,
+    pendingReview: 4,
+    deadline: "2026-02-20T23:59:59",
+    status: "Active",
+    submissions: [
+      {
+        id: 1,
+        artistName: "Sarah Johnson",
+        artistPhoto:
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120",
+        submittedAt: "2026-02-14T16:45:00",
+        proofUrl: "https://instagram.com/stories/example1",
+        status: "Pending",
+      },
+      {
+        id: 2,
+        artistName: "Marcus Lee",
+        artistPhoto:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120",
+        submittedAt: "2026-02-14T14:30:00",
+        proofUrl: "https://instagram.com/stories/example2",
+        status: "Approved",
+      },
+      {
+        id: 3,
+        artistName: "Emma Chen",
+        artistPhoto:
+          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120",
+        submittedAt: "2026-02-15T09:20:00",
+        proofUrl: "https://instagram.com/stories/example3",
+        status: "Pending",
+      },
+    ],
+  },
+  {
+    id: 4,
+    projectName: "Urban Dreams",
+    poster:
+      "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&q=80",
+    promotionType: "Instagram Post",
+    reward: "$50",
+    totalSlots: 50,
+    acceptedCount: 50,
+    submittedCount: 48,
+    approvedCount: 45,
+    rejectedCount: 3,
+    pendingReview: 0,
+    deadline: "2026-02-16T23:59:59",
+    status: "Completed",
+    submissions: [],
+  },
+];
+
+// ─── Utilities ─────────────────────────────────────────────────
+function timeLeft(deadline, now) {
+  const diff = new Date(deadline).getTime() - now.getTime();
+  if (diff <= 0) return "Expired";
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+// ─── Primitives ────────────────────────────────────────────────
+function Img({ src, alt, className }) {
+  const [err, setErr] = useState(false);
+  if (err)
+    return (
+      <div
+        className={`flex items-center justify-center ${className}`}
+        style={{ background: C.inputBg }}
+      >
+        <Film size={28} style={{ color: C.muted, opacity: 0.35 }} />
+      </div>
+    );
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      style={{ objectFit: "cover" }}
+      onError={() => setErr(true)}
+    />
+  );
+}
+
+function Badge({ status }) {
+  const s = {
+    Pending: { bg: C.yellowDim, color: C.yellow },
+    Approved: { bg: C.greenDim, color: C.green },
+    Rejected: { bg: C.redDim, color: C.red },
+    Active: { bg: "rgba(74,222,128,0.88)", color: "#fff" },
+    Completed: { bg: "rgba(156,163,175,0.35)", color: "#fff" },
+  }[status] || { bg: C.yellowDim, color: C.yellow };
+  return (
+    <span
+      className="px-3 py-1 rounded-full text-xs font-semibold"
+      style={{ background: s.bg, color: s.color }}
+    >
+      {status}
+    </span>
+  );
+}
+
+function ProgressBar({ pct }) {
+  return (
+    <div
+      style={{
+        height: 6,
+        borderRadius: 99,
+        background: "rgba(255,255,255,0.08)",
+        overflow: "hidden",
+      }}
+    >
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: `${pct}%` }}
+        transition={{ duration: 0.7 }}
+        style={{ height: "100%", background: C.gold, borderRadius: 99 }}
+      />
+    </div>
+  );
+}
+
+function FieldInput({ type = "text", value, onChange, placeholder, icon }) {
+  return (
+    <div className="relative">
+      {icon && (
+        <div
+          className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ color: C.muted }}
+        >
+          {icon}
+        </div>
+      )}
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full rounded-xl outline-none text-sm"
+        style={{
+          background: C.inputBg,
+          border: `1px solid ${C.inputBorder}`,
+          color: C.text,
+          padding: icon ? "10px 14px 10px 36px" : "10px 14px",
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = "rgba(201,169,97,0.5)";
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = C.inputBorder;
+        }}
+      />
+    </div>
+  );
+}
+
+// ─── Modal shell ───────────────────────────────────────────────
+function Modal({ open, onClose, title, subtitle, children, wide }) {
+  if (!open) return null;
+  return (
+    <AnimatePresence>
+      <motion.div
+        key="bg"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[900] flex items-center justify-center p-4"
+        style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
+        onClick={onClose}
+      >
+        <motion.div
+          key="box"
+          initial={{ opacity: 0, scale: 0.95, y: 14 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.22 }}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            width: "100%",
+            maxWidth: wide ? 680 : 540,
+            maxHeight: "90vh",
+            background: C.card,
+            border: `1px solid ${C.border}`,
+            borderRadius: 16,
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "0 28px 80px rgba(0,0,0,0.55)",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+          }}
+        >
+          {/* Modal header */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              padding: "24px 24px 20px",
+              borderBottom: `1px solid ${C.borderSub}`,
+              flexShrink: 0,
+            }}
+          >
+            <div>
+              <p
+                style={{
+                  color: C.text,
+                  fontSize: 20,
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                {title}
+              </p>
+              {subtitle && (
+                <p style={{ color: C.muted, fontSize: 13, marginTop: 3 }}>
+                  {subtitle}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                border: "none",
+                background: "rgba(255,255,255,0.07)",
+                color: C.muted,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.14)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.07)";
+              }}
+            >
+              <X size={15} />
+            </button>
+          </div>
+          {/* Scrollable body */}
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "20px 24px",
+              scrollbarWidth: "thin",
+              scrollbarColor: `rgba(201,169,97,0.2) transparent`,
+            }}
+          >
+            {children}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ─── Gold button ───────────────────────────────────────────────
+function GoldBtn({
+  children,
+  onClick,
+  className = "",
+  outline = false,
+  danger = false,
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center justify-center gap-2 text-sm font-semibold outline-none border-0 cursor-pointer transition-all ${className}`}
+      style={{
+        background: outline
+          ? "transparent"
+          : danger
+            ? C.redDim
+            : `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
+        color: outline ? C.text : danger ? C.red : "#1a1d24",
+        border: outline
+          ? `1px solid ${C.border}`
+          : danger
+            ? `1px solid rgba(248,113,113,0.25)`
+            : "none",
+        padding: "10px 18px",
+        borderRadius: 12,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.filter = "brightness(1.08)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.filter = "none";
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+export default function HirerPromotions() {
+  const navigate = useNavigate();
+  const [tab, setTab] = useState("all");
+  const [now, setNow] = useState(new Date());
+  const [myPromos, setMyPromos] = useState(INIT_MY_PROMOS);
+  const [detailPromo, setDetailPromo] = useState(null);
+  const [reviewPromo, setReviewPromo] = useState(null);
+  const [showCreate, setShowCreate] = useState(false);
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Keep review modal in sync after approve/reject
+  useEffect(() => {
+    if (reviewPromo) {
+      const fresh = myPromos.find((p) => p.id === reviewPromo.id);
+      if (fresh) setReviewPromo(fresh);
+    }
+  }, [myPromos]);
+
+  const approve = (promoId, subId) =>
+    setMyPromos((prev) =>
+      prev.map((p) =>
+        p.id !== promoId
+          ? p
+          : {
+              ...p,
+              pendingReview: Math.max(0, p.pendingReview - 1),
+              approvedCount: p.approvedCount + 1,
+              submissions: p.submissions.map((s) =>
+                s.id === subId ? { ...s, status: "Approved" } : s,
+              ),
+            },
+      ),
+    );
+
+  const reject = (promoId, subId) =>
+    setMyPromos((prev) =>
+      prev.map((p) =>
+        p.id !== promoId
+          ? p
+          : {
+              ...p,
+              pendingReview: Math.max(0, p.pendingReview - 1),
+              rejectedCount: p.rejectedCount + 1,
+              submissions: p.submissions.map((s) =>
+                s.id === subId ? { ...s, status: "Rejected" } : s,
+              ),
+            },
+      ),
+    );
+
+  return (
+    <div
+      className="min-h-screen flex"
+      style={{
+        background: C.bg,
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        .pc { transition: border-color 0.2s, box-shadow 0.2s; }
+        .pc:hover { border-color: rgba(201,169,97,0.45) !important; box-shadow: 0 6px 28px rgba(0,0,0,0.3); }
+        .tln { position: relative; }
+      `}</style>
+
+      <HirerSidebar />
+
+      <div className="flex-1 lg:ml-72 overflow-auto">
+        <div className="p-8 max-w-5xl mx-auto">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-4 mb-8"
+          >
+            <button
+              onClick={() => navigate("/hirer/dashboard")}
+              className="flex items-center justify-center w-9 h-9 rounded-lg outline-none border-0 cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.05)", color: C.text }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+              }}
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div className="flex-1">
+              <h1
+                style={{
+                  color: C.text,
+                  fontSize: 30,
+                  fontWeight: 600,
+                  marginBottom: 2,
+                }}
+              >
+                Promotions
+              </h1>
+              <p style={{ color: C.muted, fontSize: 14 }}>
+                Create promotion missions and manage submissions
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold outline-none border-0 cursor-pointer"
+              style={{
+                background: `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
+                color: "#1a1d24",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.filter = "brightness(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.filter = "none";
+              }}
+            >
+              <Upload size={16} strokeWidth={2.2} /> Create Promotion
+            </button>
+          </motion.div>
+
+          {/* Tabs */}
+          <div
+            className="flex mb-6"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            {[
+              ["all", "All Promotions"],
+              ["my", "My Promotions"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className="tln px-6 py-3 text-sm font-medium outline-none border-0 bg-transparent cursor-pointer"
+                style={{ color: tab === key ? C.gold : C.muted }}
+              >
+                {label}
+                {tab === key && (
+                  <motion.div
+                    layoutId="ul"
+                    className="absolute bottom-0 left-0 right-0"
+                    style={{ height: 2, background: C.gold }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          <AnimatePresence mode="wait">
+            {/* ALL */}
+            {tab === "all" && (
+              <motion.div
+                key="all"
+                initial={{ opacity: 0, x: -18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 18 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-4"
+              >
+                {ALL_PROMOTIONS.map((p, i) => {
+                  const rem = p.totalSlots - p.filledSlots;
+                  const isFull = rem <= 0;
+                  const tl = timeLeft(p.deadline, now);
+                  const expired = tl === "Expired";
+                  return (
+                    <motion.div
+                      key={p.id}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.06 }}
+                      className="pc flex overflow-hidden rounded-xl"
+                      style={{
+                        background: C.card,
+                        border: `1px solid ${C.border}`,
+                        opacity: isFull || expired ? 0.6 : 1,
+                      }}
+                    >
+                      {/* Poster */}
+                      <div
+                        className="relative flex-shrink-0 w-44"
+                        style={{ minHeight: 190 }}
+                      >
+                        <Img
+                          src={p.poster}
+                          alt={p.projectName}
+                          className="absolute inset-0 w-full h-full"
+                        />
+                        {(isFull || expired) && (
+                          <div
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{ background: "rgba(0,0,0,0.55)" }}
+                          >
+                            <span
+                              style={{
+                                color: "#fff",
+                                fontWeight: 700,
+                                letterSpacing: 2,
+                              }}
+                            >
+                              {isFull ? "FULL" : "EXPIRED"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Content */}
+                      <div className="flex-1 p-6 flex flex-col justify-between">
+                        <div>
+                          <h3
+                            className="text-lg font-semibold mb-2"
+                            style={{ color: C.text }}
+                          >
+                            {p.projectName}
+                          </h3>
+                          <div className="flex flex-wrap gap-4 text-sm mb-3">
+                            <span
+                              className="flex items-center gap-1.5"
+                              style={{ color: C.muted }}
+                            >
+                              <Instagram size={14} /> {p.promotionType}
+                            </span>
+                            <span
+                              className="flex items-center gap-1.5 font-semibold"
+                              style={{ color: C.gold }}
+                            >
+                              <DollarSign size={14} /> {p.reward} reward
+                            </span>
+                            <span
+                              className="flex items-center gap-1.5"
+                              style={{ color: C.muted }}
+                            >
+                              <Users size={14} /> {rem} / {p.totalSlots} slots
+                              left
+                            </span>
+                            <span
+                              className="flex items-center gap-1.5"
+                              style={{ color: expired ? C.red : C.muted }}
+                            >
+                              <Clock size={14} /> {tl}
+                            </span>
+                          </div>
+                          <p
+                            className="text-sm leading-relaxed"
+                            style={{
+                              color: C.muted,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
+                            {p.description}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between mt-4">
+                          <span style={{ color: C.muted, fontSize: 12 }}>
+                            By {p.createdBy}
+                          </span>
+                          <button
+                            onClick={() => setDetailPromo(p)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium outline-none cursor-pointer"
+                            style={{
+                              background: "transparent",
+                              border: `1px solid ${C.border}`,
+                              color: C.text,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = C.gold;
+                              e.currentTarget.style.color = C.gold;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = C.border;
+                              e.currentTarget.style.color = C.text;
+                            }}
+                          >
+                            <Eye size={15} /> View Details
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            )}
+
+            {/* MY */}
+            {tab === "my" && (
+              <motion.div
+                key="my"
+                initial={{ opacity: 0, x: 18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -18 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-4"
+              >
+                {myPromos.map((p, i) => {
+                  const tl = timeLeft(p.deadline, now);
+                  const pct = Math.round(
+                    (p.acceptedCount / p.totalSlots) * 100,
+                  );
+                  return (
+                    <motion.div
+                      key={p.id}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.06 }}
+                      className="pc flex overflow-hidden rounded-xl"
+                      style={{
+                        background: C.card,
+                        border: `1px solid ${C.border}`,
+                      }}
+                    >
+                      {/* Poster + badge */}
+                      <div
+                        className="relative flex-shrink-0 w-44"
+                        style={{ minHeight: 260 }}
+                      >
+                        <Img
+                          src={p.poster}
+                          alt={p.projectName}
+                          className="absolute inset-0 w-full h-full"
+                        />
+                        <div className="absolute top-3 left-3">
+                          <Badge status={p.status} />
+                        </div>
+                      </div>
+                      {/* Content */}
+                      <div className="flex-1 p-6 flex flex-col gap-4">
+                        <div>
+                          <h3
+                            className="text-lg font-semibold mb-2"
+                            style={{ color: C.text }}
+                          >
+                            {p.projectName}
+                          </h3>
+                          <div className="flex flex-wrap gap-4 text-sm">
+                            <span
+                              className="flex items-center gap-1.5"
+                              style={{ color: C.muted }}
+                            >
+                              <Instagram size={14} /> {p.promotionType}
+                            </span>
+                            <span
+                              className="flex items-center gap-1.5 font-semibold"
+                              style={{ color: C.gold }}
+                            >
+                              <DollarSign size={14} /> {p.reward} per artist
+                            </span>
+                            {p.status === "Active" && tl !== "Expired" && (
+                              <span
+                                className="flex items-center gap-1.5"
+                                style={{ color: C.muted }}
+                              >
+                                <Clock size={14} /> {tl} left
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Progress */}
+                        <div>
+                          <div className="flex justify-between text-sm mb-1.5">
+                            <span style={{ color: C.muted }}>
+                              Participation
+                            </span>
+                            <span
+                              className="font-semibold"
+                              style={{ color: C.text }}
+                            >
+                              {p.acceptedCount} / {p.totalSlots}
+                            </span>
+                          </div>
+                          <ProgressBar pct={pct} />
+                        </div>
+                        {/* Stats 4-grid */}
+                        <div className="grid grid-cols-4 gap-2">
+                          {[
+                            {
+                              label: "Submitted",
+                              val: p.submittedCount,
+                              bg: C.cardInner,
+                              col: C.text,
+                            },
+                            {
+                              label: "Approved",
+                              val: p.approvedCount,
+                              bg: C.greenDim,
+                              col: C.green,
+                            },
+                            {
+                              label: "Pending",
+                              val: p.pendingReview,
+                              bg: C.yellowDim,
+                              col: C.yellow,
+                            },
+                            {
+                              label: "Rejected",
+                              val: p.rejectedCount,
+                              bg: C.redDim,
+                              col: C.red,
+                            },
+                          ].map(({ label, val, bg, col }) => (
+                            <div
+                              key={label}
+                              className="rounded-lg p-3 text-center"
+                              style={{ background: bg }}
+                            >
+                              <p
+                                style={{
+                                  color: col,
+                                  fontSize: 24,
+                                  fontWeight: 600,
+                                  margin: 0,
+                                }}
+                              >
+                                {val}
+                              </p>
+                              <p
+                                style={{
+                                  color: C.muted,
+                                  fontSize: 12,
+                                  marginTop: 2,
+                                }}
+                              >
+                                {label}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Action buttons */}
+                        <div className="flex gap-2">
+                          {p.pendingReview > 0 && (
+                            <button
+                              onClick={() => setReviewPromo(p)}
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold outline-none border-0 cursor-pointer"
+                              style={{
+                                background: `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
+                                color: "#1a1d24",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.filter =
+                                  "brightness(1.08)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.filter = "none";
+                              }}
+                            >
+                              <AlertCircle size={15} /> Review Submissions (
+                              {p.pendingReview})
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setReviewPromo(p)}
+                            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium outline-none cursor-pointer"
+                            style={{
+                              background: "transparent",
+                              border: `1px solid ${C.border}`,
+                              color: C.text,
+                              flex: p.pendingReview > 0 ? "0 0 auto" : 1,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = C.gold;
+                              e.currentTarget.style.color = C.gold;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = C.border;
+                              e.currentTarget.style.color = C.text;
+                            }}
+                          >
+                            <Eye size={15} /> View All Submissions
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* ═══ Promotion Details Modal ═══ */}
+      <Modal
+        open={!!detailPromo}
+        onClose={() => setDetailPromo(null)}
+        title="Promotion Details"
+        subtitle="View the full details of this promotion"
+      >
+        {detailPromo && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Poster + meta */}
+            <div style={{ display: "flex", gap: 16 }}>
+              <div
+                style={{
+                  width: 96,
+                  height: 144,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  flexShrink: 0,
+                }}
+              >
+                <Img
+                  src={detailPromo.poster}
+                  alt={detailPromo.projectName}
+                  className="w-full h-full"
+                />
+              </div>
+              <div>
+                <p
+                  style={{
+                    color: C.text,
+                    fontSize: 18,
+                    fontWeight: 600,
+                    marginBottom: 10,
+                  }}
+                >
+                  {detailPromo.projectName}
+                </p>
+                {[
+                  {
+                    Icon: Instagram,
+                    label: detailPromo.promotionType,
+                    color: C.muted,
+                  },
+                  {
+                    Icon: DollarSign,
+                    label: `${detailPromo.reward} fixed reward`,
+                    color: C.gold,
+                  },
+                  {
+                    Icon: Calendar,
+                    label: `Deadline: ${new Date(detailPromo.deadline).toLocaleDateString()}`,
+                    color: C.muted,
+                  },
+                  {
+                    Icon: Users,
+                    label: `${detailPromo.totalSlots} total slots`,
+                    color: C.muted,
+                  },
+                ].map(({ Icon, label, color }, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      color,
+                      fontSize: 13,
+                      marginBottom: 6,
+                    }}
+                  >
+                    <Icon size={14} /> {label}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ height: 1, background: C.borderSub }} />
+            <div>
+              <p style={{ color: C.text, fontWeight: 600, marginBottom: 6 }}>
+                Description
+              </p>
+              <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.6 }}>
+                {detailPromo.description}
+              </p>
+            </div>
+            {detailPromo.requirements?.length > 0 && (
+              <div>
+                <p style={{ color: C.text, fontWeight: 600, marginBottom: 10 }}>
+                  Requirements
+                </p>
+                {detailPromo.requirements.map((r, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 10,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <CheckCircle
+                      size={16}
+                      style={{ color: C.gold, flexShrink: 0, marginTop: 1 }}
+                    />
+                    <span style={{ color: C.muted, fontSize: 13 }}>{r}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Wide gold close button */}
+            <button
+              onClick={() => setDetailPromo(null)}
+              style={{
+                width: "100%",
+                padding: "13px",
+                borderRadius: 12,
+                border: "none",
+                background: `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
+                color: "#1a1d24",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                marginTop: 4,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.filter = "brightness(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.filter = "none";
+              }}
+            >
+              Close
+            </button>
+          </div>
+        )}
+      </Modal>
+
+      {/* ═══ Review Submissions Modal ═══ */}
+      <Modal
+        open={!!reviewPromo}
+        onClose={() => setReviewPromo(null)}
+        title="Review Submissions"
+        subtitle="Approve or reject artist submissions"
+        wide
+      >
+        {reviewPromo &&
+          (reviewPromo.submissions.length === 0 ? (
+            <p
+              style={{ color: C.muted, textAlign: "center", padding: "40px 0" }}
+            >
+              No submissions yet.
+            </p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {reviewPromo.submissions.map((sub) => (
+                <motion.div
+                  key={sub.id}
+                  layout
+                  style={{
+                    background: C.cardInner,
+                    border: `1px solid ${C.borderSub}`,
+                    borderRadius: 12,
+                    padding: 16,
+                  }}
+                >
+                  <div style={{ display: "flex", gap: 14 }}>
+                    <div
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                        overflow: "hidden",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Img
+                        src={sub.artistPhoto}
+                        alt={sub.artistName}
+                        className="w-full h-full"
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: 3,
+                        }}
+                      >
+                        <p
+                          style={{ color: C.text, fontWeight: 600, margin: 0 }}
+                        >
+                          {sub.artistName}
+                        </p>
+                        <Badge status={sub.status} />
+                      </div>
+                      <p
+                        style={{
+                          color: C.muted,
+                          fontSize: 12,
+                          marginBottom: 8,
+                        }}
+                      >
+                        Submitted{" "}
+                        {new Date(sub.submittedAt).toLocaleDateString("en-US", {
+                          month: "numeric",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                      <a
+                        href={sub.proofUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: C.gold,
+                          fontSize: 13,
+                          display: "block",
+                          marginBottom: 10,
+                        }}
+                      >
+                        {sub.proofUrl}
+                      </a>
+                      {sub.status === "Pending" && (
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            onClick={() => approve(reviewPromo.id, sub.id)}
+                            style={{
+                              flex: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 6,
+                              padding: "8px 0",
+                              borderRadius: 10,
+                              border: "none",
+                              background: `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
+                              color: "#1a1d24",
+                              fontSize: 13,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.filter = "brightness(1.08)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.filter = "none";
+                            }}
+                          >
+                            <ThumbsUp size={14} /> Approve
+                          </button>
+                          <button
+                            onClick={() => reject(reviewPromo.id, sub.id)}
+                            style={{
+                              flex: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 6,
+                              padding: "8px 0",
+                              borderRadius: 10,
+                              border: `1px solid rgba(248,113,113,0.25)`,
+                              background: C.redDim,
+                              color: C.red,
+                              fontSize: 13,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.filter = "brightness(1.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.filter = "none";
+                            }}
+                          >
+                            <ThumbsDown size={14} /> Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          ))}
+      </Modal>
+
+      {/* ═══ Create Promotion Modal ═══ */}
+      <Modal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        title="Create Promotion"
+        subtitle="Set up a new promotion mission for artists"
+      >
+        <CreateForm onClose={() => setShowCreate(false)} />
+      </Modal>
+    </div>
+  );
+}
+
+// ─── Create Promotion Form ─────────────────────────────────────
+function CreateForm({ onClose }) {
+  const [form, setForm] = useState({
+    projectName: "",
+    description: "",
+    promotionType: "",
+    reward: "",
+    totalSlots: "50",
+    deadline: "",
+  });
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      {/* Project Name */}
+      <div>
+        <label
+          style={{
+            color: C.text,
+            fontSize: 13,
+            fontWeight: 500,
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
+          Project Name
+        </label>
+        <FieldInput
+          value={form.projectName}
+          onChange={(e) => set("projectName", e.target.value)}
+          placeholder="Enter movie/project name"
+        />
+      </div>
+      {/* Description */}
+      <div>
+        <label
+          style={{
+            color: C.text,
+            fontSize: 13,
+            fontWeight: 500,
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
+          Description
+        </label>
+        <textarea
+          value={form.description}
+          onChange={(e) => set("description", e.target.value)}
+          placeholder="Describe what participants need to do..."
+          rows={4}
+          style={{
+            width: "100%",
+            borderRadius: 12,
+            background: C.inputBg,
+            border: `1px solid ${C.inputBorder}`,
+            color: C.text,
+            padding: "10px 14px",
+            fontSize: 14,
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            outline: "none",
+            resize: "none",
+            boxSizing: "border-box",
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "rgba(201,169,97,0.5)";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = C.inputBorder;
+          }}
+        />
+      </div>
+      {/* Type + Reward */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div>
+          <label
+            style={{
+              color: C.text,
+              fontSize: 13,
+              fontWeight: 500,
+              display: "block",
+              marginBottom: 6,
+            }}
+          >
+            Promotion Type
+          </label>
+          <div style={{ position: "relative" }}>
+            <select
+              value={form.promotionType}
+              onChange={(e) => set("promotionType", e.target.value)}
+              style={{
+                width: "100%",
+                borderRadius: 12,
+                background: C.inputBg,
+                border: `1px solid ${C.inputBorder}`,
+                color: form.promotionType ? C.text : C.muted,
+                padding: "10px 36px 10px 14px",
+                fontSize: 14,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                outline: "none",
+                appearance: "none",
+                cursor: "pointer",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "rgba(201,169,97,0.5)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = C.inputBorder;
+              }}
+            >
+              <option value="" disabled style={{ background: "#22252e" }}>
+                Select type
+              </option>
+              <option value="story" style={{ background: "#22252e" }}>
+                Instagram Story
+              </option>
+              <option value="post" style={{ background: "#22252e" }}>
+                Instagram Post
+              </option>
+              <option value="reel" style={{ background: "#22252e" }}>
+                Instagram Reel
+              </option>
+            </select>
+            <svg
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
+                color: C.muted,
+              }}
+              width="11"
+              height="11"
+              viewBox="0 0 12 12"
+              fill="currentColor"
+            >
+              <path d="M6 8L1 3h10z" />
+            </svg>
+          </div>
+        </div>
+        <div>
+          <label
+            style={{
+              color: C.text,
+              fontSize: 13,
+              fontWeight: 500,
+              display: "block",
+              marginBottom: 6,
+            }}
+          >
+            Fixed Reward (per participant)
+          </label>
+          <FieldInput
+            type="number"
+            value={form.reward}
+            onChange={(e) => set("reward", e.target.value)}
+            placeholder="25"
+            icon={<DollarSign size={15} />}
+          />
+        </div>
+      </div>
+      {/* Slots + Deadline */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div>
+          <label
+            style={{
+              color: C.text,
+              fontSize: 13,
+              fontWeight: 500,
+              display: "block",
+              marginBottom: 6,
+            }}
+          >
+            Total Slots (Top participants)
+          </label>
+          <FieldInput
+            type="number"
+            value={form.totalSlots}
+            onChange={(e) => set("totalSlots", e.target.value)}
+            placeholder="50"
+          />
+        </div>
+        <div>
+          <label
+            style={{
+              color: C.text,
+              fontSize: 13,
+              fontWeight: 500,
+              display: "block",
+              marginBottom: 6,
+            }}
+          >
+            Deadline
+          </label>
+          <FieldInput
+            type="datetime-local"
+            value={form.deadline}
+            onChange={(e) => set("deadline", e.target.value)}
+          />
+        </div>
+      </div>
+      {/* Upload */}
+      <div>
+        <label
+          style={{
+            color: C.text,
+            fontSize: 13,
+            fontWeight: 500,
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
+          Movie Poster
+        </label>
+        <button
+          style={{
+            width: "100%",
+            padding: "32px 0",
+            borderRadius: 12,
+            border: "2px dashed rgba(255,255,255,0.12)",
+            background: "rgba(255,255,255,0.02)",
+            color: C.muted,
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = C.gold;
+            e.currentTarget.style.color = C.gold;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+            e.currentTarget.style.color = C.muted;
+          }}
+        >
+          <Upload size={28} strokeWidth={1.5} />
+          <span style={{ fontSize: 14, fontWeight: 500 }}>
+            Upload movie poster
+          </span>
+          <span style={{ fontSize: 12, opacity: 0.7 }}>
+            Recommended: 2:3 aspect ratio
+          </span>
+        </button>
+      </div>
+      {/* Buttons */}
+      <div style={{ display: "flex", gap: 12 }}>
+        <button
+          onClick={onClose}
+          style={{
+            flex: 1,
+            padding: "12px 0",
+            borderRadius: 12,
+            border: "none",
+            background: `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
+            color: "#1a1d24",
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.filter = "brightness(1.08)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.filter = "none";
+          }}
+        >
+          Create Promotion
+        </button>
+        <button
+          onClick={onClose}
+          style={{
+            flex: 1,
+            padding: "12px 0",
+            borderRadius: 12,
+            border: `1px solid ${C.border}`,
+            background: "transparent",
+            color: C.text,
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "rgba(201,169,97,0.5)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = C.border;
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
