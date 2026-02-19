@@ -176,7 +176,7 @@ export const artistAPI = {
   },
 
   getPromotions: async () => {
-    return fetchAPI('/opportunities');
+    return fetchAPI('/promotions');
   },
 
   getPayments: async () => {
@@ -246,7 +246,7 @@ export const hirerAPI = {
   },
 
   getPromotions: async () => {
-    return fetchAPI('/hirer/opportunities');
+    return fetchAPI('/promotions');
   },
 
   getBookings: async () => {

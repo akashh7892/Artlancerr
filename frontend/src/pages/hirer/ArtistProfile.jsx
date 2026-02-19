@@ -22,9 +22,10 @@ import {
   CalendarDays,
   Award,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import HirerSidebar from "./HirerSidebar";
+import { hirerAPI } from "../../services/api";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -168,6 +169,81 @@ const FALLBACK_ARTIST = {
 };
 
 // ─── Category icon/color maps ─────────────────────────────────────────────────
+const parseBookedDays = (blockedDates = []) => {
+  if (!Array.isArray(blockedDates)) return [];
+  const days = blockedDates
+    .map((d) => {
+      const date = new Date(d);
+      return Number.isNaN(date.getTime()) ? null : date.getDate();
+    })
+    .filter((d) => Number.isInteger(d) && d > 0 && d < 32);
+  return [...new Set(days)];
+};
+
+const asMoney = (value, fallback) => {
+  if (value === null || value === undefined) return fallback;
+  const s = String(value).trim();
+  if (!s) return fallback;
+  return s.startsWith("$") ? s : `$${s}`;
+};
+
+const mapPortfolioItem = (item) => ({
+  title: item?.title || item?.projectName || "Portfolio Work",
+  type: item?.category || item?.workType || "Project",
+  thumb:
+    item?.thumbnailUrl ||
+    item?.mediaUrl ||
+    "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&fit=crop",
+});
+
+const mapEquipmentItem = (item, idx) => ({
+  id: item?._id || item?.id || `eq-${idx}`,
+  name: item?.name || "Equipment",
+  model: item?.model || "",
+  category: item?.category || "Other",
+  rental: item?.rental || "",
+  available: item?.rentalOn !== false,
+  img: item?.img || null,
+});
+
+const mapArtistProfile = (apiArtist, fallback = FALLBACK_ARTIST) => {
+  const blockedDates = apiArtist?.availability?.blockedDates || [];
+  const freeDates = apiArtist?.availability?.freeDates || [];
+  const dailyRate = asMoney(apiArtist?.rates?.daily, fallback.dailyRate || "$500");
+  const weeklyRate = asMoney(apiArtist?.rates?.weekly, fallback.weeklyRate || "$2500");
+
+  return {
+    ...fallback,
+    id: apiArtist?._id || fallback.id,
+    _id: apiArtist?._id || fallback._id,
+    name: apiArtist?.name || fallback.name,
+    role: apiArtist?.artCategory || fallback.role,
+    location: apiArtist?.location || fallback.location,
+    experience: apiArtist?.experience || fallback.experience,
+    photo: apiArtist?.avatar || fallback.photo,
+    bio: apiArtist?.bio || fallback.bio,
+    skills: [apiArtist?.artCategory || fallback.role].filter(Boolean),
+    reviews: Math.max(0, apiArtist?.profileViews || fallback.reviews || 0),
+    projects: Math.max(1, Math.floor((apiArtist?.profileViews || 0) / 10)),
+    available: Array.isArray(freeDates) ? freeDates.length > 0 : fallback.available,
+    dailyRate,
+    weeklyRate,
+    projectRate: apiArtist?.rates?.project || fallback.projectRate || "Negotiable",
+    bookedDates: parseBookedDays(blockedDates),
+    equipment: Array.isArray(apiArtist?.equipment)
+      ? apiArtist.equipment.map(mapEquipmentItem)
+      : fallback.equipment,
+    portfolio: Array.isArray(apiArtist?.portfolio)
+      ? apiArtist.portfolio.map(mapPortfolioItem)
+      : fallback.portfolio,
+    topRated: (apiArtist?.profileViews || 0) > 100 || fallback.topRated,
+    website: apiArtist?.website || fallback.website,
+    instagram: apiArtist?.instagram || fallback.instagram,
+    twitter: apiArtist?.twitter || fallback.twitter,
+    youtube: apiArtist?.youtube || fallback.youtube,
+  };
+};
+
 const CAT_ICONS = {
   Camera,
   Lens: Package,
@@ -1034,12 +1110,55 @@ export default function ArtistProfile() {
   const { id } = useParams();
   const { state } = useLocation();
 
-  const artist = state?.artist || FALLBACK_ARTIST;
+  const initialArtist = useMemo(
+    () => ({ ...FALLBACK_ARTIST, ...(state?.artist || {}) }),
+    [state],
+  );
+  const [artist, setArtist] = useState(initialArtist);
+  const [loadingProfile, setLoadingProfile] = useState(Boolean(id));
+  const [profileError, setProfileError] = useState("");
 
   const [activeRate, setActiveRate] = useState("Daily Rate");
   const [saved, setSaved] = useState(false);
   const [coverErr, setCoverErr] = useState(false);
   const [photoErr, setPhotoErr] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProfile = async () => {
+      if (!id) {
+        setLoadingProfile(false);
+        return;
+      }
+
+      try {
+        setLoadingProfile(true);
+        setProfileError("");
+        const data = await hirerAPI.getArtistProfile(id);
+        if (mounted) {
+          setArtist(mapArtistProfile(data, initialArtist));
+        }
+      } catch (error) {
+        if (mounted) {
+          setProfileError(error.message || "Could not load artist profile");
+        }
+      } finally {
+        if (mounted) setLoadingProfile(false);
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, initialArtist]);
+
+  useEffect(() => {
+    setCoverErr(false);
+    setPhotoErr(false);
+  }, [artist.photo, artist.coverPhoto]);
 
   const rateValue = {
     "Daily Rate": artist.dailyRate || "$800",
@@ -1171,6 +1290,36 @@ export default function ArtistProfile() {
               }}
             >
               {/* ── Profile Card ─────────────────────────────── */}
+              {loadingProfile && (
+                <div
+                  style={{
+                    marginTop: "14px",
+                    marginBottom: "12px",
+                    color: C.muted,
+                    fontSize: "13px",
+                  }}
+                >
+                  Loading latest artist profile...
+                </div>
+              )}
+
+              {profileError && (
+                <div
+                  style={{
+                    marginTop: "14px",
+                    marginBottom: "12px",
+                    padding: "10px 12px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(239,68,68,0.25)",
+                    background: "rgba(239,68,68,0.08)",
+                    color: "#fca5a5",
+                    fontSize: "13px",
+                  }}
+                >
+                  {profileError}
+                </div>
+              )}
+
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

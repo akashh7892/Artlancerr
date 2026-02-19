@@ -168,7 +168,7 @@ router.get('/nearby-artists', async (req, res) => {
     const skip = (page - 1) * limit;
 
     const artists = await Artist.find(query)
-      .select('name username avatar location bio artCategory profileViews')
+      .select('name username avatar location bio artCategory experience rates availability equipment profileViews')
       .skip(skip)
       .limit(Number(limit));
 

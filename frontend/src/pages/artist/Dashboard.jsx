@@ -180,7 +180,7 @@ export default function Dashboard() {
                 fontFamily: "'Playfair Display', serif",
               }}
             >
-              Welcome back, Alex! <span>👋</span>
+              Welcome back <span>👋</span>
             </h1>
             <p className="text-[14px]" style={{ color: C.lightText }}>
               Here's what's happening with your profile

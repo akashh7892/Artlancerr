@@ -21,7 +21,7 @@ const promotionSchema = new mongoose.Schema({
   // Target (artist or hirer)
   targetType: {
     type: String,
-    enum: ['artist', 'hirer'],
+    enum: ['Artist', 'Hirer'],
     required: true
   },
   // Reference to target

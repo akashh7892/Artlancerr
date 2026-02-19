@@ -15,6 +15,7 @@ const messageRoutes = require('./routes/messages');
 const paymentRoutes = require('./routes/payments');
 const categoryRoutes = require('./routes/categories');
 const dashboardRoutes = require('./routes/dashboard');
+const promotionRoutes = require('./routes/promotions');
 
 const app = express();
 
@@ -22,7 +23,19 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS not allowed for this origin'));
+  }
+}));
 app.use(express.json());
 
 // Routes
@@ -35,6 +48,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/promotions', promotionRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -3,6 +3,7 @@ const router = express.Router();
 const Application = require('../models/Application');
 const Opportunity = require('../models/Opportunity');
 const { protect } = require('../middleware/auth');
+const { Types } = require('mongoose');
 
 // @route   POST /api/applications
 // @desc    Apply to an opportunity
@@ -17,6 +18,10 @@ router.post('/', protect, async (req, res) => {
 
     if (!opportunityId) {
       return res.status(400).json({ message: 'Opportunity ID is required' });
+    }
+
+    if (!Types.ObjectId.isValid(opportunityId)) {
+      return res.status(400).json({ message: 'Invalid opportunity id' });
     }
 
     // Check if opportunity exists

@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const Artist = require('../models/Artist');
 const Hirer = require('../models/Hirer');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'artlancing-secret-key-2024';
+
 // Protect routes - verify JWT token
 const protect = async (req, res, next) => {
   let token;
@@ -9,7 +11,7 @@ const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET);
       
       // Check if user is Artist or Hirer
       let user;
@@ -41,7 +43,7 @@ const protect = async (req, res, next) => {
 const generateToken = (id, userType) => {
   return jwt.sign(
     { id, userType },
-    process.env.JWT_SECRET || 'artlancing-secret-key-2024',
+    JWT_SECRET,
     { expiresIn: '30d' }
   );
 };
@@ -53,7 +55,7 @@ const optionalAuth = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'artlancing-secret-key-2024');
+      const decoded = jwt.verify(token, JWT_SECRET);
       
       let user = await Artist.findById(decoded.id).select('-password');
       

@@ -6,6 +6,7 @@ const Application = require('../models/Application');
 const Task = require('../models/Task');
 const Payment = require('../models/Payment');
 const { protect } = require('../middleware/auth');
+const { Types } = require('mongoose');
 
 // @route   GET /api/hirer/profile
 // @desc    Get current hirer's profile
@@ -97,8 +98,43 @@ router.post('/opportunity', protect, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    const {
+      title,
+      type,
+      description,
+      location,
+      budget,
+      duration,
+      startDate,
+      maxSlots,
+      availableSlots,
+      budgetMin,
+      budgetMax
+    } = req.body;
+
+    if (!title || !type || !description || !location || !budget || !duration) {
+      return res.status(400).json({ message: 'Missing required opportunity fields' });
+    }
+
+    const safeMaxSlots = Number(maxSlots) || 1;
+    const safeAvailableSlots = Number(availableSlots) || safeMaxSlots;
+    if (safeAvailableSlots > safeMaxSlots) {
+      return res.status(400).json({ message: 'Available slots cannot exceed max slots' });
+    }
+
     const opportunity = await Opportunity.create({
       ...req.body,
+      title: String(title).trim(),
+      type: String(type).trim(),
+      description: String(description).trim(),
+      location: String(location).trim(),
+      budget: String(budget).trim(),
+      duration: String(duration).trim(),
+      startDate: startDate || undefined,
+      maxSlots: safeMaxSlots,
+      availableSlots: safeAvailableSlots,
+      budgetMin: Number(budgetMin) || 0,
+      budgetMax: Number(budgetMax) || 0,
       hirer: req.user._id,
       company: req.user.companyName || req.user.name
     });

@@ -160,8 +160,16 @@ const categoryFromArt = (artCategory = "") => {
   return "Acting";
 };
 
+const formatRate = (value, fallback) => {
+  if (!value) return fallback;
+  const s = String(value).trim();
+  if (!s) return fallback;
+  return s.startsWith("$") ? s : `$${s}`;
+};
+
 const mapArtist = (artist) => ({
   id: artist._id,
+  _id: artist._id,
   name: artist.name || "Artist",
   role: artist.artCategory || "Artist",
   location: artist.location || "Unknown",
@@ -169,14 +177,19 @@ const mapArtist = (artist) => ({
   rating: 4.8,
   reviews: Math.max(5, artist.profileViews || 0),
   photo: artist.avatar || "",
-  skills: [artist.artCategory || "Artist"],
+  skills: [artist.artCategory || "Artist"].filter(Boolean),
   category: categoryFromArt(artist.artCategory),
-  available: true,
+  available:
+    Array.isArray(artist?.availability?.freeDates) &&
+    artist.availability.freeDates.length > 0
+      ? true
+      : !Array.isArray(artist?.availability?.blockedDates),
   bio: artist.bio || "",
   projects: Math.max(1, Math.floor((artist.profileViews || 0) / 10)),
   responseTime: "Within 24 hours",
-  dailyRate: "$500",
-  weeklyRate: "$2500",
+  dailyRate: formatRate(artist?.rates?.daily, "$500"),
+  weeklyRate: formatRate(artist?.rates?.weekly, "$2500"),
+  projectRate: artist?.rates?.project || "Negotiable",
 });
 
 // ─── Filter Drawer ────────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
 const { protect } = require('../middleware/auth');
+const { Types } = require('mongoose');
 
 // @route   GET /api/messages
 // @desc    Get user's conversations
@@ -118,12 +119,27 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ message: 'Receiver and content are required' });
     }
 
+    if (!Types.ObjectId.isValid(receiverId)) {
+      return res.status(400).json({ message: 'Invalid receiver id' });
+    }
+    if (opportunityId && !Types.ObjectId.isValid(opportunityId)) {
+      return res.status(400).json({ message: 'Invalid opportunity id' });
+    }
+    if (applicationId && !Types.ObjectId.isValid(applicationId)) {
+      return res.status(400).json({ message: 'Invalid application id' });
+    }
+
+    const safeContent = String(content || '').trim();
+    if (!safeContent) {
+      return res.status(400).json({ message: 'Message content cannot be empty' });
+    }
+
     const message = await Message.create({
       sender: req.user._id,
       senderModel: req.userType,
       receiver: receiverId,
       receiverModel: receiverModel || (req.userType === 'Artist' ? 'Hirer' : 'Artist'),
-      content,
+      content: safeContent,
       opportunity: opportunityId,
       application: applicationId
     });

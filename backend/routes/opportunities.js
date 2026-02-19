@@ -3,6 +3,7 @@ const router = express.Router();
 const Opportunity = require('../models/Opportunity');
 const Application = require('../models/Application');
 const { protect, optionalAuth } = require('../middleware/auth');
+const { Types } = require('mongoose');
 
 // @route   GET /api/opportunities
 // @desc    Get all opportunities (with filters)
@@ -111,6 +112,10 @@ router.get('/categories/list', (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid opportunity id' });
+    }
+
     const opportunity = await Opportunity.findById(req.params.id)
       .populate('hirer', 'name companyName avatar location');
 
@@ -130,6 +135,10 @@ router.get('/:id', async (req, res) => {
 // @access  Private (Hirer only)
 router.put('/:id', protect, async (req, res) => {
   try {
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid opportunity id' });
+    }
+
     const opportunity = await Opportunity.findById(req.params.id);
 
     if (!opportunity) {
@@ -158,6 +167,10 @@ router.put('/:id', protect, async (req, res) => {
 // @access  Private (Hirer only)
 router.delete('/:id', protect, async (req, res) => {
   try {
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid opportunity id' });
+    }
+
     const opportunity = await Opportunity.findById(req.params.id);
 
     if (!opportunity) {

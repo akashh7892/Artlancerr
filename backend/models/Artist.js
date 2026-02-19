@@ -180,6 +180,9 @@ artistSchema.methods.getPublicProfile = function() {
     twitter: this.twitter,
     youtube: this.youtube,
     website: this.website,
+    rates: this.rates,
+    availability: this.availability,
+    equipment: this.equipment,
     profileViews: this.profileViews,
     createdAt: this.createdAt
   };
