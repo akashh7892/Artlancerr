@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
   User,
@@ -21,6 +21,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import HirerSidebar from "./HirerSidebar";
+import { getUser, hirerAPI, setUser } from "../../services/api";
 
 // ─── Color tokens (matching dashboard) ────────────────────────
 const C = {
@@ -225,12 +226,84 @@ export default function HirerSettings() {
     showOnlineStatus: true,
   });
 
+  useEffect(() => {
+    const localUser = getUser();
+    if (localUser) {
+      const parts = (localUser.name || "").split(" ");
+      const firstName = parts[0] || "";
+      const lastName = parts.slice(1).join(" ") || "";
+      setProfile((prev) => ({
+        ...prev,
+        firstName: firstName || prev.firstName,
+        lastName: lastName || prev.lastName,
+        email: localUser.email || prev.email,
+      }));
+    }
+
+    (async () => {
+      try {
+        const data = await hirerAPI.getProfile();
+        const parts = (data.name || "").split(" ");
+        setProfile((prev) => ({
+          ...prev,
+          firstName: parts[0] || prev.firstName,
+          lastName: parts.slice(1).join(" ") || prev.lastName,
+          email: data.email || prev.email,
+          phone: data.phone || "",
+          company: data.companyName || "",
+          website: data.companyWebsite || "",
+          bio: data.bio || "",
+          location: data.location || "",
+        }));
+      } catch (error) {
+        console.error("Failed to load hirer profile", error);
+      }
+    })();
+  }, []);
+
   const handleSave = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    try {
+      if (activeTab === "profile") {
+        const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+        const updated = await hirerAPI.updateProfile({
+          name: fullName,
+          companyName: profile.company,
+          phone: profile.phone,
+          location: profile.location,
+          bio: profile.bio,
+          companyWebsite: profile.website,
+        });
+        const localUser = getUser();
+        if (localUser) {
+          setUser({
+            ...localUser,
+            name: updated?.name || fullName,
+            email: updated?.email || localUser.email,
+          });
+        }
+      }
+      if (activeTab === "notifications") {
+        await hirerAPI.updateProfile({
+          notifications: {
+            emailMessages: notif.artistMessages,
+            emailPayments: notif.paymentAlerts,
+            emailApplications: notif.newApplications,
+            weeklyDigest: notif.weeklyDigest,
+            marketingEmails: notif.marketingEmails,
+            pushMessages: notif.pushEnabled,
+            pushApplications: notif.projectUpdates,
+            pushPayments: notif.paymentAlerts,
+          },
+        });
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (error) {
+      console.error("Save settings failed", error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const patchProfile = (key, val) => setProfile((p) => ({ ...p, [key]: val }));

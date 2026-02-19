@@ -14,6 +14,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import HirerSidebar from "./HirerSidebar";
+import { hirerAPI } from "../../services/api";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -225,6 +226,8 @@ export default function PostRequirement() {
     availableSlots: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const set = (key) => (e) =>
     setFormData((prev) => ({
@@ -232,11 +235,62 @@ export default function PostRequirement() {
       [key]: typeof e === "string" ? e : e.target.value,
     }));
 
-  const handleSubmit = (e) => {
+  const parseBudgetRange = (budget) => {
+    const nums = String(budget || "")
+      .replace(/,/g, "")
+      .match(/\d+(\.\d+)?/g)
+      ?.map((n) => Number(n));
+
+    if (!nums || nums.length === 0) {
+      return { min: 0, max: 0 };
+    }
+
+    if (nums.length === 1) {
+      return { min: nums[0], max: nums[0] };
+    }
+
+    return { min: Math.min(...nums), max: Math.max(...nums) };
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    try {
+      const { min, max } = parseBudgetRange(formData.budget);
+      await hirerAPI.postOpportunity({
+        title: formData.title,
+        type: formData.type,
+        description: formData.description,
+        location: formData.location,
+        budget: formData.budget,
+        budgetMin: min,
+        budgetMax: max,
+        duration: formData.duration,
+        startDate: formData.startDate || undefined,
+        maxSlots: Number(formData.maxSlots),
+        availableSlots: Number(formData.availableSlots),
+      });
+
+      setSubmitted(true);
+      setFormData({
+        title: "",
+        type: "",
+        description: "",
+        location: "",
+        budget: "",
+        duration: "",
+        startDate: "",
+        maxSlots: "",
+        availableSlots: "",
+      });
+      setTimeout(() => setSubmitted(false), 3000);
+    } catch (error) {
+      setSubmitError(error.message || "Could not post requirement");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -479,6 +533,7 @@ export default function PostRequirement() {
                       }}
                       whileTap={{ scale: 0.98 }}
                       type="submit"
+                      disabled={isSubmitting}
                       style={{
                         width: "100%",
                         padding: "13px",
@@ -498,6 +553,7 @@ export default function PostRequirement() {
                         justifyContent: "center",
                         gap: "8px",
                         transition: "background 0.35s, box-shadow 0.2s",
+                        opacity: isSubmitting ? 0.75 : 1,
                       }}
                     >
                       {submitted ? (
@@ -505,6 +561,8 @@ export default function PostRequirement() {
                           <CheckCircle size={16} />
                           Requirement Posted!
                         </>
+                      ) : isSubmitting ? (
+                        <>Posting...</>
                       ) : (
                         <>
                           <FileText size={16} />
@@ -512,6 +570,12 @@ export default function PostRequirement() {
                         </>
                       )}
                     </motion.button>
+
+                    {submitError && (
+                      <p style={{ color: "#f87171", margin: 0, fontSize: "13px" }}>
+                        {submitError}
+                      </p>
+                    )}
                   </div>
                 </form>
               </motion.div>

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { authAPI } from "../../services/api";
 
 export default function Signup() {
   const { role } = useParams(); // Get role from URL
@@ -13,7 +14,18 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setFormData({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
+    setError("");
+  }, [role]);
 
   const handleChange = (e) => {
     setFormData({
@@ -24,17 +36,21 @@ export default function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Signup data:", { ...formData, role });
+      await authAPI.signup({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role,
+      });
 
-      // After successful signup, go to login for the same role
-      navigate(`/auth/${role}/login`);
+      navigate(`/${role}/dashboard`);
     } catch (error) {
       console.error("Signup failed:", error);
+      setError(error.message || "Signup failed");
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +68,15 @@ export default function Signup() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-xs sm:text-sm text-red-500 text-center">
+              {error}
+            </p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} autoComplete="off" className="space-y-3 sm:space-y-4">
           {/* Full Name */}
           <div>
             <label className="block text-xs sm:text-sm font-light text-[#808590] mb-1 sm:mb-2">
@@ -84,6 +108,7 @@ export default function Signup() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                autoComplete="off"
                 required
                 className="w-full bg-transparent border border-[#5f5641] rounded-lg py-2 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-sm sm:text-base text-[#e2e3e5] placeholder-[#808590]/50 focus:outline-none focus:border-[#c9a961] transition-colors font-light"
                 placeholder="you@example.com"
@@ -103,6 +128,7 @@ export default function Signup() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
+                autoComplete="new-password"
                 required
                 minLength={8}
                 className="w-full bg-transparent border border-[#5f5641] rounded-lg py-2 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-12 text-sm sm:text-base text-[#e2e3e5] placeholder-[#808590]/50 focus:outline-none focus:border-[#c9a961] transition-colors font-light"
@@ -134,6 +160,7 @@ export default function Signup() {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                autoComplete="new-password"
                 required
                 minLength={8}
                 className="w-full bg-transparent border border-[#5f5641] rounded-lg py-2 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-12 text-sm sm:text-base text-[#e2e3e5] placeholder-[#808590]/50 focus:outline-none focus:border-[#c9a961] transition-colors font-light"

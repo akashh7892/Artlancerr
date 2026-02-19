@@ -707,7 +707,13 @@ export default function Opportunities() {
         );
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Failed to load");
-        setOpportunities(Array.isArray(data) ? data : MOCK_OPPORTUNITIES);
+        setOpportunities(
+          Array.isArray(data)
+            ? data
+            : Array.isArray(data?.opportunities)
+              ? data.opportunities
+              : MOCK_OPPORTUNITIES,
+        );
       } catch (err) {
         if (err.name === "AbortError") return;
         // API unavailable — keep showing mock data, no error banner
@@ -729,7 +735,7 @@ export default function Opportunities() {
   const handleApply = async (opportunityId) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/auth/login");
+      navigate("/auth/artist/login");
       return;
     }
     setApplyingId(opportunityId);

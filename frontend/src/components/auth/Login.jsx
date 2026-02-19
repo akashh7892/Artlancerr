@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router";
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { authAPI } from "../../services/api";
 
 export default function Login() {
   const { role } = useParams(); // Get role from URL
@@ -80,9 +81,11 @@ export default function Login() {
         localStorage.removeItem("rememberedEmail");
       }
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Login data:", { ...formData, role });
+      await authAPI.login({
+        email: formData.email,
+        password: formData.password,
+        role,
+      });
 
       // Redirect to the role-specific dashboard
       navigate(`/${role}/dashboard`);

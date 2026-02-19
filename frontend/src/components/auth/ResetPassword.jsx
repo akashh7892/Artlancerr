@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router";
 import { Lock, ArrowLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { authAPI } from "../../services/api";
 
 export default function ResetPassword() {
   const { role } = useParams(); // Get role from URL
@@ -12,9 +13,11 @@ export default function ResetPassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || "";
+  const resetToken = location.state?.resetToken || "";
 
   const handleChange = (e) => {
     setFormData({
@@ -26,11 +29,14 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
     try {
-      // Simulate API call to reset password
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Password reset for:", email, "role:", role);
+      if (!resetToken) {
+        throw new Error("Missing reset token. Please restart password recovery.");
+      }
+
+      await authAPI.resetPassword(resetToken, formData.password);
       setIsSuccess(true);
 
       // Navigate to login after 2 seconds
@@ -39,6 +45,7 @@ export default function ResetPassword() {
       }, 2000);
     } catch (error) {
       console.error("Password reset failed:", error);
+      setError(error.message || "Password reset failed");
     } finally {
       setIsLoading(false);
     }
@@ -226,6 +233,8 @@ export default function ResetPassword() {
             <span className="absolute inset-0 bg-[#5f5641] transform scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100"></span>
           </button>
         </form>
+
+        {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       </div>
 
       <style jsx="true">{`

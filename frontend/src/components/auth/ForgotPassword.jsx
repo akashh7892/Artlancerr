@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router";
 import { Mail, ArrowLeft, ArrowRight } from "lucide-react";
+import { authAPI } from "../../services/api";
 
 export default function ForgotPassword() {
   const { role } = useParams(); // Get role from URL
@@ -40,9 +41,7 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      // Simulate API call to send OTP
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("OTP sent to:", email, "for role:", role);
+      await authAPI.forgotPassword(email);
       setIsSubmitted(true);
 
       // Navigate to OTP verification with email and role

@@ -11,9 +11,10 @@ import {
   ChevronDown,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import HirerSidebar from "./HirerSidebar";
+import { hirerAPI } from "../../services/api";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -148,6 +149,35 @@ const MOCK_ARTISTS = [
 ];
 
 const FILTERS = ["All", "Acting", "Dance", "Cinematography", "Makeup", "Music"];
+
+const categoryFromArt = (artCategory = "") => {
+  const v = artCategory.toLowerCase();
+  if (v.includes("actor") || v.includes("actress")) return "Acting";
+  if (v.includes("dance") || v.includes("choreography")) return "Dance";
+  if (v.includes("cinemat")) return "Cinematography";
+  if (v.includes("makeup")) return "Makeup";
+  if (v.includes("composer") || v.includes("music")) return "Music";
+  return "Acting";
+};
+
+const mapArtist = (artist) => ({
+  id: artist._id,
+  name: artist.name || "Artist",
+  role: artist.artCategory || "Artist",
+  location: artist.location || "Unknown",
+  experience: artist.experience || "1 year",
+  rating: 4.8,
+  reviews: Math.max(5, artist.profileViews || 0),
+  photo: artist.avatar || "",
+  skills: [artist.artCategory || "Artist"],
+  category: categoryFromArt(artist.artCategory),
+  available: true,
+  bio: artist.bio || "",
+  projects: Math.max(1, Math.floor((artist.profileViews || 0) / 10)),
+  responseTime: "Within 24 hours",
+  dailyRate: "$500",
+  weeklyRate: "$2500",
+});
 
 // ─── Filter Drawer ────────────────────────────────────────────────────────────
 function FilterDrawer({
@@ -697,6 +727,8 @@ function ArtistCard({ artist, index, onView, onMessage }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function BrowseArtist() {
   const navigate = useNavigate();
+  const [artists, setArtists] = useState(MOCK_ARTISTS);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -705,7 +737,28 @@ export default function BrowseArtist() {
   const [availability, setAvailability] = useState("all");
   const [searchFocused, setSearchFocused] = useState(false);
 
-  const filteredArtists = MOCK_ARTISTS.filter((a) => {
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setIsLoading(true);
+        const data = await hirerAPI.getArtists();
+        const list = Array.isArray(data?.artists) ? data.artists : [];
+        if (mounted && list.length > 0) {
+          setArtists(list.map(mapArtist));
+        }
+      } catch (err) {
+        console.error("Failed to load artists, using fallback data", err);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filteredArtists = artists.filter((a) => {
     const matchSearch =
       a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       a.role.toLowerCase().includes(searchQuery.toLowerCase());
@@ -921,7 +974,20 @@ export default function BrowseArtist() {
               </motion.div>
 
               {/* ── Grid ─────────────────────────────────────── */}
-              {filteredArtists.length === 0 ? (
+              {isLoading ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{
+                    textAlign: "center",
+                    padding: "80px 20px",
+                    color: C.muted,
+                    fontSize: "15px",
+                  }}
+                >
+                  Loading artists...
+                </motion.div>
+              ) : filteredArtists.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -945,11 +1011,11 @@ export default function BrowseArtist() {
                 >
                   {filteredArtists.map((artist, i) => (
                     <ArtistCard
-                      key={artist.id}
+                      key={artist.id || artist._id}
                       artist={artist}
                       index={i}
                       onView={(a) =>
-                        navigate(`/hirer/browse-artists/${a.id}`, {
+                        navigate(`/hirer/browse-artists/${a.id || a._id}`, {
                           state: { artist: a },
                         })
                       }

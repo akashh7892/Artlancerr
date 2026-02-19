@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
+import { authAPI } from "../../services/api";
 
 export default function VerifyOTP() {
   const { role } = useParams(); // Get role from URL
@@ -8,6 +9,7 @@ export default function VerifyOTP() {
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || "your email";
@@ -67,18 +69,18 @@ export default function VerifyOTP() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
     try {
-      // Simulate API call to verify OTP
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("OTP verified:", otp.join(""), "for role:", role);
+      const data = await authAPI.verifyOTP(email, otp.join(""));
 
       // Navigate to reset password with role
       navigate(`/auth/${role}/reset-password`, {
-        state: { email, otp: otp.join("") },
+        state: { email, resetToken: data.resetToken },
       });
     } catch (error) {
       console.error("OTP verification failed:", error);
+      setError(error.message || "OTP verification failed");
     } finally {
       setIsLoading(false);
     }
@@ -90,11 +92,10 @@ export default function VerifyOTP() {
     setOtp(["", "", "", "", "", ""]);
 
     try {
-      // Simulate resending OTP
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("OTP resent to:", email, "role:", role);
+      await authAPI.forgotPassword(email);
     } catch (error) {
       console.error("Failed to resend OTP:", error);
+      setError(error.message || "Failed to resend OTP");
     }
   };
 
@@ -187,6 +188,10 @@ export default function VerifyOTP() {
             <span className="absolute inset-0 bg-[#5f5641] transform scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100"></span>
           </button>
         </form>
+
+        {error && (
+          <p className="mt-3 text-center text-sm text-red-500">{error}</p>
+        )}
 
         {/* Help text */}
         <p className="mt-4 text-center text-xs sm:text-sm text-[#808590] font-light">

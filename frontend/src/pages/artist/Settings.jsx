@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import {
   ArrowLeft,
@@ -21,6 +21,7 @@ import {
   Shield,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
+import { artistAPI, authAPI, getUser, setUser } from "../../services/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -405,6 +406,44 @@ export default function ArtistSettings() {
     payoutSchedule: "Weekly (every Friday)",
   });
 
+  useEffect(() => {
+    const localUser = getUser();
+    if (localUser) {
+      setProfile((prev) => ({
+        ...prev,
+        name: localUser.name || prev.name,
+        email: localUser.email || prev.email,
+      }));
+    }
+
+    (async () => {
+      try {
+        const data = await artistAPI.getProfile();
+        setProfile((prev) => ({
+          ...prev,
+          name: data.name || prev.name,
+          username: data.username || prev.username,
+          email: data.email || prev.email,
+          phone: data.phone || "",
+          location: data.location || "",
+          bio: data.bio || "",
+          website: data.website || "",
+          instagram: data.instagram || "",
+          twitter: data.twitter || "",
+          youtube: data.youtube || "",
+          avatar: data.avatar || null,
+          artCategory: data.artCategory || prev.artCategory,
+          experience: data.experience || prev.experience,
+        }));
+        if (data.notifications) {
+          setNotifications((prev) => ({ ...prev, ...data.notifications }));
+        }
+      } catch (error) {
+        console.error("Failed to load artist profile", error);
+      }
+    })();
+  }, []);
+
   const showToast = (msg) => {
     setToast({ visible: true, message: msg });
     setTimeout(() => setToast({ visible: false, message: "" }), 3000);
@@ -420,8 +459,48 @@ export default function ArtistSettings() {
   const handleUpdatePayment = (k, v) => setPayment((p) => ({ ...p, [k]: v }));
 
   const handlePasswordSave = () => {
-    showToast("Password updated successfully");
-    setPasswords({ current: "", newPass: "", confirm: "" });
+    (async () => {
+      try {
+        await authAPI.changePassword(passwords.current, passwords.newPass);
+        showToast("Password updated successfully");
+        setPasswords({ current: "", newPass: "", confirm: "" });
+      } catch (error) {
+        showToast(error.message || "Could not update password");
+      }
+    })();
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      if (activeTab === "profile") {
+        const updated = await artistAPI.updateProfile({
+          name: profile.name,
+          username: profile.username,
+          phone: profile.phone,
+          location: profile.location,
+          bio: profile.bio,
+          website: profile.website,
+          instagram: profile.instagram,
+          twitter: profile.twitter,
+          youtube: profile.youtube,
+          artCategory: profile.artCategory,
+          experience: profile.experience,
+        });
+        const localUser = getUser();
+        if (localUser) {
+          setUser({
+            ...localUser,
+            name: updated?.name || profile.name,
+            email: updated?.email || localUser.email,
+          });
+        }
+      } else if (activeTab === "notifications") {
+        await artistAPI.updateProfile({ notifications });
+      }
+      showToast("Settings saved successfully");
+    } catch (error) {
+      showToast(error.message || "Failed to save settings");
+    }
   };
 
   const isPasswordSaveDisabled =
@@ -1341,7 +1420,7 @@ export default function ArtistSettings() {
               {activeTab !== "security" && (
                 <div className="flex justify-end pt-2 pb-8">
                   <button
-                    onClick={() => showToast("Settings saved successfully")}
+                    onClick={handleSaveChanges}
                     className="px-8 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
                     style={{ background: COLORS.gold, color: "#1a1d24" }}
                     onMouseEnter={(e) =>
