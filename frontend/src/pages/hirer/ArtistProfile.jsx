@@ -27,7 +27,7 @@ import { useNavigate, useParams, useLocation } from "react-router";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Design Tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -47,15 +47,16 @@ const C = {
   dangerBorder: "rgba(239,68,68,0.2)",
 };
 
-// ─── Fallback Data ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Fallback Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const FALLBACK_ARTIST = {
   id: 1,
   name: "Sarah Johnson",
   role: "Cinematographer",
   location: "Los Angeles, CA",
   experience: "8 years",
-  rating: 4.9,
-  reviews: 127,
+  rating: null,
+  reviewCount: 0,
+  profileViews: 0,
   photo:
     "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&fit=crop",
   coverPhoto:
@@ -114,61 +115,11 @@ const FALLBACK_ARTIST = {
       img: null,
     },
   ],
-  portfolio: [
-    {
-      title: "Cinematic Short – 'Echoes'",
-      type: "Film",
-      thumb:
-        "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&fit=crop",
-    },
-    {
-      title: "Brand Campaign – Nike",
-      type: "Commercial",
-      thumb:
-        "https://images.unsplash.com/photo-1533561052604-c3beb6d55b8d?w=400&fit=crop",
-    },
-    {
-      title: "Documentary – 'City Pulse'",
-      type: "Documentary",
-      thumb:
-        "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&fit=crop",
-    },
-    {
-      title: "Music Video – Indie Artist",
-      type: "Music Video",
-      thumb:
-        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&fit=crop",
-    },
-  ],
-  reviews_list: [
-    {
-      name: "James Carter",
-      photo:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop",
-      rating: 5,
-      date: "Nov 2024",
-      text: "Incredible work on our film. Brought a cinematic vision that exceeded our expectations.",
-    },
-    {
-      name: "Priya Sharma",
-      photo:
-        "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&fit=crop",
-      rating: 5,
-      date: "Oct 2024",
-      text: "Professional, creative, and delivers on time. Will hire again without hesitation.",
-    },
-    {
-      name: "Derek Wu",
-      photo:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&fit=crop",
-      rating: 4,
-      date: "Sep 2024",
-      text: "Great collaboration throughout. Minor scheduling hiccup but overall superb output.",
-    },
-  ],
+  portfolio: [],
+  reviews_list: [],
 };
 
-// ─── Category icon/color maps ─────────────────────────────────────────────────
+// â”€â”€â”€ Category icon/color maps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const parseBookedDays = (blockedDates = []) => {
   if (!Array.isArray(blockedDates)) return [];
   const days = blockedDates
@@ -190,10 +141,7 @@ const asMoney = (value, fallback) => {
 const mapPortfolioItem = (item) => ({
   title: item?.title || item?.projectName || "Portfolio Work",
   type: item?.category || item?.workType || "Project",
-  thumb:
-    item?.thumbnailUrl ||
-    item?.mediaUrl ||
-    "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&fit=crop",
+  thumb: item?.thumbnailUrl || item?.mediaUrl || null,
 });
 
 const mapEquipmentItem = (item, idx) => ({
@@ -209,6 +157,18 @@ const mapEquipmentItem = (item, idx) => ({
 const mapArtistProfile = (apiArtist, fallback = FALLBACK_ARTIST) => {
   const blockedDates = apiArtist?.availability?.blockedDates || [];
   const freeDates = apiArtist?.availability?.freeDates || [];
+  const profileViews = Number(apiArtist?.profileViews || 0);
+  const backendReviews = Array.isArray(apiArtist?.reviews) ? apiArtist.reviews : [];
+  const reviewCount = backendReviews.length;
+  const avgRating =
+    reviewCount > 0
+      ? Number(
+          (
+            backendReviews.reduce((sum, r) => sum + Number(r?.rating || 0), 0) /
+            reviewCount
+          ).toFixed(1),
+        )
+      : null;
   const dailyRate = asMoney(apiArtist?.rates?.daily, fallback.dailyRate || "$500");
   const weeklyRate = asMoney(apiArtist?.rates?.weekly, fallback.weeklyRate || "$2500");
 
@@ -223,8 +183,10 @@ const mapArtistProfile = (apiArtist, fallback = FALLBACK_ARTIST) => {
     photo: apiArtist?.avatar || fallback.photo,
     bio: apiArtist?.bio || fallback.bio,
     skills: [apiArtist?.artCategory || fallback.role].filter(Boolean),
-    reviews: Math.max(0, apiArtist?.profileViews || fallback.reviews || 0),
-    projects: Math.max(1, Math.floor((apiArtist?.profileViews || 0) / 10)),
+    rating: avgRating,
+    reviewCount,
+    profileViews,
+    projects: Math.max(1, Math.floor(profileViews / 10)),
     available: Array.isArray(freeDates) ? freeDates.length > 0 : fallback.available,
     dailyRate,
     weeklyRate,
@@ -236,6 +198,7 @@ const mapArtistProfile = (apiArtist, fallback = FALLBACK_ARTIST) => {
     portfolio: Array.isArray(apiArtist?.portfolio)
       ? apiArtist.portfolio.map(mapPortfolioItem)
       : fallback.portfolio,
+    reviews_list: backendReviews,
     topRated: (apiArtist?.profileViews || 0) > 100 || fallback.topRated,
     website: apiArtist?.website || fallback.website,
     instagram: apiArtist?.instagram || fallback.instagram,
@@ -277,7 +240,7 @@ const MONTHS = [
 ];
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-// ─── Section Card wrapper ─────────────────────────────────────────────────────
+// â”€â”€â”€ Section Card wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function SectionCard({ children, delay = 0 }) {
   return (
     <motion.div
@@ -324,7 +287,7 @@ function SectionTitle({ icon: Icon, children, subtitle }) {
   );
 }
 
-// ─── Stat Pill ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Stat Pill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function StatPill({ icon: Icon, label, value }) {
   return (
     <div
@@ -366,7 +329,7 @@ function StatPill({ icon: Icon, label, value }) {
   );
 }
 
-// ─── Rate Tab ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Rate Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function RateTab({ label, active, onClick }) {
   return (
     <button
@@ -388,7 +351,7 @@ function RateTab({ label, active, onClick }) {
   );
 }
 
-// ─── Portfolio Card ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Portfolio Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function PortfolioCard({ item }) {
   const [imgErr, setImgErr] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -480,7 +443,7 @@ function PortfolioCard({ item }) {
   );
 }
 
-// ─── Review Card ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Review Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ReviewCard({ review }) {
   const [imgErr, setImgErr] = useState(false);
   return (
@@ -558,7 +521,7 @@ function ReviewCard({ review }) {
   );
 }
 
-// ─── Availability Calendar (read-only for hirer) ──────────────────────────────
+// â”€â”€â”€ Availability Calendar (read-only for hirer) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function AvailabilityCalendar({ bookedDates = [] }) {
   const [current, setCurrent] = useState({ year: 2026, month: 1 });
   const bookedSet = new Set(bookedDates);
@@ -601,7 +564,7 @@ function AvailabilityCalendar({ bookedDates = [] }) {
     <SectionCard delay={0.2}>
       <SectionTitle
         icon={CalendarDays}
-        subtitle="Green = available · Red = booked by another project"
+        subtitle="Green = available Â· Red = booked by another project"
       >
         Availability Calendar
       </SectionTitle>
@@ -836,7 +799,7 @@ function AvailabilityCalendar({ bookedDates = [] }) {
   );
 }
 
-// ─── Equipment Section (read-only, with rent option) ─────────────────────────
+// â”€â”€â”€ Equipment Section (read-only, with rent option) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function EquipmentSection({ equipment = [] }) {
   const [selectedEquip, setSelectedEquip] = useState(null);
 
@@ -1068,7 +1031,7 @@ function EquipmentSection({ equipment = [] }) {
                       transition: "all 0.2s",
                     }}
                   >
-                    {isSelected ? "✓ Added to Booking" : "+ Add to Booking"}
+                    {isSelected ? "âœ“ Added to Booking" : "+ Add to Booking"}
                   </motion.button>
                 )}
               </div>
@@ -1104,7 +1067,7 @@ function EquipmentSection({ equipment = [] }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function ArtistProfile() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -1179,7 +1142,7 @@ export default function ArtistProfile() {
       <div className="flex-1 flex flex-col lg:ml-72">
         <main className="flex-1 overflow-auto">
           <div style={{ backgroundColor: C.bg, minHeight: "100vh" }}>
-            {/* ── Cover ────────────────────────────────────── */}
+            {/* â”€â”€ Cover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <div
               style={{
                 position: "relative",
@@ -1281,7 +1244,7 @@ export default function ArtistProfile() {
               </div>
             </div>
 
-            {/* ── Page content ─────────────────────────────── */}
+            {/* â”€â”€ Page content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <div
               style={{
                 maxWidth: "960px",
@@ -1289,7 +1252,7 @@ export default function ArtistProfile() {
                 padding: "0 clamp(14px, 3vw, 30px) 48px",
               }}
             >
-              {/* ── Profile Card ─────────────────────────────── */}
+              {/* â”€â”€ Profile Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               {loadingProfile && (
                 <div
                   style={{
@@ -1509,7 +1472,7 @@ export default function ArtistProfile() {
                   {[
                     {
                       icon: Star,
-                      text: `${artist.rating} (${artist.reviews} reviews)`,
+                      text: artist.rating ? `${artist.rating} (${artist.reviewCount} reviews)` : `${artist.profileViews} profile views`,
                       gold: true,
                     },
                     { icon: Briefcase, text: `${artist.projects} projects` },
@@ -1637,7 +1600,7 @@ export default function ArtistProfile() {
                 </div>
               </motion.div>
 
-              {/* ── Stats Pills ──────────────────────────────── */}
+              {/* â”€â”€ Stats Pills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <motion.div
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1652,7 +1615,7 @@ export default function ArtistProfile() {
                 <StatPill
                   icon={Star}
                   label="Rating"
-                  value={`${artist.rating} / 5.0`}
+                  value={artist.rating ? `${artist.rating} / 5.0` : "N/A"}
                 />
                 <StatPill
                   icon={Briefcase}
@@ -1676,30 +1639,45 @@ export default function ArtistProfile() {
                 />
               </motion.div>
 
-              {/* ── Portfolio ────────────────────────────────── */}
+              {/* â”€â”€ Portfolio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <SectionCard delay={0.14}>
                 <SectionTitle>Portfolio</SectionTitle>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fill, minmax(180px, 1fr))",
-                    gap: "12px",
-                  }}
-                >
-                  {(artist.portfolio || []).map((item, i) => (
-                    <PortfolioCard key={i} item={item} />
-                  ))}
-                </div>
+                {(artist.portfolio || []).length > 0 ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fill, minmax(180px, 1fr))",
+                      gap: "12px",
+                    }}
+                  >
+                    {(artist.portfolio || []).map((item, i) => (
+                      <PortfolioCard key={i} item={item} />
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      padding: "14px",
+                      borderRadius: "10px",
+                      border: `1px solid ${C.border}`,
+                      color: C.muted,
+                      fontSize: "13px",
+                      background: C.input,
+                    }}
+                  >
+                    No portfolio items published yet.
+                  </div>
+                )}
               </SectionCard>
 
-              {/* ── Availability Calendar ────────────────────── */}
+              {/* â”€â”€ Availability Calendar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <AvailabilityCalendar bookedDates={artist.bookedDates || []} />
 
-              {/* ── Equipment ────────────────────────────────── */}
+              {/* â”€â”€ Equipment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <EquipmentSection equipment={artist.equipment || []} />
 
-              {/* ── Reviews ──────────────────────────────────── */}
+              {/* â”€â”€ Reviews â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <SectionCard delay={0.3}>
                 <div
                   style={{
@@ -1738,10 +1716,10 @@ export default function ArtistProfile() {
                         color: C.gold,
                       }}
                     >
-                      {artist.rating}
+                      {artist.rating ? artist.rating : "N/A"}
                     </span>
                     <span style={{ fontSize: "11px", color: C.muted }}>
-                      · {artist.reviews} reviews
+                      · {artist.reviewCount} reviews
                     </span>
                   </div>
                 </div>
@@ -1752,13 +1730,28 @@ export default function ArtistProfile() {
                     gap: "12px",
                   }}
                 >
-                  {(artist.reviews_list || []).map((r, i) => (
-                    <ReviewCard key={i} review={r} />
-                  ))}
+                  {(artist.reviews_list || []).length > 0 ? (
+                    (artist.reviews_list || []).map((r, i) => (
+                      <ReviewCard key={i} review={r} />
+                    ))
+                  ) : (
+                    <div
+                      style={{
+                        padding: "14px",
+                        borderRadius: "10px",
+                        border: `1px solid ${C.border}`,
+                        color: C.muted,
+                        fontSize: "13px",
+                        background: C.input,
+                      }}
+                    >
+                      No verified reviews available yet.
+                    </div>
+                  )}
                 </div>
               </SectionCard>
 
-              {/* ── Sticky CTA footer ────────────────────────── */}
+              {/* â”€â”€ Sticky CTA footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1798,9 +1791,9 @@ export default function ArtistProfile() {
                     }}
                   >
                     {artist.available
-                      ? "✓ Available for projects"
+                      ? "âœ“ Available for projects"
                       : "Currently unavailable"}{" "}
-                    · {artist.dailyRate}/day
+                    Â· {artist.dailyRate}/day
                   </p>
                 </div>
                 <div style={{ display: "flex", gap: "10px" }}>
@@ -1867,3 +1860,4 @@ export default function ArtistProfile() {
     </div>
   );
 }
+
