@@ -176,63 +176,24 @@ export default function HirerSidebar() {
         </div>
       </aside>
 
-      {/* Top Navbar (Mobile & Tablet) */}
-      <header
-        className="sticky top-0 z-40 lg:hidden"
-        style={{
-          backgroundColor: "#2d3139",
-          borderBottom: "1px solid rgba(201, 169, 97, 0.1)",
-        }}
-      >
-        <div className="flex items-center justify-between px-4 py-4">
-          {/* Hamburger Menu Button */}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg transition-colors"
-            style={{ color: "#ffffff" }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor =
-                "rgba(201, 169, 97, 0.1)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "transparent")
-            }
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <Film className="w-6 h-6" style={{ color: "#c9a961" }} />
-            <span
-              className="text-lg font-semibold"
-              style={{ color: "#ffffff" }}
-            >
-              Artlancing
-            </span>
-            <span className="text-xs ml-2" style={{ color: "#9ca3af" }}>
-              Hirer Mode
-            </span>
-          </div>
-
-          {/* Right side actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate("/hirer")}
-              className="p-2 rounded-lg transition-colors"
-              style={{ color: "#ffffff" }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor =
-                  "rgba(201, 169, 97, 0.1)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = "transparent")
-              }
-            >
-              <LayoutDashboard className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
+      <header>
+        {/* Floating Hamburger Menu Button – Mobile & Tablet only */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="
+      fixed top-4 left-4 z-50 p-2 rounded-lg transition-colors
+      block lg:hidden
+    "
+          style={{ color: "#ffffff" }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "rgba(201, 169, 97, 0.2)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "transparent")
+          }
+        >
+          <Menu className="w-6 h-6" />
+        </button>
       </header>
 
       {/* Mobile/Tablet Sidebar Overlay */}
