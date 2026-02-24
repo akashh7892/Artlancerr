@@ -2,7 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import Landing from "./pages/Landing";
 import IntroFlow from "./pages/IntroFlow";
 
-// Auth components (role‑aware)
+// Auth components
 import Signup from "./components/auth/Signup";
 import Login from "./components/auth/Login";
 import ForgotPassword from "./components/auth/ForgotPassword";
@@ -40,17 +40,20 @@ function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/intro/:role" element={<IntroFlow />} />
 
-      {/* Auth role in URL */}
+      {/* Auth */}
       <Route path="/auth/:role/signup" element={<Signup />} />
       <Route path="/auth/:role/login" element={<Login />} />
       <Route path="/auth/:role/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/:role/verify-otp" element={<VerifyOTP />} />
       <Route path="/auth/:role/reset-password" element={<ResetPassword />} />
 
-      {/* Artist routes */}
+      {/* Artist Routes */}
       <Route path="/artist/dashboard" element={<Dashboard />} />
+
+      {/* ✅ Support BOTH singular and plural */}
       <Route path="/artist/message" element={<Messages />} />
       <Route path="/artist/messages" element={<Messages />} />
+
       <Route path="/artist/near-by-artists" element={<Nearbyartists />} />
       <Route
         path="/artist/near-by-artists/:id"
@@ -64,15 +67,18 @@ function App() {
       <Route path="/artist/promotion" element={<Promotions />} />
       <Route path="/artist/settings" element={<Settings />} />
 
-      {/* Hirer routes */}
+      {/* Hirer Routes */}
       <Route path="/hirer/dashboard" element={<HirerDashboard />} />
+      <Route path="/hirer/messages" element={<HirerMessages />} />
       <Route path="/hirer/settings" element={<HirerSettings />} />
       <Route path="/hirer/promotions" element={<HirerPromotions />} />
       <Route path="/hirer/post-requirement" element={<PostRequirement />} />
       <Route path="/hirer/browse-artists" element={<BrowseArtist />} />
-      <Route path="/hirer/browse-artists/:id" element={<ArtistProfile />} />
+      <Route
+        path="/hirer/browse-artists/:id"
+        element={<ArtistProfile />}
+      />
       <Route path="/hirer/bookings" element={<Booking />} />
-      <Route path="/hirer/messages" element={<HirerMessages />} />
       <Route path="/hirer/payments" element={<HirerPayment />} />
     </Routes>
   );

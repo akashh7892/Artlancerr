@@ -1,604 +1,239 @@
-import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import {
-  Search,
-  Paperclip,
-  Send,
-  MoreVertical,
-  ArrowLeft,
-  Check,
-  CheckCheck,
-} from "lucide-react";
-import Sidebar from "../../components/common/Sidebar";
-
-// ── Nearby artists mapped so their IDs match what ArtistNearby passes ──
-const NEARBY_ARTISTS_AS_CONVS = {
-  1: {
-    id: 101,
-    name: "Marcus Lee",
-    avatar: "ML",
-    online: true,
-    time: "Just now",
-    preview: "Start a conversation with Marcus Lee",
-    unread: 0,
-  },
-  2: {
-    id: 102,
-    name: "Alex Rivera",
-    avatar: "AR",
-    online: true,
-    time: "Just now",
-    preview: "Start a conversation with Alex Rivera",
-    unread: 0,
-  },
-  3: {
-    id: 103,
-    name: "Emma Chen",
-    avatar: "EC",
-    online: false,
-    time: "Just now",
-    preview: "Start a conversation with Emma Chen",
-    unread: 0,
-  },
-  4: {
-    id: 104,
-    name: "Jordan White",
-    avatar: "JW",
-    online: false,
-    time: "Just now",
-    preview: "Start a conversation with Jordan White",
-    unread: 0,
-  },
-  5: {
-    id: 105,
-    name: "Sofia Martinez",
-    avatar: "SM",
-    online: true,
-    time: "Just now",
-    preview: "Start a conversation with Sofia Martinez",
-    unread: 0,
-  },
-  6: {
-    id: 106,
-    name: "David Kim",
-    avatar: "DK",
-    online: false,
-    time: "Just now",
-    preview: "Start a conversation with David Kim",
-    unread: 0,
-  },
-  7: {
-    id: 107,
-    name: "Rachel Green",
-    avatar: "RG",
-    online: true,
-    time: "Just now",
-    preview: "Start a conversation with Rachel Green",
-    unread: 0,
-  },
-  8: {
-    id: 108,
-    name: "Michael Chen",
-    avatar: "MC",
-    online: false,
-    time: "Just now",
-    preview: "Start a conversation with Michael Chen",
-    unread: 0,
-  },
-};
-
-const BASE_CONVERSATIONS = [
-  {
-    id: 1,
-    name: "Paramount Studios",
-    avatar: "PS",
-    time: "30m ago",
-    preview: "We'd love to discuss the cinematog...",
-    unread: 2,
-    online: true,
-  },
-  {
-    id: 2,
-    name: "Warner Bros",
-    avatar: "WB",
-    time: "2h ago",
-    preview: "When are you available for the shoot",
-    unread: 0,
-    online: false,
-  },
-  {
-    id: 3,
-    name: "Netflix Originals",
-    avatar: "NO",
-    time: "1d ago",
-    preview: "Thanks for the quick response!",
-    unread: 0,
-    online: true,
-  },
-  {
-    id: 4,
-    name: "Disney Production",
-    avatar: "DP",
-    time: "2d ago",
-    preview: "Looking forward to our collaboration",
-    unread: 0,
-    online: false,
-  },
-];
-
-const BASE_MESSAGES = {
-  1: [
-    {
-      id: 1,
-      from: "them",
-      text: "Hi! We saw your portfolio and are very impressed.",
-      time: "1h ago",
-    },
-    {
-      id: 2,
-      from: "me",
-      text: "Thank you! I'd love to hear more about the opportunity.",
-      time: "45m ago",
-      read: true,
-    },
-    {
-      id: 3,
-      from: "them",
-      text: "We'd love to discuss the cinematography role.",
-      time: "30m ago",
-    },
-  ],
-  2: [
-    {
-      id: 1,
-      from: "them",
-      text: "Hey! We have an exciting project for you.",
-      time: "3h ago",
-    },
-    {
-      id: 2,
-      from: "me",
-      text: "Sounds great, tell me more!",
-      time: "2h ago",
-      read: true,
-    },
-    {
-      id: 3,
-      from: "them",
-      text: "When are you available for the shoot?",
-      time: "2h ago",
-    },
-  ],
-  3: [
-    {
-      id: 1,
-      from: "me",
-      text: "I'll send over the files by end of day.",
-      time: "1d ago",
-      read: true,
-    },
-    {
-      id: 2,
-      from: "them",
-      text: "Thanks for the quick response!",
-      time: "1d ago",
-    },
-  ],
-  4: [
-    {
-      id: 1,
-      from: "them",
-      text: "We'd love to work with you on our upcoming series.",
-      time: "2d ago",
-    },
-    {
-      id: 2,
-      from: "me",
-      text: "I'm very interested! Let's set up a call.",
-      time: "2d ago",
-      read: true,
-    },
-    {
-      id: 3,
-      from: "them",
-      text: "Looking forward to our collaboration.",
-      time: "2d ago",
-    },
-  ],
-};
+import { useEffect, useRef, useState } from "react";
+import axios from "axios";
+import socket from "../../socket";
 
 export default function Messages() {
-  const location = useLocation();
-
-  // ── Build conversation list, injecting nearby artist if ?userId= param present ──
-  const [conversations, setConversations] = useState(BASE_CONVERSATIONS);
-  const [messages, setMessages] = useState(BASE_MESSAGES);
-  const [selectedId, setSelectedId] = useState(1);
+  const [conversations, setConversations] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [mobileView, setMobileView] = useState("list");
 
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user"));
+  const messagesEndRef = useRef(null);
+
+  // Load Conversations
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const rawId = params.get("userId");
-    const artistId = rawId ? Number(rawId) : null;
+    if (!token) return;
 
-    if (!artistId) return;
+    axios
+      .get("http://localhost:5000/api/messages", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setConversations(res.data))
+      .catch(console.error);
+  }, [token]);
 
-    const nearby = NEARBY_ARTISTS_AS_CONVS[artistId];
-    if (!nearby) return;
+  // Load Messages when user selected
+  useEffect(() => {
+    if (!selectedUser) return;
 
-    // Check if conversation already exists
-    setConversations((prev) => {
-      const exists = prev.find((c) => c.id === nearby.id);
-      if (exists) {
-        setSelectedId(nearby.id);
-        setMobileView("chat");
-        return prev;
+    axios
+      .get(
+        `http://localhost:5000/api/messages/${selectedUser._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      .then((res) => setMessages(res.data))
+      .catch(console.error);
+  }, [selectedUser, token]);
+
+  // Socket
+  useEffect(() => {
+    if (user?._id) {
+      socket.emit("registerUser", user._id);
+    }
+
+    socket.on("newMessage", (msg) => {
+      if (
+        selectedUser &&
+        (msg.sender._id === selectedUser._id ||
+          msg.receiver._id === selectedUser._id)
+      ) {
+        setMessages((prev) => [...prev, msg]);
       }
-      // Inject at top of list
-      const updated = [{ ...nearby }, ...prev];
-      setSelectedId(nearby.id);
-      setMobileView("chat");
-      return updated;
     });
 
-    // Seed empty conversation if no messages exist for this ID
-    setMessages((prev) => {
-      if (prev[nearby.id]) return prev;
-      return {
-        ...prev,
-        [nearby.id]: [
-          {
-            id: 1,
-            from: "them",
-            text: `Hi! I'm ${nearby.name}. Thanks for reaching out — I'd love to explore a collaboration!`,
-            time: "Just now",
-          },
-        ],
-      };
-    });
-  }, [location.search]);
+    return () => socket.off("newMessage");
+  }, [selectedUser, user]);
 
-  const selected = conversations.find((c) => c.id === selectedId);
-  const currentMessages = messages[selectedId] || [];
-  const filteredConvs = conversations.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  // Auto Scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    const newMsg = {
-      id: Date.now(),
-      from: "me",
-      text: input.trim(),
-      time: "just now",
-      read: false,
-    };
-    setMessages((prev) => ({
-      ...prev,
-      [selectedId]: [...(prev[selectedId] || []), newMsg],
-    }));
+  // Send Message
+  const sendMessage = async () => {
+    if (!input.trim() || !selectedUser) return;
+
+    const res = await axios.post(
+      "http://localhost:5000/api/messages",
+      {
+        receiverId: selectedUser._id,
+        content: input,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    setMessages((prev) => [...prev, res.data]);
     setInput("");
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const selectConv = (id) => {
-    setSelectedId(id);
-    setMobileView("chat");
-  };
-
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-        .msg-scrollbar::-webkit-scrollbar { width: 3px; }
-        .msg-scrollbar::-webkit-scrollbar-thumb { background: rgba(201,169,97,0.15); border-radius: 4px; }
-        .msg-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(201,169,97,0.15) transparent; }
-        .conv-item { transition: background 0.15s ease; }
-        .conv-item:hover { background: rgba(255,255,255,0.03); }
-        .send-btn { transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease; }
-        .send-btn:hover { opacity: 0.85; transform: scale(1.05); }
-        .input-field:focus { outline: none; border-color: rgba(201,169,97,0.35) !important; }
-        .attach-btn { transition: color 0.15s ease; }
-        .attach-btn:hover { color: #c9a961 !important; }
-      `}</style>
-
-      <Sidebar />
-
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        background: "#1a1d24",
+        color: "#c4d5e0",
+      }}
+    >
+      {/* LEFT PANEL */}
       <div
-        className="flex h-screen overflow-hidden lg:ml-[248px]"
         style={{
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          width: "320px",
+          borderRight: "1px solid rgba(201,169,97,0.15)",
+          padding: "20px",
           background: "#1a1d24",
         }}
       >
-        {/* ── Conversation List ── */}
-        <div
-          className={`flex flex-col w-full lg:w-[300px] flex-shrink-0 ${mobileView === "chat" ? "hidden lg:flex" : "flex"}`}
-          style={{
-            borderRight: "1px solid rgba(201,169,97,0.10)",
-            background: "#1a1d24",
-          }}
-        >
-          {/* Header */}
-          <div className="px-5 pt-7 pb-4 flex-shrink-0">
-            <h1
-              className="text-[22px] font-bold leading-tight"
-              style={{ color: "#c4d5e0" }}
-            >
-              Messages
-            </h1>
-            <p className="text-[12px] mt-[3px]" style={{ color: "#5a6e7d" }}>
-              Connect with hirers and opportunities
-            </p>
-          </div>
+        <h2 style={{ marginBottom: "20px" }}>Messages</h2>
 
-          {/* Search */}
-          <div className="px-4 pb-3 flex-shrink-0">
-            <div className="relative">
-              <Search
-                size={14}
-                className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                style={{ color: "#5a6e7d" }}
-              />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search conversations..."
-                className="input-field w-full pl-9 pr-4 py-[9px] rounded-xl text-[13px]"
-                style={{
-                  background: "#2d3139",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  color: "#c4d5e0",
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                }}
-              />
+        {conversations.map((conv) => (
+          <div
+            key={conv.user._id}
+            onClick={() => setSelectedUser(conv.user)}
+            style={{
+              padding: "12px",
+              marginBottom: "12px",
+              borderRadius: "10px",
+              cursor: "pointer",
+              background:
+                selectedUser?._id === conv.user._id
+                  ? "rgba(201,169,97,0.15)"
+                  : "transparent",
+              border:
+                selectedUser?._id === conv.user._id
+                  ? "1px solid #c9a961"
+                  : "1px solid rgba(255,255,255,0.05)",
+            }}
+          >
+            <strong>{conv.user.name}</strong>
+            <div style={{ fontSize: "12px", opacity: 0.6 }}>
+              {conv.lastMessage?.content}
             </div>
           </div>
-
-          {/* Conversations */}
-          <div className="flex-1 overflow-y-auto msg-scrollbar">
-            {filteredConvs.map((conv) => (
-              <div
-                key={conv.id}
-                className="conv-item flex items-center gap-3 px-4 py-[13px] cursor-pointer"
-                style={{
-                  background:
-                    conv.id === selectedId
-                      ? "rgba(201,169,97,0.08)"
-                      : "transparent",
-                  borderLeft:
-                    conv.id === selectedId
-                      ? "2px solid #c9a961"
-                      : "2px solid transparent",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                }}
-                onClick={() => selectConv(conv.id)}
-              >
-                <div className="relative flex-shrink-0">
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center text-[13px] font-bold"
-                    style={{ background: "#2d3139", color: "#c9a961" }}
-                  >
-                    {conv.avatar}
-                  </div>
-                  {conv.online && (
-                    <span
-                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
-                      style={{ background: "#4ade80", borderColor: "#1a1d24" }}
-                    />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-[3px]">
-                    <span
-                      className="text-[13.5px] font-semibold truncate"
-                      style={{
-                        color: conv.id === selectedId ? "#c4d5e0" : "#8a9faf",
-                      }}
-                    >
-                      {conv.name}
-                    </span>
-                    <span
-                      className="text-[11px] flex-shrink-0 ml-2"
-                      style={{ color: "#3a4e5e" }}
-                    >
-                      {conv.time}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p
-                      className="text-[12px] truncate flex-1"
-                      style={{ color: "#3a4e5e" }}
-                    >
-                      {conv.preview}
-                    </p>
-                    {conv.unread > 0 && (
-                      <span
-                        className="ml-2 flex-shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold"
-                        style={{ background: "#c9a961", color: "#1a1d24" }}
-                      >
-                        {conv.unread}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Chat Area ── */}
-        <div
-          className={`flex flex-col flex-1 min-w-0 ${mobileView === "list" ? "hidden lg:flex" : "flex"}`}
-          style={{ background: "#1a1d24" }}
-        >
-          {selected ? (
-            <>
-              {/* Chat Header */}
-              <div
-                className="flex items-center gap-3 px-5 py-[14px] flex-shrink-0"
-                style={{
-                  borderBottom: "1px solid rgba(201,169,97,0.10)",
-                  background: "#1a1d24",
-                }}
-              >
-                <button
-                  className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg mr-1"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    color: "#8a9faf",
-                  }}
-                  onClick={() => setMobileView("list")}
-                >
-                  <ArrowLeft size={16} />
-                </button>
-                <div className="relative flex-shrink-0">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold"
-                    style={{ background: "#2d3139", color: "#c9a961" }}
-                  >
-                    {selected.avatar}
-                  </div>
-                  {selected.online && (
-                    <span
-                      className="absolute -bottom-0.5 -right-0.5 w-[10px] h-[10px] rounded-full border-2"
-                      style={{ background: "#4ade80", borderColor: "#1a1d24" }}
-                    />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3
-                    className="text-[15px] font-semibold leading-tight"
-                    style={{ color: "#c4d5e0" }}
-                  >
-                    {selected.name}
-                  </h3>
-                  <span
-                    className="text-[11.5px]"
-                    style={{ color: selected.online ? "#4ade80" : "#3a4e5e" }}
-                  >
-                    {selected.online ? "● Active now" : "● Offline"}
-                  </span>
-                </div>
-                <button
-                  className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    color: "#5a6e7d",
-                  }}
-                >
-                  <MoreVertical size={16} />
-                </button>
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto msg-scrollbar px-5 py-5 flex flex-col gap-4">
-                {currentMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col max-w-[62%] ${msg.from === "me" ? "self-end items-end" : "self-start items-start"}`}
-                  >
-                    <div
-                      className="px-4 py-[11px] rounded-2xl text-[13.5px] leading-relaxed"
-                      style={
-                        msg.from === "me"
-                          ? {
-                              background: "#c9a961",
-                              color: "#1a1d24",
-                              borderBottomRightRadius: "4px",
-                              fontWeight: 500,
-                            }
-                          : {
-                              background: "#2d3139",
-                              color: "#c4d5e0",
-                              borderBottomLeftRadius: "4px",
-                            }
-                      }
-                    >
-                      {msg.text}
-                    </div>
-                    <div className="flex items-center gap-1 mt-[5px]">
-                      <span
-                        className="text-[10.5px]"
-                        style={{ color: "#3a4e5e" }}
-                      >
-                        {msg.time}
-                      </span>
-                      {msg.from === "me" &&
-                        (msg.read ? (
-                          <CheckCheck size={12} style={{ color: "#c9a961" }} />
-                        ) : (
-                          <Check size={12} style={{ color: "#3a4e5e" }} />
-                        ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Input */}
-              <div
-                className="flex items-center gap-3 px-4 py-3 flex-shrink-0"
-                style={{
-                  borderTop: "1px solid rgba(201,169,97,0.10)",
-                  background: "#1a1d24",
-                }}
-              >
-                <button
-                  className="attach-btn flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0"
-                  style={{ color: "#5a6e7d" }}
-                >
-                  <Paperclip size={17} />
-                </button>
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type your message..."
-                  className="input-field flex-1 px-4 py-[11px] rounded-xl text-[13.5px]"
-                  style={{
-                    background: "#2d3139",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    color: "#c4d5e0",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                />
-                <button
-                  className="send-btn flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0"
-                  style={{
-                    background: input.trim() ? "#c9a961" : "#2d3139",
-                    color: input.trim() ? "#1a1d24" : "#3a4e5e",
-                  }}
-                  onClick={handleSend}
-                >
-                  <Send size={16} strokeWidth={2.2} />
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                style={{ background: "rgba(201,169,97,0.08)" }}
-              >
-                <Search size={24} style={{ color: "rgba(201,169,97,0.4)" }} />
-              </div>
-              <p className="text-[14px]" style={{ color: "#3a4e5e" }}>
-                Select a conversation to start messaging
-              </p>
-            </div>
-          )}
-        </div>
+        ))}
       </div>
-    </>
+
+      {/* CHAT AREA */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {selectedUser ? (
+          <>
+            {/* HEADER */}
+            <div
+              style={{
+                padding: "20px",
+                borderBottom: "1px solid rgba(201,169,97,0.15)",
+                fontWeight: "600",
+              }}
+            >
+              Chat with {selectedUser.name}
+            </div>
+
+            {/* MESSAGES */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+              }}
+            >
+              {messages.map((msg) => {
+                const isMe = msg.sender._id === user._id;
+
+                return (
+                  <div
+                    key={msg._id}
+                    style={{
+                      alignSelf: isMe ? "flex-end" : "flex-start",
+                      background: isMe ? "#c9a961" : "#2d3139",
+                      color: isMe ? "#1a1d24" : "#c4d5e0",
+                      padding: "10px 14px",
+                      borderRadius: "14px",
+                      maxWidth: "60%",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {msg.content}
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* INPUT */}
+            <div
+              style={{
+                padding: "15px",
+                borderTop: "1px solid rgba(201,169,97,0.15)",
+                display: "flex",
+                gap: "10px",
+              }}
+            >
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your message..."
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: "#2d3139",
+                  color: "#c4d5e0",
+                }}
+              />
+              <button
+                onClick={sendMessage}
+                style={{
+                  padding: "12px 18px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "#c9a961",
+                  color: "#1a1d24",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                }}
+              >
+                Send
+              </button>
+            </div>
+          </>
+        ) : (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              opacity: 0.5,
+            }}
+          >
+            Select a conversation
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
