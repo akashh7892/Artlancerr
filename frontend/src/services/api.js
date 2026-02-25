@@ -1,46 +1,46 @@
-const API_BASE_URL = '/api';
+const API_BASE_URL = "/api";
 
 // Helper function to get token from localStorage
-const getToken = () => localStorage.getItem('token');
+const getToken = () => localStorage.getItem("token");
 
 // Helper function to set token in localStorage
 const setToken = (token) => {
   if (token) {
-    localStorage.setItem('token', token);
+    localStorage.setItem("token", token);
   } else {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
   }
 };
 
 // Helper function to get user data from localStorage
 const getUser = () => {
-  const user = localStorage.getItem('user');
+  const user = localStorage.getItem("user");
   return user ? JSON.parse(user) : null;
 };
 
 // Helper function to set user data in localStorage
 const setUser = (user) => {
   if (user) {
-    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem("user", JSON.stringify(user));
   } else {
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
   }
 };
 
 // Clear auth data (for logout)
 const clearAuth = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 };
 
 // Generic fetch wrapper with error handling
 const fetchAPI = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const config = {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options.headers,
     },
   };
@@ -48,7 +48,7 @@ const fetchAPI = async (endpoint, options = {}) => {
   // Add token to headers if available
   const token = getToken();
   if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
+    config.headers["Authorization"] = `Bearer ${token}`;
   }
 
   try {
@@ -56,12 +56,12 @@ const fetchAPI = async (endpoint, options = {}) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Something went wrong');
+      throw new Error(data.message || "Something went wrong");
     }
 
     return data;
   } catch (error) {
-    console.error('API Error:', error);
+    console.error("API Error:", error);
     throw error;
   }
 };
@@ -69,8 +69,8 @@ const fetchAPI = async (endpoint, options = {}) => {
 // Auth API calls
 export const authAPI = {
   signup: async (userData) => {
-    const data = await fetchAPI('/auth/signup', {
-      method: 'POST',
+    const data = await fetchAPI("/auth/signup", {
+      method: "POST",
       body: JSON.stringify(userData),
     });
     // Store token and user data on successful signup
@@ -82,8 +82,8 @@ export const authAPI = {
   },
 
   login: async (credentials) => {
-    const data = await fetchAPI('/auth/login', {
-      method: 'POST',
+    const data = await fetchAPI("/auth/login", {
+      method: "POST",
       body: JSON.stringify(credentials),
     });
     // Store token and user data on successful login
@@ -96,8 +96,8 @@ export const authAPI = {
 
   logout: async () => {
     try {
-      await fetchAPI('/auth/logout', {
-        method: 'POST',
+      await fetchAPI("/auth/logout", {
+        method: "POST",
       });
     } finally {
       clearAuth();
@@ -105,33 +105,33 @@ export const authAPI = {
   },
 
   getCurrentUser: async () => {
-    return fetchAPI('/auth/me');
+    return fetchAPI("/auth/me");
   },
 
   forgotPassword: async (email) => {
-    return fetchAPI('/auth/forgot-password', {
-      method: 'POST',
+    return fetchAPI("/auth/forgot-password", {
+      method: "POST",
       body: JSON.stringify({ email }),
     });
   },
 
   resetPassword: async (token, password) => {
-    return fetchAPI('/auth/reset-password', {
-      method: 'POST',
+    return fetchAPI("/auth/reset-password", {
+      method: "POST",
       body: JSON.stringify({ token, password }),
     });
   },
 
   changePassword: async (currentPassword, newPassword) => {
-    return fetchAPI('/auth/change-password', {
-      method: 'POST',
+    return fetchAPI("/auth/change-password", {
+      method: "POST",
       body: JSON.stringify({ currentPassword, newPassword }),
     });
   },
 
   verifyOTP: async (email, otp) => {
-    return fetchAPI('/auth/verify-otp', {
-      method: 'POST',
+    return fetchAPI("/auth/verify-otp", {
+      method: "POST",
       body: JSON.stringify({ email, otp }),
     });
   },
@@ -140,73 +140,73 @@ export const authAPI = {
 // Artist API calls
 export const artistAPI = {
   getProfile: async () => {
-    return fetchAPI('/artist/profile');
+    return fetchAPI("/artist/profile");
   },
 
   updateProfile: async (profileData) => {
-    return fetchAPI('/artist/profile', {
-      method: 'PUT',
+    return fetchAPI("/artist/profile", {
+      method: "PUT",
       body: JSON.stringify(profileData),
     });
   },
 
   getOpportunities: async () => {
-    return fetchAPI('/opportunities');
+    return fetchAPI("/opportunities");
   },
 
   getMessages: async () => {
-    return fetchAPI('/messages');
+    return fetchAPI("/messages");
   },
 
   getPortfolio: async () => {
-    return fetchAPI('/artist/portfolio');
+    return fetchAPI("/artist/portfolio");
   },
 
   addPortfolio: async (portfolioData) => {
-    return fetchAPI('/artist/portfolio', {
-      method: 'POST',
+    return fetchAPI("/artist/portfolio", {
+      method: "POST",
       body: JSON.stringify(portfolioData),
     });
   },
 
   deletePortfolio: async (id) => {
     return fetchAPI(`/artist/portfolio/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 
   getPromotions: async () => {
-    return fetchAPI('/promotions');
+    return fetchAPI("/promotions");
   },
 
   getPayments: async () => {
-    return fetchAPI('/artist/payments');
+    return fetchAPI("/artist/payments");
   },
 
   getNearbyArtists: async () => {
-    return fetchAPI('/dashboard/nearby-artists');
+    return fetchAPI("/dashboard/nearby-artists");
   },
 
   getDashboard: async () => {
-    return fetchAPI('/dashboard/artist');
+    return fetchAPI("/dashboard/artist");
   },
 };
 
 // Hirer API calls
 export const hirerAPI = {
   getProfile: async () => {
-    return fetchAPI('/hirer/profile');
+    return fetchAPI("/hirer/profile");
   },
 
   updateProfile: async (profileData) => {
-    return fetchAPI('/hirer/profile', {
-      method: 'PUT',
+    return fetchAPI("/hirer/profile", {
+      method: "PUT",
       body: JSON.stringify(profileData),
     });
   },
 
   getArtists: async () => {
-    return fetchAPI('/dashboard/nearby-artists');
+    return fetchAPI("/dashboard/nearby-artists");
   },
 
   getArtistProfile: async (id) => {
@@ -214,54 +214,54 @@ export const hirerAPI = {
   },
 
   postOpportunity: async (opportunityData) => {
-    return fetchAPI('/hirer/opportunity', {
-      method: 'POST',
+    return fetchAPI("/hirer/opportunity", {
+      method: "POST",
       body: JSON.stringify(opportunityData),
     });
   },
 
   getOpportunities: async () => {
-    return fetchAPI('/hirer/opportunities');
+    return fetchAPI("/hirer/opportunities");
   },
 
   updateOpportunity: async (id, opportunityData) => {
     return fetchAPI(`/opportunities/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(opportunityData),
     });
   },
 
   deleteOpportunity: async (id) => {
     return fetchAPI(`/opportunities/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 
   getMessages: async () => {
-    return fetchAPI('/messages');
+    return fetchAPI("/messages");
   },
 
   getPayments: async () => {
-    return fetchAPI('/hirer/payments');
+    return fetchAPI("/hirer/payments");
   },
 
   getPromotions: async () => {
-    return fetchAPI('/promotions');
+    return fetchAPI("/promotions");
   },
 
   getBookings: async () => {
-    return fetchAPI('/hirer/tasks');
+    return fetchAPI("/hirer/tasks");
   },
 
   getDashboard: async () => {
-    return fetchAPI('/dashboard/hirer');
+    return fetchAPI("/dashboard/hirer");
   },
 };
 
 // Opportunities API calls (shared)
 export const opportunitiesAPI = {
   getAll: async () => {
-    return fetchAPI('/opportunities');
+    return fetchAPI("/opportunities");
   },
 
   getById: async (id) => {
@@ -269,8 +269,8 @@ export const opportunitiesAPI = {
   },
 
   apply: async (opportunityId, applicationData) => {
-    return fetchAPI('/applications', {
-      method: 'POST',
+    return fetchAPI("/applications", {
+      method: "POST",
       body: JSON.stringify({ opportunityId, ...applicationData }),
     });
   },
@@ -279,7 +279,7 @@ export const opportunitiesAPI = {
 // Applications API calls
 export const applicationsAPI = {
   getAll: async () => {
-    return fetchAPI('/applications/my');
+    return fetchAPI("/applications/my");
   },
 
   getById: async (id) => {
@@ -288,7 +288,7 @@ export const applicationsAPI = {
 
   updateStatus: async (id, status) => {
     return fetchAPI(`/hirer/application/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify({ status }),
     });
   },
@@ -297,18 +297,18 @@ export const applicationsAPI = {
 // Categories API calls
 export const categoriesAPI = {
   getAll: async () => {
-    return fetchAPI('/categories');
+    return fetchAPI("/categories");
   },
 };
 
 // Dashboard API calls
 export const dashboardAPI = {
   getArtistDashboard: async () => {
-    return fetchAPI('/dashboard/artist');
+    return fetchAPI("/dashboard/artist");
   },
 
   getHirerDashboard: async () => {
-    return fetchAPI('/dashboard/hirer');
+    return fetchAPI("/dashboard/hirer");
   },
 };
 
