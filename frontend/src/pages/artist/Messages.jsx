@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Search,
@@ -10,276 +10,209 @@ import {
   CheckCheck,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
+import { getToken, getUser, messagesAPI } from "../../services/api";
+import { connectSocket } from "../../socket";
 
-// ── Nearby artists mapped so their IDs match what ArtistNearby passes ──
-const NEARBY_ARTISTS_AS_CONVS = {
-  1: {
-    id: 101,
-    name: "Marcus Lee",
-    avatar: "ML",
-    online: true,
-    time: "Just now",
-    preview: "Start a conversation with Marcus Lee",
-    unread: 0,
-  },
-  2: {
-    id: 102,
-    name: "Alex Rivera",
-    avatar: "AR",
-    online: true,
-    time: "Just now",
-    preview: "Start a conversation with Alex Rivera",
-    unread: 0,
-  },
-  3: {
-    id: 103,
-    name: "Emma Chen",
-    avatar: "EC",
-    online: false,
-    time: "Just now",
-    preview: "Start a conversation with Emma Chen",
-    unread: 0,
-  },
-  4: {
-    id: 104,
-    name: "Jordan White",
-    avatar: "JW",
-    online: false,
-    time: "Just now",
-    preview: "Start a conversation with Jordan White",
-    unread: 0,
-  },
-  5: {
-    id: 105,
-    name: "Sofia Martinez",
-    avatar: "SM",
-    online: true,
-    time: "Just now",
-    preview: "Start a conversation with Sofia Martinez",
-    unread: 0,
-  },
-  6: {
-    id: 106,
-    name: "David Kim",
-    avatar: "DK",
-    online: false,
-    time: "Just now",
-    preview: "Start a conversation with David Kim",
-    unread: 0,
-  },
-  7: {
-    id: 107,
-    name: "Rachel Green",
-    avatar: "RG",
-    online: true,
-    time: "Just now",
-    preview: "Start a conversation with Rachel Green",
-    unread: 0,
-  },
-  8: {
-    id: 108,
-    name: "Michael Chen",
-    avatar: "MC",
-    online: false,
-    time: "Just now",
-    preview: "Start a conversation with Michael Chen",
-    unread: 0,
-  },
+const toInitials = (name = "") =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() || "")
+    .join("") || "?";
+
+const formatRelativeTime = (dateString) => {
+  if (!dateString) return "";
+  const value = new Date(dateString);
+  const diffMs = Date.now() - value.getTime();
+  const min = Math.floor(diffMs / 60000);
+  const hours = Math.floor(min / 60);
+  const days = Math.floor(hours / 24);
+  if (min < 1) return "Just now";
+  if (min < 60) return `${min}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return value.toLocaleDateString();
 };
 
-const BASE_CONVERSATIONS = [
-  {
-    id: 1,
-    name: "Paramount Studios",
-    avatar: "PS",
-    time: "30m ago",
-    preview: "We'd love to discuss the cinematog...",
-    unread: 2,
-    online: true,
-  },
-  {
-    id: 2,
-    name: "Warner Bros",
-    avatar: "WB",
-    time: "2h ago",
-    preview: "When are you available for the shoot",
-    unread: 0,
-    online: false,
-  },
-  {
-    id: 3,
-    name: "Netflix Originals",
-    avatar: "NO",
-    time: "1d ago",
-    preview: "Thanks for the quick response!",
-    unread: 0,
-    online: true,
-  },
-  {
-    id: 4,
-    name: "Disney Production",
-    avatar: "DP",
-    time: "2d ago",
-    preview: "Looking forward to our collaboration",
-    unread: 0,
-    online: false,
-  },
-];
+const formatMsgTime = (dateString) =>
+  new Date(dateString).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-const BASE_MESSAGES = {
-  1: [
-    {
-      id: 1,
-      from: "them",
-      text: "Hi! We saw your portfolio and are very impressed.",
-      time: "1h ago",
-    },
-    {
-      id: 2,
-      from: "me",
-      text: "Thank you! I'd love to hear more about the opportunity.",
-      time: "45m ago",
-      read: true,
-    },
-    {
-      id: 3,
-      from: "them",
-      text: "We'd love to discuss the cinematography role.",
-      time: "30m ago",
-    },
-  ],
-  2: [
-    {
-      id: 1,
-      from: "them",
-      text: "Hey! We have an exciting project for you.",
-      time: "3h ago",
-    },
-    {
-      id: 2,
-      from: "me",
-      text: "Sounds great, tell me more!",
-      time: "2h ago",
-      read: true,
-    },
-    {
-      id: 3,
-      from: "them",
-      text: "When are you available for the shoot?",
-      time: "2h ago",
-    },
-  ],
-  3: [
-    {
-      id: 1,
-      from: "me",
-      text: "I'll send over the files by end of day.",
-      time: "1d ago",
-      read: true,
-    },
-    {
-      id: 2,
-      from: "them",
-      text: "Thanks for the quick response!",
-      time: "1d ago",
-    },
-  ],
-  4: [
-    {
-      id: 1,
-      from: "them",
-      text: "We'd love to work with you on our upcoming series.",
-      time: "2d ago",
-    },
-    {
-      id: 2,
-      from: "me",
-      text: "I'm very interested! Let's set up a call.",
-      time: "2d ago",
-      read: true,
-    },
-    {
-      id: 3,
-      from: "them",
-      text: "Looking forward to our collaboration.",
-      time: "2d ago",
-    },
-  ],
-};
+const normalizeMessage = (msg, currentUserId) => ({
+  id: msg._id,
+  from: msg.sender?._id === currentUserId ? "me" : "them",
+  text: msg.content,
+  time: formatMsgTime(msg.createdAt),
+  read: Boolean(msg.isRead),
+});
+
+const toConversation = (item) => ({
+  id: item.user?._id,
+  name: item.user?.name || "Unknown user",
+  avatar: toInitials(item.user?.name),
+  time: formatRelativeTime(item.lastMessage?.createdAt),
+  preview: item.lastMessage?.content || "Start a conversation",
+  unread: item.unreadCount || 0,
+  online: false,
+});
 
 export default function Messages() {
   const location = useLocation();
+  const currentUser = getUser();
+  const currentUserId = currentUser?._id;
 
-  // ── Build conversation list, injecting nearby artist if ?userId= param present ──
-  const [conversations, setConversations] = useState(BASE_CONVERSATIONS);
-  const [messages, setMessages] = useState(BASE_MESSAGES);
-  const [selectedId, setSelectedId] = useState(1);
+  const [conversations, setConversations] = useState([]);
+  const [messagesByConv, setMessagesByConv] = useState({});
+  const [selectedId, setSelectedId] = useState(null);
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
   const [mobileView, setMobileView] = useState("list");
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const rawId = params.get("userId");
-    const artistId = rawId ? Number(rawId) : null;
+    let mounted = true;
+    const loadConversations = async () => {
+      try {
+        const data = await messagesAPI.getConversations();
+        if (!mounted) return;
+        const mapped = data.map(toConversation);
+        setConversations(mapped);
 
-    if (!artistId) return;
-
-    const nearby = NEARBY_ARTISTS_AS_CONVS[artistId];
-    if (!nearby) return;
-
-    // Check if conversation already exists
-    setConversations((prev) => {
-      const exists = prev.find((c) => c.id === nearby.id);
-      if (exists) {
-        setSelectedId(nearby.id);
-        setMobileView("chat");
-        return prev;
+        const urlId = new URLSearchParams(location.search).get("userId");
+        const preferred = mapped.find((c) => c.id === urlId)?.id || mapped[0]?.id || null;
+        setSelectedId((prev) => prev || preferred);
+      } catch (error) {
+        console.error("Failed to load conversations:", error);
       }
-      // Inject at top of list
-      const updated = [{ ...nearby }, ...prev];
-      setSelectedId(nearby.id);
-      setMobileView("chat");
-      return updated;
-    });
+    };
 
-    // Seed empty conversation if no messages exist for this ID
-    setMessages((prev) => {
-      if (prev[nearby.id]) return prev;
-      return {
-        ...prev,
-        [nearby.id]: [
-          {
-            id: 1,
-            from: "them",
-            text: `Hi! I'm ${nearby.name}. Thanks for reaching out — I'd love to explore a collaboration!`,
-            time: "Just now",
-          },
-        ],
-      };
-    });
+    loadConversations();
+    return () => {
+      mounted = false;
+    };
   }, [location.search]);
 
-  const selected = conversations.find((c) => c.id === selectedId);
-  const currentMessages = messages[selectedId] || [];
+  useEffect(() => {
+    if (!selectedId || !currentUserId) return;
+    let mounted = true;
+    const loadThread = async () => {
+      try {
+        const data = await messagesAPI.getThread(selectedId);
+        if (!mounted) return;
+
+        setMessagesByConv((prev) => ({
+          ...prev,
+          [selectedId]: data.map((m) => normalizeMessage(m, currentUserId)),
+        }));
+
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv.id === selectedId ? { ...conv, unread: 0 } : conv,
+          ),
+        );
+      } catch (error) {
+        console.error("Failed to load thread:", error);
+      }
+    };
+
+    loadThread();
+    return () => {
+      mounted = false;
+    };
+  }, [selectedId, currentUserId]);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token || !currentUserId) return;
+    const socket = connectSocket(token);
+
+    const onNewMessage = (msg) => {
+      const senderId = msg.sender?._id;
+      const receiverId = msg.receiver?._id;
+      const otherId = senderId === currentUserId ? receiverId : senderId;
+      if (!otherId) return;
+
+      setMessagesByConv((prev) => {
+        const list = prev[otherId] || [];
+        if (list.some((m) => m.id === msg._id)) return prev;
+        return {
+          ...prev,
+          [otherId]: [...list, normalizeMessage(msg, currentUserId)],
+        };
+      });
+
+      setConversations((prev) => {
+        const existing = prev.find((c) => c.id === otherId);
+        const meSent = senderId === currentUserId;
+        const unreadInc = !meSent && selectedId !== otherId ? 1 : 0;
+
+        if (!existing) {
+          const name = meSent ? msg.receiver?.name : msg.sender?.name;
+          return [
+            {
+              id: otherId,
+              name: name || "Unknown user",
+              avatar: toInitials(name),
+              time: formatRelativeTime(msg.createdAt),
+              preview: msg.content,
+              unread: unreadInc,
+              online: false,
+            },
+            ...prev,
+          ];
+        }
+
+        return [
+          {
+            ...existing,
+            preview: msg.content,
+            time: formatRelativeTime(msg.createdAt),
+            unread: existing.unread + unreadInc,
+          },
+          ...prev.filter((c) => c.id !== otherId),
+        ];
+      });
+    };
+
+    const onMessagesRead = ({ conversationWith, readBy }) => {
+      if (readBy === currentUserId || conversationWith !== selectedId) return;
+      setMessagesByConv((prev) => ({
+        ...prev,
+        [conversationWith]: (prev[conversationWith] || []).map((msg) =>
+          msg.from === "me" ? { ...msg, read: true } : msg,
+        ),
+      }));
+    };
+
+    socket.on("new_message", onNewMessage);
+    socket.on("messages_read", onMessagesRead);
+    return () => {
+      socket.off("new_message", onNewMessage);
+      socket.off("messages_read", onMessagesRead);
+    };
+  }, [currentUserId, selectedId]);
+
+  const selected = useMemo(
+    () => conversations.find((c) => c.id === selectedId),
+    [conversations, selectedId],
+  );
+  const currentMessages = messagesByConv[selectedId] || [];
   const filteredConvs = conversations.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    const newMsg = {
-      id: Date.now(),
-      from: "me",
-      text: input.trim(),
-      time: "just now",
-      read: false,
-    };
-    setMessages((prev) => ({
-      ...prev,
-      [selectedId]: [...(prev[selectedId] || []), newMsg],
-    }));
+  const handleSend = async () => {
+    const content = input.trim();
+    if (!content || !selectedId) return;
     setInput("");
+    try {
+      await messagesAPI.sendMessage({ receiverId: selectedId, content });
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setInput(content);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -319,7 +252,6 @@ export default function Messages() {
           background: "#1a1d24",
         }}
       >
-        {/* ── Conversation List ── */}
         <div
           className={`flex flex-col w-full lg:w-[300px] flex-shrink-0 ${mobileView === "chat" ? "hidden lg:flex" : "flex"}`}
           style={{
@@ -327,7 +259,6 @@ export default function Messages() {
             background: "#1a1d24",
           }}
         >
-          {/* Header */}
           <div className="px-5 pt-7 pb-4 flex-shrink-0">
             <h1
               className="text-[22px] font-bold leading-tight"
@@ -340,7 +271,6 @@ export default function Messages() {
             </p>
           </div>
 
-          {/* Search */}
           <div className="px-4 pb-3 flex-shrink-0">
             <div className="relative">
               <Search
@@ -364,7 +294,6 @@ export default function Messages() {
             </div>
           </div>
 
-          {/* Conversations */}
           <div className="flex-1 overflow-y-auto msg-scrollbar">
             {filteredConvs.map((conv) => (
               <div
@@ -390,12 +319,6 @@ export default function Messages() {
                   >
                     {conv.avatar}
                   </div>
-                  {conv.online && (
-                    <span
-                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
-                      style={{ background: "#4ade80", borderColor: "#1a1d24" }}
-                    />
-                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-[3px]">
@@ -436,14 +359,12 @@ export default function Messages() {
           </div>
         </div>
 
-        {/* ── Chat Area ── */}
         <div
           className={`flex flex-col flex-1 min-w-0 ${mobileView === "list" ? "hidden lg:flex" : "flex"}`}
           style={{ background: "#1a1d24" }}
         >
           {selected ? (
             <>
-              {/* Chat Header */}
               <div
                 className="flex items-center gap-3 px-5 py-[14px] flex-shrink-0"
                 style={{
@@ -468,12 +389,6 @@ export default function Messages() {
                   >
                     {selected.avatar}
                   </div>
-                  {selected.online && (
-                    <span
-                      className="absolute -bottom-0.5 -right-0.5 w-[10px] h-[10px] rounded-full border-2"
-                      style={{ background: "#4ade80", borderColor: "#1a1d24" }}
-                    />
-                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3
@@ -482,11 +397,8 @@ export default function Messages() {
                   >
                     {selected.name}
                   </h3>
-                  <span
-                    className="text-[11.5px]"
-                    style={{ color: selected.online ? "#4ade80" : "#3a4e5e" }}
-                  >
-                    {selected.online ? "● Active now" : "● Offline"}
+                  <span className="text-[11.5px]" style={{ color: "#3a4e5e" }}>
+                    Offline
                   </span>
                 </div>
                 <button
@@ -500,7 +412,6 @@ export default function Messages() {
                 </button>
               </div>
 
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto msg-scrollbar px-5 py-5 flex flex-col gap-4">
                 {currentMessages.map((msg) => (
                   <div
@@ -544,7 +455,6 @@ export default function Messages() {
                 ))}
               </div>
 
-              {/* Input */}
               <div
                 className="flex items-center gap-3 px-4 py-3 flex-shrink-0"
                 style={{

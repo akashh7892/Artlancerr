@@ -312,5 +312,22 @@ export const dashboardAPI = {
   },
 };
 
+export const messagesAPI = {
+  getConversations: async () => {
+    return fetchAPI("/messages");
+  },
+
+  getThread: async (userId) => {
+    return fetchAPI(`/messages/${userId}`);
+  },
+
+  sendMessage: async (payload) => {
+    return fetchAPI("/messages", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+};
+
 // Export utility functions
 export { getToken, setToken, getUser, setUser, clearAuth, fetchAPI };

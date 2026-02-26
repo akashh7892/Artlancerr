@@ -97,10 +97,22 @@ router.get("/:userId", protect, async (req, res) => {
       .sort({ createdAt: 1 });
 
     // Mark messages as read
-    await Message.updateMany(
+    const readResult = await Message.updateMany(
       { sender: otherUserId, receiver: userId, isRead: false },
       { isRead: true, readAt: Date.now() },
     );
+
+    if (readResult.modifiedCount > 0) {
+      const io = req.app.get("io");
+      io.to(`user:${userId.toString()}`).to(`user:${otherUserId}`).emit(
+        "messages_read",
+        {
+          conversationWith: otherUserId,
+          readBy: userId.toString(),
+          readAt: new Date().toISOString(),
+        },
+      );
+    }
 
     res.json(messages);
   } catch (error) {
@@ -154,6 +166,12 @@ router.post("/", protect, async (req, res) => {
     const populated = await Message.findById(message._id)
       .populate("sender", "name avatar username")
       .populate("receiver", "name avatar username");
+
+    const io = req.app.get("io");
+    io.to(`user:${req.user._id.toString()}`).to(`user:${receiverId}`).emit(
+      "new_message",
+      populated,
+    );
 
     res.status(201).json(populated);
   } catch (error) {
