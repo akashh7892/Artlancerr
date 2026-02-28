@@ -9,7 +9,7 @@ const connectDB = require("./config/db");
 const Artist = require("./models/Artist");
 const Hirer = require("./models/Hirer");
 
-// Import routes
+// Routes
 const authRoutes = require("./routes/auth");
 const artistRoutes = require("./routes/artist");
 const hirerRoutes = require("./routes/hirer");
@@ -24,23 +24,24 @@ const uploadRoutes = require("./routes/upload");
 
 const app = express();
 const server = http.createServer(app);
-app.use(cors());
-// Connect to MongoDB
+
+// Connect DB
 connectDB();
 
-// Middleware
+/* ================= CORS CONFIG ================= */
+
 const normalizeOrigin = (value) => {
   if (!value) return null;
   try {
     return new URL(value).origin;
-  } catch (error) {
+  } catch {
     return String(value).trim().replace(/\/+$/, "");
   }
 };
 
-const configuredOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
+const configuredOrigins = (process.env.FRONTEND_URL || "")
   .split(",")
-  .map((origin) => normalizeOrigin(origin))
+  .map(normalizeOrigin)
   .filter(Boolean);
 
 const defaultDevOrigins = [
@@ -48,30 +49,13 @@ const defaultDevOrigins = [
   "http://127.0.0.1:5173",
   "http://localhost:5174",
   "http://127.0.0.1:5174",
-  "http://localhost:4173",
-  "http://127.0.0.1:4173",
 ];
 
 const allowedOrigins = new Set(
   process.env.NODE_ENV === "production"
     ? configuredOrigins
-    : [...configuredOrigins, ...defaultDevOrigins],
+    : [...configuredOrigins, ...defaultDevOrigins]
 );
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      const normalizedOrigin = normalizeOrigin(origin);
-      if (!origin || allowedOrigins.has(normalizedOrigin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("CORS not allowed for this origin"));
-    },
-    credentials: true,
-  }),
-);
-app.use(express.json());
-app.use(mongoSanitize());
 
 const corsOriginCheck = (origin, callback) => {
   const normalizedOrigin = normalizeOrigin(origin);
@@ -80,6 +64,18 @@ const corsOriginCheck = (origin, callback) => {
   }
   return callback(new Error("CORS not allowed for this origin"));
 };
+
+app.use(
+  cors({
+    origin: corsOriginCheck,
+    credentials: true,
+  })
+);
+
+/* =============================================== */
+
+app.use(express.json());
+app.use(mongoSanitize());
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -94,22 +90,25 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/promotions", promotionRoutes);
 app.use("/api/upload", uploadRoutes);
 
-// Health check
+// Health
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Artlancing API is running" });
 });
 
+/* ========== SOCKET.IO CORS ========= */
 const io = new Server(server, {
   cors: {
     origin: corsOriginCheck,
     credentials: true,
   },
 });
+/* =================================== */
 
 app.set("io", io);
 
 const JWT_SECRET = process.env.JWT_SECRET || "artlancing-secret-key-2024";
 
+/* socket auth middleware unchanged */
 io.use(async (socket, next) => {
   try {
     const authHeader = socket.handshake.headers?.authorization || "";
@@ -117,13 +116,14 @@ io.use(async (socket, next) => {
       ? authHeader.slice(7)
       : null;
     const token =
-      socket.handshake.auth?.token || socket.handshake.query?.token || bearerToken;
+      socket.handshake.auth?.token ||
+      socket.handshake.query?.token ||
+      bearerToken;
 
-    if (!token) {
-      return next(new Error("Not authorized"));
-    }
+    if (!token) return next(new Error("Not authorized"));
 
     const decoded = jwt.verify(token, JWT_SECRET);
+
     let user = await Artist.findById(decoded.id).select("_id");
     let userType = "Artist";
 
@@ -132,14 +132,12 @@ io.use(async (socket, next) => {
       userType = "Hirer";
     }
 
-    if (!user) {
-      return next(new Error("User not found"));
-    }
+    if (!user) return next(new Error("User not found"));
 
     socket.user = { _id: user._id.toString(), userType };
-    return next();
-  } catch (error) {
-    return next(new Error("Not authorized"));
+    next();
+  } catch {
+    next(new Error("Not authorized"));
   }
 });
 
@@ -154,7 +152,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// Error handling middleware
+// Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -164,7 +162,4 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
