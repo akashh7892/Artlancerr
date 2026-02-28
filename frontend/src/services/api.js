@@ -179,6 +179,26 @@ export const artistAPI = {
     return fetchAPI("/promotions");
   },
 
+  createPromotion: async (promotionData) => {
+    return fetchAPI("/promotions", {
+      method: "POST",
+      body: JSON.stringify(promotionData),
+    });
+  },
+
+  updatePromotion: async (id, promotionData) => {
+    return fetchAPI(`/promotions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(promotionData),
+    });
+  },
+
+  deletePromotion: async (id) => {
+    return fetchAPI(`/promotions/${id}`, {
+      method: "DELETE",
+    });
+  },
+
   getPayments: async () => {
     return fetchAPI("/artist/payments");
   },
@@ -249,8 +269,41 @@ export const hirerAPI = {
     return fetchAPI("/promotions");
   },
 
+  createPromotion: async (promotionData) => {
+    return fetchAPI("/promotions", {
+      method: "POST",
+      body: JSON.stringify(promotionData),
+    });
+  },
+
+  updatePromotion: async (id, promotionData) => {
+    return fetchAPI(`/promotions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(promotionData),
+    });
+  },
+
+  deletePromotion: async (id) => {
+    return fetchAPI(`/promotions/${id}`, {
+      method: "DELETE",
+    });
+  },
+
   getBookings: async () => {
     return fetchAPI("/hirer/tasks");
+  },
+
+  updateTask: async (id, payload) => {
+    return fetchAPI(`/hirer/task/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  releaseTaskPayment: async (id) => {
+    return fetchAPI(`/hirer/task/${id}/release-payment`, {
+      method: "POST",
+    });
   },
 
   getDashboard: async () => {

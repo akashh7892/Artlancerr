@@ -50,26 +50,7 @@ const MONTHS = [
 ];
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const DEFAULT_EQUIPMENT = [
-  {
-    clientId: "tmp-1",
-    name: "Sony FX6",
-    model: "ILME-FX6V",
-    category: "Camera",
-    rental: "400",
-    rentalOn: true,
-    img: null,
-  },
-  {
-    clientId: "tmp-2",
-    name: "Canon EF 24-70mm",
-    model: "f/2.8L II USM",
-    category: "Lens",
-    rental: "100",
-    rentalOn: true,
-    img: null,
-  },
-];
+const DEFAULT_EQUIPMENT = [];
 
 function dateKey(year, month, day) {
   const mm = String(month + 1).padStart(2, "0");

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 
-// ─── Color tokens ─────────────────────────────────────────────
+// â”€â”€â”€ Color tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = {
   bg: "#1a1d24",
   card: "#22252e",
@@ -29,7 +29,7 @@ const C = {
   panelBg: "#1e2129",
 };
 
-// ─── 21 Categories ────────────────────────────────────────────
+// â”€â”€â”€ 21 Categories â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const FILTERS = [
   "All",
   "Film & TV Production",
@@ -55,429 +55,6 @@ const FILTERS = [
   "Internal Communication Studios",
 ];
 
-const MOCK_OPPORTUNITIES = [
-  {
-    id: 1,
-    title: "Lead Cinematographer – Feature Film",
-    company: "Sunrise Studios",
-    location: "Los Angeles, CA",
-    budget: "$8,000 – $12,000",
-    duration: "4 weeks",
-    posted: "2 days ago",
-    type: "Film & TV Production",
-  },
-  {
-    id: 2,
-    title: "Director of Photography for TV Pilot",
-    company: "Paramount Network",
-    location: "Atlanta, GA",
-    budget: "$10,000 – $15,000",
-    duration: "3 weeks",
-    posted: "1 day ago",
-    type: "Film & TV Production",
-  },
-  {
-    id: 3,
-    title: "Videographer for Nike Campaign",
-    company: "BBDO Advertising",
-    location: "New York, NY",
-    budget: "$5,000 – $8,000",
-    duration: "1 week",
-    posted: "3 days ago",
-    type: "Advertising & Commercial Shoots",
-  },
-  {
-    id: 4,
-    title: "Commercial Shoot – Auto Brand",
-    company: "Grey Global Group",
-    location: "Detroit, MI",
-    budget: "$6,000 – $9,000",
-    duration: "5 days",
-    posted: "5 days ago",
-    type: "Advertising & Commercial Shoots",
-  },
-  {
-    id: 5,
-    title: "Music Video Director",
-    company: "Rhythm Productions",
-    location: "New York, NY",
-    budget: "$3,000 – $5,000",
-    duration: "1 week",
-    posted: "5 days ago",
-    type: "Music Videos",
-  },
-  {
-    id: 6,
-    title: "Cinematographer for Hip-Hop Video",
-    company: "Def Jam Recordings",
-    location: "Los Angeles, CA",
-    budget: "$4,000 – $6,000",
-    duration: "3 days",
-    posted: "2 days ago",
-    type: "Music Videos",
-  },
-  {
-    id: 7,
-    title: "Event Videographer – Tech Summit",
-    company: "TechWorld Events",
-    location: "San Francisco, CA",
-    budget: "$2,000 – $3,500",
-    duration: "2 days",
-    posted: "1 day ago",
-    type: "Event Videography",
-  },
-  {
-    id: 8,
-    title: "Multi-Camera Operator – Awards Gala",
-    company: "Prestige Events Co.",
-    location: "Chicago, IL",
-    budget: "$1,500 – $2,500",
-    duration: "1 day",
-    posted: "4 days ago",
-    type: "Event Videography",
-  },
-  {
-    id: 9,
-    title: "Wedding Cinematographer – Luxury Package",
-    company: "Golden Vows Films",
-    location: "Miami, FL",
-    budget: "$3,500 – $5,000",
-    duration: "2 days",
-    posted: "3 days ago",
-    type: "Wedding Cinematography",
-  },
-  {
-    id: 10,
-    title: "Second Shooter – Destination Wedding",
-    company: "Forever Films Studio",
-    location: "Santorini, Greece",
-    budget: "$2,000 – $3,000",
-    duration: "3 days",
-    posted: "1 week ago",
-    type: "Wedding Cinematography",
-  },
-  {
-    id: 11,
-    title: "Cinematographer for Feature Documentary",
-    company: "True Vision Films",
-    location: "San Francisco, CA",
-    budget: "$7,000 – $10,000",
-    duration: "4 weeks",
-    posted: "1 week ago",
-    type: "Documentary Production",
-  },
-  {
-    id: 12,
-    title: "Field Director – Social Justice Doc",
-    company: "Impact Media",
-    location: "Washington, D.C.",
-    budget: "$5,000 – $8,000",
-    duration: "3 weeks",
-    posted: "6 days ago",
-    type: "Documentary Production",
-  },
-  {
-    id: 13,
-    title: "DoP for Netflix Original Series",
-    company: "Netflix Originals",
-    location: "Remote / LA",
-    budget: "$12,000 – $18,000",
-    duration: "6 weeks",
-    posted: "2 days ago",
-    type: "Streaming Content Production",
-  },
-  {
-    id: 14,
-    title: "Camera Operator – Amazon Prime Show",
-    company: "Amazon Studios",
-    location: "Seattle, WA",
-    budget: "$9,000 – $13,000",
-    duration: "5 weeks",
-    posted: "4 days ago",
-    type: "Streaming Content Production",
-  },
-  {
-    id: 15,
-    title: "Video Editor for Tech YouTube Channel",
-    company: "Linus Media Group",
-    location: "Remote",
-    budget: "$2,000 – $3,500/mo",
-    duration: "Ongoing",
-    posted: "Today",
-    type: "YouTubers Hiring Editors",
-  },
-  {
-    id: 16,
-    title: "Short-form Editor – 500K Sub Channel",
-    company: "Creator Hub",
-    location: "Remote",
-    budget: "$1,500 – $2,500/mo",
-    duration: "Ongoing",
-    posted: "1 day ago",
-    type: "YouTubers Hiring Editors",
-  },
-  {
-    id: 17,
-    title: "Videographer for Lifestyle Influencer",
-    company: "Nova Creative Agency",
-    location: "Los Angeles, CA",
-    budget: "$1,800 – $3,000",
-    duration: "1 week/mo",
-    posted: "2 days ago",
-    type: "Influencers Hiring Videographers",
-  },
-  {
-    id: 18,
-    title: "Travel Content Videographer",
-    company: "WanderlustMedia",
-    location: "Remote / Travel",
-    budget: "$2,500 – $4,000",
-    duration: "2 weeks/mo",
-    posted: "3 days ago",
-    type: "Influencers Hiring Videographers",
-  },
-  {
-    id: 19,
-    title: "Podcast Video Editor",
-    company: "The Daily Grind Podcast",
-    location: "Remote",
-    budget: "$800 – $1,500/mo",
-    duration: "Ongoing",
-    posted: "Today",
-    type: "Podcast Production Teams",
-  },
-  {
-    id: 20,
-    title: "Live Podcast A/V Technician",
-    company: "Speak Easy Studios",
-    location: "Austin, TX",
-    budget: "$1,200 – $2,000/mo",
-    duration: "Ongoing",
-    posted: "2 days ago",
-    type: "Podcast Production Teams",
-  },
-  {
-    id: 21,
-    title: "Reels & TikTok Editor",
-    company: "Viral Content Studio",
-    location: "Remote",
-    budget: "$1,500 – $2,800/mo",
-    duration: "Ongoing",
-    posted: "Today",
-    type: "Social Media Content Studios",
-  },
-  {
-    id: 22,
-    title: "Social Content Videographer",
-    company: "Hype Creative Co.",
-    location: "New York, NY",
-    budget: "$2,000 – $3,200/mo",
-    duration: "Ongoing",
-    posted: "1 day ago",
-    type: "Social Media Content Studios",
-  },
-  {
-    id: 23,
-    title: "Brand Story Videographer",
-    company: "Glossier",
-    location: "New York, NY",
-    budget: "$3,500 – $5,500",
-    duration: "2 weeks",
-    posted: "3 days ago",
-    type: "Brand Creator Collaborations",
-  },
-  {
-    id: 24,
-    title: "UGC Creator Partner",
-    company: "Notion Inc.",
-    location: "Remote",
-    budget: "$1,000 – $2,000/mo",
-    duration: "Ongoing",
-    posted: "5 days ago",
-    type: "Brand Creator Collaborations",
-  },
-  {
-    id: 25,
-    title: "Cinematic Cutscene Director",
-    company: "Epic Games",
-    location: "Cary, NC",
-    budget: "$15,000 – $25,000",
-    duration: "6 weeks",
-    posted: "1 week ago",
-    type: "Game Cinematics",
-  },
-  {
-    id: 26,
-    title: "In-Game Trailer Cinematographer",
-    company: "CD Projekt Red",
-    location: "Remote / Poland",
-    budget: "$12,000 – $20,000",
-    duration: "4 weeks",
-    posted: "4 days ago",
-    type: "Game Cinematics",
-  },
-  {
-    id: 27,
-    title: "MoCap Technician – AAA Title",
-    company: "Ubisoft",
-    location: "Montreal, Canada",
-    budget: "$8,000 – $13,000",
-    duration: "3 weeks",
-    posted: "6 days ago",
-    type: "Motion Capture Crews",
-  },
-  {
-    id: 28,
-    title: "Performance Capture Operator",
-    company: "Weta Digital",
-    location: "Wellington, NZ",
-    budget: "$10,000 – $15,000",
-    duration: "4 weeks",
-    posted: "1 week ago",
-    type: "Motion Capture Crews",
-  },
-  {
-    id: 29,
-    title: "Senior 3D Animator",
-    company: "Pixar Animation Studios",
-    location: "Emeryville, CA",
-    budget: "$9,000 – $14,000",
-    duration: "2 months",
-    posted: "3 days ago",
-    type: "3D Animation Teams",
-  },
-  {
-    id: 30,
-    title: "Freelance 3D Character Animator",
-    company: "DreamWorks Animation",
-    location: "Remote",
-    budget: "$5,000 – $9,000",
-    duration: "1 month",
-    posted: "5 days ago",
-    type: "3D Animation Teams",
-  },
-  {
-    id: 31,
-    title: "Virtual Production Supervisor",
-    company: "Industrial Light & Magic",
-    location: "San Francisco, CA",
-    budget: "$18,000 – $28,000",
-    duration: "2 months",
-    posted: "2 days ago",
-    type: "Virtual Production Specialists",
-  },
-  {
-    id: 32,
-    title: "LED Volume Operator",
-    company: "Orbital Studios",
-    location: "Los Angeles, CA",
-    budget: "$10,000 – $16,000",
-    duration: "3 weeks",
-    posted: "1 week ago",
-    type: "Virtual Production Specialists",
-  },
-  {
-    id: 33,
-    title: "Unreal Engine 5 Environment Artist",
-    company: "Lumen Studios",
-    location: "Remote",
-    budget: "$7,000 – $12,000",
-    duration: "1 month",
-    posted: "Today",
-    type: "Unreal Engine Artists",
-  },
-  {
-    id: 34,
-    title: "UE5 Cinematic Lighting Artist",
-    company: "Forge Creative",
-    location: "Remote",
-    budget: "$6,000 – $10,000",
-    duration: "3 weeks",
-    posted: "2 days ago",
-    type: "Unreal Engine Artists",
-  },
-  {
-    id: 35,
-    title: "Corporate Videographer – Annual Report",
-    company: "Deloitte Media",
-    location: "New York, NY",
-    budget: "$4,000 – $6,500",
-    duration: "2 weeks",
-    posted: "4 days ago",
-    type: "Corporate Video Production",
-  },
-  {
-    id: 36,
-    title: "Executive Interview Videographer",
-    company: "Goldman Sachs",
-    location: "New York, NY",
-    budget: "$3,000 – $5,000",
-    duration: "1 week",
-    posted: "1 day ago",
-    type: "Corporate Video Production",
-  },
-  {
-    id: 37,
-    title: "eLearning Video Producer",
-    company: "Coursera",
-    location: "Remote",
-    budget: "$2,500 – $4,500/mo",
-    duration: "Ongoing",
-    posted: "3 days ago",
-    type: "Training Content Creation",
-  },
-  {
-    id: 38,
-    title: "Instructional Video Creator",
-    company: "LinkedIn Learning",
-    location: "Remote",
-    budget: "$2,000 – $3,500/mo",
-    duration: "Ongoing",
-    posted: "6 days ago",
-    type: "Training Content Creation",
-  },
-  {
-    id: 39,
-    title: "Marketing Video Strategist",
-    company: "HubSpot",
-    location: "Remote",
-    budget: "$5,000 – $8,000",
-    duration: "1 month",
-    posted: "2 days ago",
-    type: "Marketing Media Teams",
-  },
-  {
-    id: 40,
-    title: "Product Launch Videographer",
-    company: "Shopify",
-    location: "Remote / Toronto",
-    budget: "$4,500 – $7,000",
-    duration: "2 weeks",
-    posted: "5 days ago",
-    type: "Marketing Media Teams",
-  },
-  {
-    id: 41,
-    title: "Internal Comms Video Producer",
-    company: "Google",
-    location: "Mountain View, CA",
-    budget: "$5,000 – $8,000/mo",
-    duration: "Ongoing",
-    posted: "1 day ago",
-    type: "Internal Communication Studios",
-  },
-  {
-    id: 42,
-    title: "Town Hall & All-Hands Video Lead",
-    company: "Meta",
-    location: "Menlo Park, CA",
-    budget: "$4,000 – $6,500/mo",
-    duration: "Ongoing",
-    posted: "3 days ago",
-    type: "Internal Communication Studios",
-  },
-];
-
 const LOCATIONS = [
   "All locations",
   "Los Angeles, CA",
@@ -493,15 +70,15 @@ const LOCATIONS = [
 const DURATIONS = [
   "Any duration",
   "Less than 1 week",
-  "1–4 weeks",
+  "1â€“4 weeks",
   "1+ months",
   "Ongoing",
 ];
 const POSTED = ["Any time", "Last 24 hours", "Last week", "Last month"];
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // StyledSelect
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function StyledSelect({ value, onChange, options }) {
   return (
     <div className="relative">
@@ -538,9 +115,9 @@ function StyledSelect({ value, onChange, options }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// FilterTabs  ← THIS IS THE MISSING COMPONENT THAT CAUSED THE ERROR
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// FilterTabs  â† THIS IS THE MISSING COMPONENT THAT CAUSED THE ERROR
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function FilterTabs({ filters, selected, onSelect }) {
   const scrollRef = useRef(null);
   const [canLeft, setCanLeft] = useState(false);
@@ -627,9 +204,9 @@ function FilterTabs({ filters, selected, onSelect }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Helpers
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function getPostedLabel(createdAt) {
   if (!createdAt) return "Recently posted";
   const d = new Date(createdAt);
@@ -647,7 +224,7 @@ function matchesDuration(duration, filter) {
   if (filter === "Any duration") return true;
   const t = String(duration || "").toLowerCase();
   if (filter === "Less than 1 week") return t.includes("day");
-  if (filter === "1–4 weeks") return t.includes("week");
+  if (filter === "1â€“4 weeks") return t.includes("week");
   if (filter === "1+ months") return t.includes("month");
   if (filter === "Ongoing") return t.includes("ongoing");
   return true;
@@ -664,14 +241,14 @@ function matchesPosted(createdAt, filter) {
   return true;
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Main page component
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function Opportunities() {
   const navigate = useNavigate();
 
-  // Use local state — API fetches into this, falls back to mock
-  const [opportunities, setOpportunities] = useState(MOCK_OPPORTUNITIES);
+  // Use local state populated by API
+  const [opportunities, setOpportunities] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -687,7 +264,7 @@ export default function Opportunities() {
   const apiBaseUrl =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-  // Try API, silently fall back to mock on failure
+  // Load opportunities from API
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
@@ -712,12 +289,12 @@ export default function Opportunities() {
             ? data
             : Array.isArray(data?.opportunities)
               ? data.opportunities
-              : MOCK_OPPORTUNITIES,
+              : [],
         );
       } catch (err) {
         if (err.name === "AbortError") return;
-        // API unavailable — keep showing mock data, no error banner
-        setOpportunities(MOCK_OPPORTUNITIES);
+        // API unavailable â€” keep showing mock data, no error banner
+        setOpportunities([]);
       } finally {
         setIsLoading(false);
       }
@@ -762,7 +339,7 @@ export default function Opportunities() {
     }
   };
 
-  // Local filter (works on both API data and mock data)
+  // Local filter over API data
   const filtered = opportunities.filter((o) => {
     const q = searchQuery.toLowerCase();
     return (
@@ -869,7 +446,7 @@ export default function Opportunities() {
 
       <Sidebar />
 
-      {/* ── Advanced Filters Sheet ── */}
+      {/* â”€â”€ Advanced Filters Sheet â”€â”€ */}
       {sheetOpen && (
         <>
           <div
@@ -948,7 +525,7 @@ export default function Opportunities() {
                 >
                   Budget Range:{" "}
                   <span style={{ color: C.gold }}>
-                    ${budgetMin.toLocaleString()} – $
+                    ${budgetMin.toLocaleString()} â€“ $
                     {budgetMax.toLocaleString()}
                   </span>
                 </label>
@@ -1040,7 +617,7 @@ export default function Opportunities() {
         </>
       )}
 
-      {/* ── Main Content ── */}
+      {/* â”€â”€ Main Content â”€â”€ */}
       <div
         className="min-h-screen lg:ml-[248px]"
         style={{
@@ -1121,7 +698,7 @@ export default function Opportunities() {
             />
           </div>
 
-          {/* ── Filter Tabs (scrollable with arrows) ── */}
+          {/* â”€â”€ Filter Tabs (scrollable with arrows) â”€â”€ */}
           <FilterTabs
             filters={FILTERS}
             selected={selectedFilter}

@@ -18,8 +18,9 @@ import {
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import HirerSidebar from "./HirerSidebar";
+import { hirerAPI } from "../../services/api";
 
-// ─── Design tokens ─────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Design tokens Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -39,132 +40,8 @@ const C = {
   redDim: "rgba(248,113,113,0.10)",
 };
 
-// ─── Mock Data ─────────────────────────────────────────────────
-const ALL_PROMOTIONS = [
-  {
-    id: 1,
-    projectName: "Midnight Echo",
-    poster:
-      "https://images.unsplash.com/photo-1620153850780-0883dd907257?w=600&q=80",
-    promotionType: "Instagram Story",
-    reward: "$25",
-    totalSlots: 50,
-    filledSlots: 32,
-    deadline: "2026-02-20T23:59:59",
-    description:
-      "Share our movie poster on your Instagram story with the hashtag #MidnightEcho",
-    requirements: [
-      "Post must be visible for 24 hours",
-      "Must include project hashtag",
-      "Tag @midnightechomovie",
-    ],
-    createdBy: "Warner Bros Studios",
-  },
-  {
-    id: 2,
-    projectName: "The Last Horizon",
-    poster:
-      "https://images.unsplash.com/photo-1574267432644-f74f897cb112?w=600&q=80",
-    promotionType: "Instagram Post",
-    reward: "$50",
-    totalSlots: 50,
-    filledSlots: 45,
-    deadline: "2026-02-18T23:59:59",
-    description: "Create a feed post about our upcoming thriller film",
-    requirements: [
-      "Minimum 100 followers",
-      "Include movie poster",
-      "Caption must be at least 50 words",
-    ],
-    createdBy: "Paramount Pictures",
-  },
-  {
-    id: 3,
-    projectName: "Dance Revolution",
-    poster:
-      "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=600&q=80",
-    promotionType: "Instagram Reel",
-    reward: "$75",
-    totalSlots: 50,
-    filledSlots: 12,
-    deadline: "2026-02-25T23:59:59",
-    description:
-      "Create a 15-30 second reel featuring our dance film soundtrack",
-    requirements: [
-      "Reel must be 15-30 seconds",
-      "Use official soundtrack",
-      "Include dance moves",
-    ],
-    createdBy: "Universal Studios",
-  },
-];
-
-const INIT_MY_PROMOS = [
-  {
-    id: 1,
-    projectName: "Midnight Echo",
-    poster:
-      "https://images.unsplash.com/photo-1620153850780-0883dd907257?w=600&q=80",
-    promotionType: "Instagram Story",
-    reward: "$25",
-    totalSlots: 50,
-    acceptedCount: 32,
-    submittedCount: 18,
-    approvedCount: 12,
-    rejectedCount: 2,
-    pendingReview: 4,
-    deadline: "2026-02-20T23:59:59",
-    status: "Active",
-    submissions: [
-      {
-        id: 1,
-        artistName: "Sarah Johnson",
-        artistPhoto:
-          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120",
-        submittedAt: "2026-02-14T16:45:00",
-        proofUrl: "https://instagram.com/stories/example1",
-        status: "Pending",
-      },
-      {
-        id: 2,
-        artistName: "Marcus Lee",
-        artistPhoto:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120",
-        submittedAt: "2026-02-14T14:30:00",
-        proofUrl: "https://instagram.com/stories/example2",
-        status: "Approved",
-      },
-      {
-        id: 3,
-        artistName: "Emma Chen",
-        artistPhoto:
-          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120",
-        submittedAt: "2026-02-15T09:20:00",
-        proofUrl: "https://instagram.com/stories/example3",
-        status: "Pending",
-      },
-    ],
-  },
-  {
-    id: 4,
-    projectName: "Urban Dreams",
-    poster:
-      "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&q=80",
-    promotionType: "Instagram Post",
-    reward: "$50",
-    totalSlots: 50,
-    acceptedCount: 50,
-    submittedCount: 48,
-    approvedCount: 45,
-    rejectedCount: 3,
-    pendingReview: 0,
-    deadline: "2026-02-16T23:59:59",
-    status: "Completed",
-    submissions: [],
-  },
-];
-
-// ─── Utilities ─────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Mock Data Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Utilities Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function timeLeft(deadline, now) {
   const diff = new Date(deadline).getTime() - now.getTime();
   if (diff <= 0) return "Expired";
@@ -176,7 +53,7 @@ function timeLeft(deadline, now) {
   return `${m}m`;
 }
 
-// ─── Primitives ────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Primitives Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function Img({ src, alt, className }) {
   const [err, setErr] = useState(false);
   if (err)
@@ -272,7 +149,7 @@ function FieldInput({ type = "text", value, onChange, placeholder, icon }) {
   );
 }
 
-// ─── Modal shell ───────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Modal shell Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function Modal({ open, onClose, title, subtitle, children, wide }) {
   if (!open) return null;
   return (
@@ -377,7 +254,7 @@ function Modal({ open, onClose, title, subtitle, children, wide }) {
   );
 }
 
-// ─── Gold button ───────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Gold button Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function GoldBtn({
   children,
   onClick,
@@ -416,12 +293,15 @@ function GoldBtn({
   );
 }
 
-// ══════════════════════════════════════════════════════════════
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 export default function HirerPromotions() {
   const navigate = useNavigate();
   const [tab, setTab] = useState("all");
   const [now, setNow] = useState(new Date());
-  const [myPromos, setMyPromos] = useState(INIT_MY_PROMOS);
+  const [allPromos, setAllPromos] = useState([]);
+  const [myPromos, setMyPromos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [detailPromo, setDetailPromo] = useState(null);
   const [reviewPromo, setReviewPromo] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -438,6 +318,90 @@ export default function HirerPromotions() {
       if (fresh) setReviewPromo(fresh);
     }
   }, [myPromos]);
+
+  useEffect(() => {
+    let m = true;
+    hirerAPI
+      .getPromotions()
+      .then((res) => {
+        if (!m) return;
+        const list = Array.isArray(res) ? res : [];
+        const mapped = list.map((p) => ({
+          id: p._id,
+          projectName: p.title || "Promotion",
+          poster:
+            p.image ||
+            "",
+          promotionType: p.type || "Promotion",
+          reward: `$${Number(p.price || 0)}`,
+          totalSlots: 50,
+          filledSlots: 0,
+          deadline: p.endDate || p.createdAt,
+          description: p.description || "",
+          requirements: [],
+          createdBy: "Artlancerr",
+          acceptedCount: 0,
+          submittedCount: 0,
+          approvedCount: 0,
+          rejectedCount: 0,
+          pendingReview: 0,
+          status: p.status === "active" ? "Active" : "Completed",
+          submissions: [],
+        }));
+        setAllPromos(mapped);
+        setMyPromos(mapped);
+      })
+      .catch((e) => {
+        if (m) setError(e.message || "Failed to load promotions");
+      })
+      .finally(() => {
+        if (m) setLoading(false);
+      });
+    return () => {
+      m = false;
+    };
+  }, []);
+
+  const handleCreatePromotion = async (form) => {
+    const created = await hirerAPI.createPromotion({
+      title: form.projectName,
+      description: form.description,
+      type: "featured",
+      duration: form.deadline
+        ? Math.max(
+            1,
+            Math.ceil(
+              (new Date(form.deadline).getTime() - Date.now()) / 86400000,
+            ),
+          )
+        : 7,
+      price: Number(form.reward || 0),
+    });
+    const mapped = {
+      id: created._id,
+      projectName: created.title || form.projectName,
+      poster:
+        created.image ||
+        "",
+      promotionType: created.type || form.promotionType || "Promotion",
+      reward: `$${Number(created.price || form.reward || 0)}`,
+      totalSlots: Number(form.totalSlots || 50),
+      filledSlots: 0,
+      deadline: created.endDate || form.deadline || new Date().toISOString(),
+      description: created.description || form.description,
+      requirements: [],
+      createdBy: "Artlancerr",
+      acceptedCount: 0,
+      submittedCount: 0,
+      approvedCount: 0,
+      rejectedCount: 0,
+      pendingReview: 0,
+      status: "Active",
+      submissions: [],
+    };
+    setAllPromos((prev) => [mapped, ...prev]);
+    setMyPromos((prev) => [mapped, ...prev]);
+  };
 
   const approve = (promoId, subId) =>
     setMyPromos((prev) =>
@@ -569,6 +533,16 @@ export default function HirerPromotions() {
             ))}
           </div>
 
+          {loading && (
+            <div className="flex justify-center py-8">
+              <div className="w-10 h-10 border-2 border-[#c9a961] border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {error && (
+            <p className="text-sm mb-4" style={{ color: "#f87171" }}>
+              {error}
+            </p>
+          )}
           {/* Tab content */}
           <AnimatePresence mode="wait">
             {/* ALL */}
@@ -581,7 +555,7 @@ export default function HirerPromotions() {
                 transition={{ duration: 0.25 }}
                 className="space-y-4"
               >
-                {ALL_PROMOTIONS.map((p, i) => {
+                {(allPromos || []).map((p, i) => {
                   const rem = p.totalSlots - p.filledSlots;
                   const isFull = rem <= 0;
                   const tl = timeLeft(p.deadline, now);
@@ -902,7 +876,7 @@ export default function HirerPromotions() {
         </div>
       </div>
 
-      {/* ═══ Promotion Details Modal ═══ */}
+      {/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Promotion Details Modal Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */}
       <Modal
         open={!!detailPromo}
         onClose={() => setDetailPromo(null)}
@@ -1038,7 +1012,7 @@ export default function HirerPromotions() {
         )}
       </Modal>
 
-      {/* ═══ Review Submissions Modal ═══ */}
+      {/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Review Submissions Modal Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */}
       <Modal
         open={!!reviewPromo}
         onClose={() => setReviewPromo(null)}
@@ -1189,21 +1163,24 @@ export default function HirerPromotions() {
           ))}
       </Modal>
 
-      {/* ═══ Create Promotion Modal ═══ */}
+      {/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Create Promotion Modal Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */}
       <Modal
         open={showCreate}
         onClose={() => setShowCreate(false)}
         title="Create Promotion"
         subtitle="Set up a new promotion mission for artists"
       >
-        <CreateForm onClose={() => setShowCreate(false)} />
+        <CreateForm
+          onClose={() => setShowCreate(false)}
+          onCreate={handleCreatePromotion}
+        />
       </Modal>
     </div>
   );
 }
 
-// ─── Create Promotion Form ─────────────────────────────────────
-function CreateForm({ onClose }) {
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Create Promotion Form Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function CreateForm({ onClose, onCreate }) {
   const [form, setForm] = useState({
     projectName: "",
     description: "",
@@ -1452,7 +1429,10 @@ function CreateForm({ onClose }) {
       {/* Buttons */}
       <div style={{ display: "flex", gap: 12 }}>
         <button
-          onClick={onClose}
+          onClick={async () => {
+            await onCreate?.(form);
+            onClose();
+          }}
           style={{
             flex: 1,
             padding: "12px 0",

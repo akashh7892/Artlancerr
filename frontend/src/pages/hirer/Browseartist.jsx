@@ -16,7 +16,7 @@ import { useNavigate } from "react-router";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Design Tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -29,124 +29,6 @@ const C = {
   text: "#ffffff",
   muted: "#9ca3af",
 };
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const MOCK_ARTISTS = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    role: "Lead Actor",
-    location: "Los Angeles, CA",
-    experience: "8 years",
-    rating: 4.9,
-    reviews: 127,
-    photo:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&fit=crop",
-    skills: ["Drama", "Comedy", "Theater"],
-    category: "Acting",
-    available: true,
-    bio: "Award-winning actor with extensive film and theater experience.",
-    projects: 45,
-    responseTime: "Within 2 hours",
-    dailyRate: "$800",
-    weeklyRate: "$4,500",
-  },
-  {
-    id: 2,
-    name: "Marcus Lee",
-    role: "Choreographer",
-    location: "New York, NY",
-    experience: "6 years",
-    rating: 4.8,
-    reviews: 89,
-    photo:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&fit=crop",
-    skills: ["Contemporary", "Hip Hop", "Ballroom"],
-    category: "Dance",
-    available: true,
-    bio: "Professional choreographer who has worked with top music artists worldwide.",
-    projects: 38,
-    responseTime: "Within 4 hours",
-    dailyRate: "$600",
-    weeklyRate: "$3,200",
-  },
-  {
-    id: 3,
-    name: "Alex Rivera",
-    role: "Cinematographer",
-    location: "Atlanta, GA",
-    experience: "10 years",
-    rating: 5.0,
-    reviews: 203,
-    photo:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&fit=crop",
-    skills: ["Color Grading", "Lighting", "Steadicam"],
-    category: "Cinematography",
-    available: false,
-    bio: "Award-winning cinematographer specializing in narrative storytelling.",
-    projects: 72,
-    responseTime: "Within 1 day",
-    dailyRate: "$1,200",
-    weeklyRate: "$6,000",
-  },
-  {
-    id: 4,
-    name: "Emma Chen",
-    role: "Makeup Artist",
-    location: "San Francisco, CA",
-    experience: "5 years",
-    rating: 4.7,
-    reviews: 156,
-    photo:
-      "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=600&fit=crop",
-    skills: ["Special Effects", "Period", "Beauty"],
-    category: "Makeup",
-    available: true,
-    bio: "Specialist in character and special effects makeup for film and TV.",
-    projects: 61,
-    responseTime: "Within 3 hours",
-    dailyRate: "$500",
-    weeklyRate: "$2,800",
-  },
-  {
-    id: 5,
-    name: "Jordan Miles",
-    role: "Music Composer",
-    location: "Nashville, TN",
-    experience: "7 years",
-    rating: 4.9,
-    reviews: 94,
-    photo:
-      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&fit=crop",
-    skills: ["Film Scoring", "Orchestral", "Electronic"],
-    category: "Music",
-    available: true,
-    bio: "Film composer with credits on 30+ independent and studio projects.",
-    projects: 33,
-    responseTime: "Within 2 hours",
-    dailyRate: "$700",
-    weeklyRate: "$3,800",
-  },
-  {
-    id: 6,
-    name: "Priya Patel",
-    role: "Film Editor",
-    location: "Los Angeles, CA",
-    experience: "9 years",
-    rating: 4.8,
-    reviews: 178,
-    photo:
-      "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&fit=crop",
-    skills: ["Avid", "Premiere Pro", "Color Correction"],
-    category: "Acting",
-    available: false,
-    bio: "Experienced editor who has worked on documentaries, shorts and features.",
-    projects: 55,
-    responseTime: "Within 6 hours",
-    dailyRate: "$900",
-    weeklyRate: "$4,800",
-  },
-];
 
 const FILTERS = ["All", "Acting", "Dance", "Cinematography", "Makeup", "Music"];
 
@@ -192,7 +74,7 @@ const mapArtist = (artist) => ({
   projectRate: artist?.rates?.project || "Negotiable",
 });
 
-// ─── Filter Drawer ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Filter Drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function FilterDrawer({
   open,
   onClose,
@@ -319,8 +201,8 @@ function FilterDrawer({
                   onChange={setExperience}
                   options={[
                     { value: "all", label: "Any Experience" },
-                    { value: "0-3", label: "0–3 years" },
-                    { value: "4-7", label: "4–7 years" },
+                    { value: "0-3", label: "0â€“3 years" },
+                    { value: "4-7", label: "4â€“7 years" },
                     { value: "8+", label: "8+ years" },
                   ]}
                 />
@@ -462,7 +344,7 @@ function FilterSelect({ value, onChange, options }) {
   );
 }
 
-// ─── Artist Card ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Artist Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ArtistCard({ artist, index, onView, onMessage }) {
   const [imgErr, setImgErr] = useState(false);
 
@@ -737,7 +619,7 @@ function ArtistCard({ artist, index, onView, onMessage }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function BrowseArtist() {
   const navigate = useNavigate();
   const [artists, setArtists] = useState([]);
@@ -761,7 +643,7 @@ export default function BrowseArtist() {
           setArtists(list.map(mapArtist));
         }
       } catch (err) {
-        console.error("Failed to load artists, using fallback data", err);
+        console.error("Failed to load artists", err);
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -813,7 +695,7 @@ export default function BrowseArtist() {
                 padding: "clamp(20px, 4vw, 40px) clamp(16px, 3vw, 32px)",
               }}
             >
-              {/* ── Header ──────────────────────────────────── */}
+              {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -903,7 +785,7 @@ export default function BrowseArtist() {
                 </div>
               </motion.div>
 
-              {/* ── Search ──────────────────────────────────── */}
+              {/* â”€â”€ Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -947,7 +829,7 @@ export default function BrowseArtist() {
                 />
               </motion.div>
 
-              {/* ── Filter Tabs ──────────────────────────────── */}
+              {/* â”€â”€ Filter Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -986,7 +868,7 @@ export default function BrowseArtist() {
                 ))}
               </motion.div>
 
-              {/* ── Grid ─────────────────────────────────────── */}
+              {/* â”€â”€ Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               {isLoading ? (
                 <motion.div
                   initial={{ opacity: 0 }}

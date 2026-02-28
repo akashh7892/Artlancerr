@@ -50,7 +50,7 @@ export default function Dashboard() {
     const opp = app.opportunity || {}; const hirer = app.hirer || {};
     const d = app.createdAt ? new Date(app.createdAt) : new Date();
     const timeAgo = Date.now() - d.getTime() < 86400000 ? `${Math.floor((Date.now() - d.getTime()) / 3600000)}h ago` : `${Math.floor((Date.now() - d.getTime()) / 86400000)}d ago`;
-    return { _id: app._id, title: opp.title || "Opportunity", company: hirer.companyName || hirer.name || "—", budget: opp.budget ? formatCur(opp.budget) : "—", time: timeAgo, status: (app.status || "pending").toLowerCase(), img: hirer.avatar || "https://images.unsplash.com/photo-1493804714600-6edb1cd93080?w=80&h=80&fit=crop" };
+    return { _id: app._id, title: opp.title || "Opportunity", company: hirer.companyName || hirer.name || "—", budget: opp.budget ? formatCur(opp.budget) : "—", time: timeAgo, status: (app.status || "pending").toLowerCase(), img: hirer.avatar || "" };
   });
   if (loading) return (<><Sidebar /><div className="min-h-screen lg:ml-[248px] flex items-center justify-center" style={{ background: C.bg }}><div className="w-10 h-10 border-2 border-[#b3a961] border-t-transparent rounded-full animate-spin" /></div></>);
   if (error) return (<><Sidebar /><div className="min-h-screen lg:ml-[248px] flex items-center justify-center" style={{ background: C.bg }}><p className="text-red-500">{error}</p></div></>);

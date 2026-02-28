@@ -9,44 +9,10 @@ import {
   Download,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/common/Sidebar";
-
-const MOCK_PAYMENTS = [
-  {
-    id: "1",
-    projectName: "Cinematic Short Film",
-    hirerName: "Paramount Studios",
-    amount: 5000,
-    status: "in_escrow",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-    releaseDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
-    milestone: "Principal Photography Completed",
-    description: "Payment for cinematography services - 5 day shoot",
-  },
-  {
-    id: "2",
-    projectName: "Documentary Series",
-    hirerName: "Netflix Originals",
-    amount: 8500,
-    status: "pending",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    milestone: "Initial Consultation",
-    description: "50% upfront payment for documentary project",
-  },
-  {
-    id: "3",
-    projectName: "Brand Commercial",
-    hirerName: "Nike Productions",
-    amount: 3000,
-    status: "released",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
-    releaseDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-    milestone: "Final Delivery",
-    description: "Final payment for commercial cinematography",
-  },
-];
+import { artistAPI } from "../../services/api";
 
 const STATUS_STYLES = {
   pending: {
@@ -334,9 +300,48 @@ const TAB_LABELS = {
 
 export default function ArtistPayments() {
   const navigate = useNavigate();
-  const [payments] = useState(MOCK_PAYMENTS);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+
+  useEffect(() => {
+    let m = true;
+    artistAPI
+      .getPayments()
+      .then((res) => {
+        if (!m) return;
+        const list = Array.isArray(res) ? res : [];
+        setPayments(
+          list.map((p) => ({
+            id: p._id,
+            projectName: p.projectName || p.description || "Payment",
+            hirerName: p.hirer?.companyName || p.hirer?.name || "Hirer",
+            amount: Number(p.amount || 0),
+            status:
+              p.status === "completed"
+                ? "released"
+                : p.status === "pending" || p.status === "processing"
+                  ? "in_escrow"
+                  : "pending",
+            createdAt: new Date(p.paidAt || p.createdAt),
+            releaseDate: p.paidAt ? new Date(p.paidAt) : null,
+            milestone: p.description || "-",
+            description: p.description || "Payment for project work",
+          })),
+        );
+      })
+      .catch((e) => {
+        if (m) setError(e.message || "Failed to load payments");
+      })
+      .finally(() => {
+        if (m) setLoading(false);
+      });
+    return () => {
+      m = false;
+    };
+  }, []);
 
   const totalEarnings = payments
     .filter((p) => p.status === "released")
@@ -393,6 +398,11 @@ export default function ArtistPayments() {
         className="lg:ml-[248px] min-h-screen payments-scroll"
         style={{ background: "#1a1d24", color: "#c4d5e0" }}
       >
+        {loading && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40">
+            <div className="w-10 h-10 border-2 border-[#c9a961] border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
         {/* ── Header ── */}
         <div
           className="px-8 pt-8 pb-7"
@@ -540,7 +550,14 @@ export default function ArtistPayments() {
 
             {/* Cards */}
             <div className="flex flex-col gap-4">
-              {filteredPayments.length === 0 ? (
+              {error ? (
+                <div
+                  className="rounded-2xl p-10 text-center text-[14px]"
+                  style={{ background: "#2d3139", color: "#f87171" }}
+                >
+                  {error}
+                </div>
+              ) : filteredPayments.length === 0 ? (
                 <div
                   className="rounded-2xl p-10 text-center text-[14px]"
                   style={{ background: "#2d3139", color: "#3a4e5e" }}

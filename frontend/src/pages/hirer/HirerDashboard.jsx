@@ -14,72 +14,9 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import HirerSidebar from "./HirerSidebar";
-
-const MOCK_TASKS = [
-  {
-    id: "1",
-    projectName: "Cinematic Short Film",
-    artistName: "Alex Rivera",
-    artistImage:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-    milestone: "Principal Photography",
-    amount: 5000,
-    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
-    status: "submitted",
-    progress: 100,
-    description:
-      "All 5-day shoot completed. Awaiting approval for payment release.",
-  },
-  {
-    id: "2",
-    projectName: "Documentary Series",
-    artistName: "Maya Chen",
-    artistImage:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
-    milestone: "Initial Consultation & Planning",
-    amount: 2500,
-    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
-    status: "in_progress",
-    progress: 60,
-    description: "Research phase and location scouting in progress.",
-  },
-  {
-    id: "3",
-    projectName: "Brand Commercial",
-    artistName: "Jordan Miles",
-    artistImage:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
-    milestone: "Post-Production Edit",
-    amount: 3000,
-    dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
-    status: "overdue",
-    progress: 85,
-    description: "Final edit delayed by 1 day. Expected completion soon.",
-  },
-];
-
-const MOCK_PROJECTS = [
-  {
-    id: "1",
-    title: "Cinematic Short Film",
-    artistsHired: 3,
-    budget: 15000,
-    completion: 65,
-    deadline: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
-    image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400",
-  },
-  {
-    id: "2",
-    title: "Documentary Series",
-    artistsHired: 2,
-    budget: 25000,
-    completion: 30,
-    deadline: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-    image: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400",
-  },
-];
+import { hirerAPI } from "../../services/api";
 
 // Simple Card Component
 const Card = ({ children, className = "", style = {} }) => (
@@ -165,13 +102,87 @@ const ImageWithFallback = ({ src, alt, className = "" }) => {
 
 export default function HirerDashboard() {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState(MOCK_TASKS);
+  const [tasks, setTasks] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [stats, setStats] = useState({
+    activeProjects: 0,
+    artistsHired: 0,
+    totalSpent: 0,
+    inEscrow: 0,
+    opportunityCount: 0,
+    applicationCount: 0,
+  });
+  const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
   const [releaseDialogOpen, setReleaseDialogOpen] = useState(false);
 
-  const totalSpent = 48500;
-  const inEscrow = 10500;
-  const activeProjects = MOCK_PROJECTS.length;
+  useEffect(() => {
+    let m = true;
+    hirerAPI
+      .getDashboard()
+      .then((res) => {
+        if (!m) return;
+        const rawTasks = Array.isArray(res?.tasks) ? res.tasks : [];
+        const rawProjects = Array.isArray(res?.opportunities)
+          ? res.opportunities
+          : [];
+        setStats((prev) => ({ ...prev, ...(res?.stats || {}) }));
+        setTasks(
+          rawTasks.map((t) => ({
+            id: t._id,
+            projectName: t.opportunity?.title || t.title || "Project",
+            artistName: t.artist?.name || "Artist",
+            artistImage:
+              t.artist?.avatar ||
+              "",
+            milestone: t.milestone || "Milestone",
+            amount: Number(t.amount || 0),
+            dueDate: new Date(t.dueDate || t.createdAt),
+            status: t.status || "pending",
+            progress: Number(t.progress || 0),
+            description: t.description || "Task in progress",
+          })),
+        );
+        setProjects(
+          rawProjects.map((p) => ({
+            id: p._id,
+            title: p.title || "Project",
+            artistsHired: Number(p.applicationCount || 0),
+            budget: Number(p.budgetMax || p.budgetMin || 0),
+            completion:
+              p.maxSlots && p.maxSlots > 0
+                ? Math.round(
+                    ((p.maxSlots - Number(p.availableSlots || 0)) / p.maxSlots) *
+                      100,
+                  )
+                : 0,
+            deadline: new Date(
+              p.startDate ||
+                (p.createdAt
+                  ? new Date(new Date(p.createdAt).getTime() + 12096e5)
+                  : Date.now()),
+            ),
+            image:
+              "",
+          })),
+        );
+      })
+      .catch(() => {
+        if (!m) return;
+        setTasks([]);
+        setProjects([]);
+      })
+      .finally(() => {
+        if (m) setLoading(false);
+      });
+    return () => {
+      m = false;
+    };
+  }, []);
+
+  const totalSpent = Number(stats.totalSpent || 0);
+  const inEscrow = Number(stats.inEscrow || 0);
+  const activeProjects = Number(stats.activeProjects || projects.length || 0);
 
   const getTaskStatusColor = (status) => {
     switch (status) {
@@ -235,20 +246,27 @@ export default function HirerDashboard() {
     setReleaseDialogOpen(true);
   };
 
-  const confirmReleasePayment = () => {
-    if (selectedTask) {
-      setTasks(
-        tasks.map((t) =>
+  const confirmReleasePayment = async () => {
+    if (!selectedTask) return;
+    try {
+      await hirerAPI.releaseTaskPayment(selectedTask.id);
+      setTasks((prev) =>
+        prev.map((t) =>
           t.id === selectedTask.id ? { ...t, status: "approved" } : t,
         ),
       );
-      setReleaseDialogOpen(false);
-      setSelectedTask(null);
-    }
+    } catch (_) {}
+    setReleaseDialogOpen(false);
+    setSelectedTask(null);
   };
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: "#1a1d24" }}>
+      {loading && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40">
+          <div className="w-10 h-10 border-2 border-[#c9a961] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
       <HirerSidebar />
 
       {/* Main Content Area */}
@@ -337,7 +355,7 @@ export default function HirerDashboard() {
                       </span>
                     </div>
                     <p className="text-2xl mb-1" style={{ color: "#ffffff" }}>
-                      12
+                      {Number(stats.artistsHired || 0)}
                     </p>
                     <p className="text-sm" style={{ color: "#9ca3af" }}>
                       Artists Hired
@@ -608,7 +626,7 @@ export default function HirerDashboard() {
                         Active Projects
                       </h3>
                       <div className="space-y-4">
-                        {MOCK_PROJECTS.map((project) => (
+                        {projects.map((project) => (
                           <div key={project.id} className="space-y-2">
                             <ImageWithFallback
                               src={project.image}
@@ -683,7 +701,9 @@ export default function HirerDashboard() {
                           >
                             Requirements Posted
                           </span>
-                          <span style={{ color: "#ffffff" }}>8</span>
+                          <span style={{ color: "#ffffff" }}>
+                            {Number(stats.opportunityCount || 0)}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span
@@ -692,7 +712,9 @@ export default function HirerDashboard() {
                           >
                             Applications Received
                           </span>
-                          <span style={{ color: "#ffffff" }}>142</span>
+                          <span style={{ color: "#ffffff" }}>
+                            {Number(stats.applicationCount || 0)}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span
@@ -701,7 +723,9 @@ export default function HirerDashboard() {
                           >
                             Artists Hired
                           </span>
-                          <span style={{ color: "#ffffff" }}>5</span>
+                          <span style={{ color: "#ffffff" }}>
+                            {Number(stats.artistsHired || 0)}
+                          </span>
                         </div>
                         <div
                           className="flex items-center justify-between pt-3"
@@ -723,7 +747,7 @@ export default function HirerDashboard() {
                               className="w-3 h-3"
                               style={{ color: "#4ade80" }}
                             />
-                            $15,500
+                            ${totalSpent.toLocaleString()}
                           </span>
                         </div>
                       </div>

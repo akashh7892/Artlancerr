@@ -11,12 +11,12 @@ import {
   CheckCircle,
   FileText,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Design Tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -31,7 +31,7 @@ const C = {
   successBorder: "rgba(74,222,128,0.2)",
 };
 
-// ─── Shared input base style ──────────────────────────────────────────────────
+// â”€â”€â”€ Shared input base style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const baseInput = {
   width: "100%",
   borderRadius: "10px",
@@ -43,7 +43,7 @@ const baseInput = {
   boxSizing: "border-box",
 };
 
-// ─── Label ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Label({ children }) {
   return (
     <label
@@ -62,7 +62,7 @@ function Label({ children }) {
   );
 }
 
-// ─── TextInput ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ TextInput â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function TextInput({
   icon: Icon,
   type = "text",
@@ -109,7 +109,7 @@ function TextInput({
   );
 }
 
-// ─── Textarea ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Textarea â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Textarea({ value, onChange, placeholder, required }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -134,7 +134,7 @@ function Textarea({ value, onChange, placeholder, required }) {
   );
 }
 
-// ─── Select ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Select â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function SelectInput({ value, onChange, options, placeholder }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -188,7 +188,7 @@ function SelectInput({ value, onChange, options, placeholder }) {
   );
 }
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PROJECT_TYPES = [
   { value: "acting", label: "Acting" },
   { value: "dance", label: "Dance / Choreography" },
@@ -200,18 +200,7 @@ const PROJECT_TYPES = [
   { value: "other", label: "Other" },
 ];
 
-const RECENT_POSTS = [
-  {
-    title: "Lead Actor for Indie Film",
-    meta: "Posted 2 days ago · 23 applications",
-  },
-  {
-    title: "Cinematographer for Brand Commercial",
-    meta: "Posted 5 days ago · 11 applications",
-  },
-];
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function PostRequirement() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -228,12 +217,32 @@ export default function PostRequirement() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [recentPosts, setRecentPosts] = useState([]);
 
   const set = (key) => (e) =>
     setFormData((prev) => ({
       ...prev,
       [key]: typeof e === "string" ? e : e.target.value,
     }));
+
+  useEffect(() => {
+    let m = true;
+    hirerAPI
+      .getOpportunities()
+      .then((res) => {
+        if (!m) return;
+        const list = Array.isArray(res) ? res : [];
+        const mapped = list.slice(0, 3).map((o) => ({
+          title: o.title || "Requirement",
+          meta: `Posted ${new Date(o.createdAt).toLocaleDateString()} Â· ${Number(o.applicationCount || 0)} applications`,
+        }));
+        setRecentPosts(mapped);
+      })
+      .catch(() => {});
+    return () => {
+      m = false;
+    };
+  }, []);
 
   const parseBudgetRange = (budget) => {
     const nums = String(budget || "")
@@ -295,7 +304,7 @@ export default function PostRequirement() {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: C.bg }}>
-      {/* Sidebar — identical pattern to HirerDashboard */}
+      {/* Sidebar â€” identical pattern to HirerDashboard */}
       <HirerSidebar />
 
       {/* Main content offset by sidebar width on lg+ */}
@@ -309,7 +318,7 @@ export default function PostRequirement() {
                 padding: "clamp(20px, 4vw, 40px) clamp(16px, 3vw, 32px)",
               }}
             >
-              {/* ── Page Header ──────────────────────────────── */}
+              {/* â”€â”€ Page Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -364,7 +373,7 @@ export default function PostRequirement() {
                 </div>
               </motion.div>
 
-              {/* ── Form Card ────────────────────────────────── */}
+              {/* â”€â”€ Form Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -580,7 +589,7 @@ export default function PostRequirement() {
                 </form>
               </motion.div>
 
-              {/* ── Recent Posts ─────────────────────────────── */}
+              {/* â”€â”€ Recent Posts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -598,7 +607,7 @@ export default function PostRequirement() {
                   Your Recent Posts
                 </h2>
 
-                {RECENT_POSTS.map((post, i) => (
+                {recentPosts.map((post, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, y: 10 }}

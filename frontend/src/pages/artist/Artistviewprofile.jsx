@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -15,8 +15,9 @@ import {
   X,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
+import { fetchAPI } from "../../services/api";
 
-// ─── Color tokens ──────────────────────────────────────────────
+// â”€â”€â”€ Color tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = {
   bg: "#1a1d24",
   card: "#22252e",
@@ -47,151 +48,24 @@ const AVAIL_STYLE = {
   },
 };
 
-// Full artist data (same as nearby list, extended with extra fields)
-const ARTISTS_MAP = {
-  1: {
-    id: 1,
-    name: "Marcus Lee",
-    photo:
-      "https://images.unsplash.com/photo-1699269266070-97882aaf9fec?w=600&q=80",
-    coverPhoto:
-      "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=1200&q=80",
-    primarySkill: "Choreographer",
-    specialties: ["Contemporary", "Hip Hop", "Ballroom"],
-    distance: 2.3,
-    availability: "Available Now",
-    rating: 4.8,
-    projectsCompleted: 24,
-    responseTime: "Within 2 hours",
-    location: "Los Angeles, CA",
-    about:
-      "Professional choreographer specializing in contemporary fusion with over 8 years of experience in theater and film productions. Passionate about creating innovative movement that tells compelling stories.",
-    experience: [
-      {
-        role: "Lead Choreographer",
-        company: "Broadway Dance Theater",
-        period: "2020 – Present",
-        desc: "Creating original choreography for major theatrical productions",
-      },
-      {
-        role: "Dance Instructor",
-        company: "LA Dance Academy",
-        period: "2018 – 2020",
-        desc: "Teaching contemporary and hip hop to students of all levels",
-      },
-    ],
-    portfolio: [
-      {
-        img: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&q=80",
-        title: "Contemporary Showcase",
-      },
-      {
-        img: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80",
-        title: "Hip Hop Battle",
-      },
-      {
-        img: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&q=80",
-        title: "Music Video – 2023",
-      },
-      {
-        img: "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=400&q=80",
-        title: "Theater Production",
-      },
-    ],
-    reviews: [
-      {
-        name: "Sony Pictures",
-        avatar: "SP",
-        rating: 5,
-        text: "Marcus brought an incredible energy to our production. Highly professional and creative.",
-        date: "Dec 2024",
-      },
-      {
-        name: "Universal Music",
-        avatar: "UM",
-        rating: 5,
-        text: "Outstanding choreographer. The music video exceeded all expectations.",
-        date: "Oct 2024",
-      },
-      {
-        name: "LA Dance Co.",
-        avatar: "LD",
-        rating: 4,
-        text: "Great communicator, delivered on time and within budget. Will hire again.",
-        date: "Aug 2024",
-      },
-    ],
-  },
-  2: {
-    id: 2,
-    name: "Alex Rivera",
-    photo:
-      "https://images.unsplash.com/photo-1768885511762-4f8a888b0a6f?w=600&q=80",
-    coverPhoto:
-      "https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=1200&q=80",
-    primarySkill: "Cinematographer",
-    specialties: ["Color Grading", "Lighting", "Drone"],
-    distance: 4.7,
-    availability: "Available Now",
-    rating: 5.0,
-    projectsCompleted: 56,
-    responseTime: "Within 1 hour",
-    location: "Los Angeles, CA",
-    about:
-      "Award-winning cinematographer with 10+ years crafting visual narratives for top studios worldwide. Specializing in cinematic storytelling through light, shadow and motion.",
-    experience: [
-      {
-        role: "Director of Photography",
-        company: "Paramount Pictures",
-        period: "2021 – Present",
-        desc: "Leading cinematography on major studio productions",
-      },
-      {
-        role: "Camera Operator",
-        company: "Netflix Originals",
-        period: "2018 – 2021",
-        desc: "Operating on high-profile streaming productions",
-      },
-    ],
-    portfolio: [
-      {
-        img: "https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=400&q=80",
-        title: "Cinematic Reel 2024",
-      },
-      {
-        img: "https://images.unsplash.com/photo-1533488765986-dfa2a9939acd?w=400&q=80",
-        title: "Short Film – Dawn",
-      },
-      {
-        img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80",
-        title: "Nature Documentary",
-      },
-      {
-        img: "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&q=80",
-        title: "Commercial Shoot",
-      },
-    ],
-    reviews: [
-      {
-        name: "Paramount Studios",
-        avatar: "PS",
-        rating: 5,
-        text: "Alex's eye for light and composition is unmatched. Every frame was stunning.",
-        date: "Jan 2025",
-      },
-      {
-        name: "Netflix",
-        avatar: "NF",
-        rating: 5,
-        text: "Phenomenal work ethic and creative vision. One of the best in the industry.",
-        date: "Nov 2024",
-      },
-    ],
-  },
+const EMPTY_ARTIST = {
+  id: "",
+  name: "",
+  photo: "",
+  coverPhoto: "",
+  primarySkill: "",
+  specialties: [],
+  distance: null,
+  availability: "Booking Ahead",
+  rating: null,
+  projectsCompleted: 0,
+  responseTime: "",
+  location: "",
+  about: "",
+  experience: [],
+  portfolio: [],
+  reviews: [],
 };
-
-// Fallback for unknown IDs
-const DEFAULT_ARTIST = ARTISTS_MAP[1];
 
 const TABS = ["Overview", "Portfolio", "Reviews"];
 
@@ -324,9 +198,42 @@ function ConnectModal({ artist, onClose }) {
 export default function ArtistProfileView() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const artist = ARTISTS_MAP[Number(id)] || DEFAULT_ARTIST;
+  const [artist, setArtist] = useState(EMPTY_ARTIST);
   const [activeTab, setActiveTab] = useState("Overview");
   const [showConnect, setShowConnect] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    let m = true;
+    fetchAPI(`/artist/${id}`)
+      .then((data) => {
+        if (!m) return;
+        setArtist((prev) => ({
+          ...prev,
+          id: data._id || id,
+          name: data.name || prev.name,
+          photo: data.avatar || prev.photo,
+          primarySkill: data.artCategory || prev.primarySkill,
+          specialties: [data.artCategory, data.experience].filter(Boolean),
+          location: data.location || prev.location,
+          about: data.bio || prev.about,
+          portfolio: Array.isArray(data.portfolio)
+            ? data.portfolio.map((p, idx) => ({
+                img:
+                  p.thumbnailUrl ||
+                  p.mediaUrl ||
+                  prev.portfolio[idx % prev.portfolio.length]?.img,
+                title: p.title || "Portfolio",
+              }))
+            : prev.portfolio,
+        }));
+      })
+      .catch(() => {});
+    return () => {
+      m = false;
+    };
+  }, [id]);
+
   const avail =
     AVAIL_STYLE[artist.availability] || AVAIL_STYLE["Available Now"];
 
@@ -355,7 +262,7 @@ export default function ArtistProfileView() {
           fontFamily: "'Plus Jakarta Sans', sans-serif",
         }}
       >
-        {/* ── Cover Photo ── */}
+        {/* â”€â”€ Cover Photo â”€â”€ */}
         <div className="relative w-full" style={{ height: 260 }}>
           <img
             src={artist.coverPhoto}
@@ -389,7 +296,7 @@ export default function ArtistProfileView() {
           </button>
         </div>
 
-        {/* ── Profile Card ── */}
+        {/* â”€â”€ Profile Card â”€â”€ */}
         <div className="px-6 md:px-8">
           <div
             className="rounded-2xl p-6 -mt-10 relative z-10 mb-5"
@@ -520,7 +427,7 @@ export default function ArtistProfileView() {
             </div>
           </div>
 
-          {/* ── Tabs ── */}
+          {/* â”€â”€ Tabs â”€â”€ */}
           <div
             className="flex items-center gap-1 mb-5"
             style={{ borderBottom: `1px solid ${C.inputBorder}` }}
@@ -546,7 +453,7 @@ export default function ArtistProfileView() {
             })}
           </div>
 
-          {/* ── Tab Content ── */}
+          {/* â”€â”€ Tab Content â”€â”€ */}
           <div
             style={{ animation: "fadeUp 0.25s ease both", paddingBottom: 48 }}
           >

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -16,8 +16,9 @@ import {
   X,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
+import { artistAPI } from "../../services/api";
 
-// ─── Color tokens ──────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Color tokens Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const C = {
   bg: "#1a1d24",
   card: "#22252e",
@@ -30,129 +31,6 @@ const C = {
   inputBorder: "rgba(255,255,255,0.08)",
   muted: "#5a6e7d",
 };
-
-const NEARBY_ARTISTS = [
-  {
-    id: 1,
-    name: "Marcus Lee",
-    photo:
-      "https://images.unsplash.com/photo-1699269266070-97882aaf9fec?w=600&q=80",
-    primarySkill: "Choreographer",
-    specialties: ["Contemporary", "Hip Hop", "Ballroom"],
-    distance: 2.3,
-    availability: "Available Now",
-    rating: 4.8,
-    projectsCompleted: 24,
-    responseTime: "Within 2 hours",
-    bio: "Professional choreographer specializing in contemporary fusion with 8+ years in theater and film productions.",
-    location: "Los Angeles, CA",
-  },
-  {
-    id: 2,
-    name: "Alex Rivera",
-    photo:
-      "https://images.unsplash.com/photo-1768885511762-4f8a888b0a6f?w=600&q=80",
-    primarySkill: "Cinematographer",
-    specialties: ["Color Grading", "Lighting", "Drone"],
-    distance: 4.7,
-    availability: "Available Now",
-    rating: 5.0,
-    projectsCompleted: 56,
-    responseTime: "Within 1 hour",
-    bio: "Award-winning cinematographer with 10+ years experience crafting visual narratives for top studios.",
-    location: "Los Angeles, CA",
-  },
-  {
-    id: 3,
-    name: "Emma Chen",
-    photo:
-      "https://images.unsplash.com/photo-1600637070413-0798fafbb6c7?w=600&q=80",
-    primarySkill: "Makeup Artist",
-    specialties: ["Special Effects", "Period", "Beauty"],
-    distance: 5.2,
-    availability: "Available This Week",
-    rating: 4.7,
-    projectsCompleted: 42,
-    responseTime: "Within 4 hours",
-    bio: "Versatile makeup artist for film and theater productions. Skilled in transformative FX.",
-    location: "Los Angeles, CA",
-  },
-  {
-    id: 4,
-    name: "Jordan White",
-    photo:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80",
-    primarySkill: "Film Director",
-    specialties: ["Indie Films", "Documentaries", "Music Videos"],
-    distance: 6.8,
-    availability: "Booking Ahead",
-    rating: 4.9,
-    projectsCompleted: 31,
-    responseTime: "Within 8 hours",
-    bio: "Independent filmmaker passionate about authentic storytelling and human connection.",
-    location: "Los Angeles, CA",
-  },
-  {
-    id: 5,
-    name: "Sofia Martinez",
-    photo:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&q=80",
-    primarySkill: "Singer",
-    specialties: ["Jazz", "Soul", "R&B"],
-    distance: 7.5,
-    availability: "Available Now",
-    rating: 4.8,
-    projectsCompleted: 38,
-    responseTime: "Within 3 hours",
-    bio: "Professional vocalist for studio recordings and live performances across multiple genres.",
-    location: "Los Angeles, CA",
-  },
-  {
-    id: 6,
-    name: "David Kim",
-    photo:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&q=80",
-    primarySkill: "Sound Designer",
-    specialties: ["Post Production", "Foley", "Mixing"],
-    distance: 8.9,
-    availability: "Available This Week",
-    rating: 4.9,
-    projectsCompleted: 47,
-    responseTime: "Within 2 hours",
-    bio: "Sound design specialist for film and television with credits on major streaming productions.",
-    location: "Los Angeles, CA",
-  },
-  {
-    id: 7,
-    name: "Rachel Green",
-    photo:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&q=80",
-    primarySkill: "Costume Designer",
-    specialties: ["Period Costumes", "Contemporary", "Fantasy"],
-    distance: 9.3,
-    availability: "Available Now",
-    rating: 4.7,
-    projectsCompleted: 29,
-    responseTime: "Within 6 hours",
-    bio: "Creative costume designer with theatrical background and extensive period production experience.",
-    location: "Los Angeles, CA",
-  },
-  {
-    id: 8,
-    name: "Michael Chen",
-    photo:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&q=80",
-    primarySkill: "Film Editor",
-    specialties: ["Narrative", "Documentary", "Color Correction"],
-    distance: 11.2,
-    availability: "Booking Ahead",
-    rating: 4.8,
-    projectsCompleted: 52,
-    responseTime: "Within 12 hours",
-    bio: "Post-production editor with expertise in narrative storytelling and documentary crafts.",
-    location: "Los Angeles, CA",
-  },
-];
 
 const SKILL_FILTERS = [
   "All Skills",
@@ -194,7 +72,7 @@ const AVAIL_STYLE = {
   },
 };
 
-// ── Custom Toggle ──────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Custom Toggle Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function Toggle({ checked, onChange }) {
   return (
     <button
@@ -220,7 +98,7 @@ function Toggle({ checked, onChange }) {
   );
 }
 
-// ── Custom Select ──────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Custom Select Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function NativeSelect({ value, onChange, options }) {
   return (
     <div className="relative">
@@ -253,7 +131,7 @@ function NativeSelect({ value, onChange, options }) {
   );
 }
 
-// ── Privacy Modal ──────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Privacy Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function PrivacyModal({ privacy, setPrivacy, onClose }) {
   return (
     <div
@@ -367,7 +245,7 @@ function PrivacyModal({ privacy, setPrivacy, onClose }) {
   );
 }
 
-// ── Connect Modal ──────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Connect Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function ConnectModal({ artist, onClose, onSend }) {
   const [msg, setMsg] = useState("");
   return (
@@ -505,6 +383,9 @@ export default function ArtistNearby() {
   const [skillFilter, setSkillFilter] = useState("All Skills");
   const [availabilityFilter, setAvailabilityFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [artists, setArtists] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [connectArtist, setConnectArtist] = useState(null);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [privacy, setPrivacy] = useState({
@@ -513,7 +394,65 @@ export default function ArtistNearby() {
     allowConnectionRequests: true,
   });
 
-  const filtered = NEARBY_ARTISTS.filter((a) => {
+  useEffect(() => {
+    let m = true;
+    artistAPI
+      .getNearbyArtists()
+      .then((res) => {
+        if (!m) return;
+        const list = Array.isArray(res?.artists)
+          ? res.artists
+          : Array.isArray(res)
+            ? res
+            : [];
+        const mapped = list.map((a, idx) => {
+          const freeDates = Array.isArray(a.availability?.freeDates)
+            ? a.availability.freeDates
+            : [];
+          const availability =
+            freeDates.length > 10
+              ? "Available Now"
+              : freeDates.length > 0
+                ? "Available This Week"
+                : "Booking Ahead";
+          return {
+            id: a._id || a.id || `artist-${idx}`,
+            name: a.name || "Artist",
+            photo:
+              a.avatar ||
+              "",
+            primarySkill: a.artCategory || "Artist",
+            specialties: [a.artCategory, a.experience, "Creative"].filter(
+              Boolean,
+            ),
+            distance: Number((idx + 1) * 1.7),
+            availability,
+            rating: 4.6,
+            projectsCompleted: Math.max(
+              1,
+              Math.floor(Number(a.profileViews || 0) / 8),
+            ),
+            responseTime: "Within 6 hours",
+            bio: a.bio || "Available for collaboration projects.",
+            location: a.location || "Unknown location",
+          };
+        });
+        setArtists(mapped);
+      })
+      .catch((e) => {
+        if (!m) return;
+        setError(e.message || "Failed to load nearby artists");
+        setArtists([]);
+      })
+      .finally(() => {
+        if (m) setLoading(false);
+      });
+    return () => {
+      m = false;
+    };
+  }, []);
+
+  const filtered = artists.filter((a) => {
     const matchDist = a.distance <= distanceRadius;
     const matchSkill =
       skillFilter === "All Skills" || a.primarySkill === skillFilter;
@@ -570,7 +509,7 @@ export default function ArtistNearby() {
         }}
       >
         <div className="px-8 py-8 max-w-[1100px]">
-          {/* ── Header ── */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ Header Ã¢â€â‚¬Ã¢â€â‚¬ */}
           <div
             className="flex items-center gap-4 mb-7"
             style={{ animation: "fadeUp 0.3s ease both" }}
@@ -623,7 +562,7 @@ export default function ArtistNearby() {
             </button>
           </div>
 
-          {/* ── Filters ── */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ Filters Ã¢â€â‚¬Ã¢â€â‚¬ */}
           <div
             className="rounded-2xl p-6 mb-6"
             style={{
@@ -726,7 +665,7 @@ export default function ArtistNearby() {
             </div>
           </div>
 
-          {/* ── Count ── */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ Count Ã¢â€â‚¬Ã¢â€â‚¬ */}
           <p
             className="text-[13px] mb-5"
             style={{
@@ -741,9 +680,18 @@ export default function ArtistNearby() {
             artists nearby
           </p>
 
-          {/* ── Artist Cards ── */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ Artist Cards Ã¢â€â‚¬Ã¢â€â‚¬ */}
+          {error && (
+            <p className="text-[12px] mb-4" style={{ color: "#f87171" }}>
+              {error}
+            </p>
+          )}
           <div className="flex flex-col gap-4">
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div className="flex justify-center py-14">
+                <div className="w-10 h-10 border-2 border-[#c9a961] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : filtered.length === 0 ? (
               <div
                 className="text-center py-16 rounded-2xl"
                 style={{ background: C.card, border: `1px solid ${C.border}` }}

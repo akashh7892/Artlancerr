@@ -14,11 +14,12 @@ import {
   X,
   ChevronRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import HirerSidebar from "./HirerSidebar";
+import { hirerAPI } from "../../services/api";
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Design Tokens Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -39,126 +40,11 @@ const C = {
   dangerBorder: "rgba(248,113,113,0.2)",
 };
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const MOCK_BOOKINGS = [
-  {
-    id: "1",
-    status: "confirmed",
-    artist: {
-      name: "Sarah Johnson",
-      role: "Cinematographer",
-      photo:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&fit=crop",
-      contact: "+1 (555) 123-4567",
-    },
-    project: {
-      title: "Music Video Production",
-      description: "3-day music video shoot for emerging artist",
-      location: "Downtown LA Studio, 123 Main St",
-    },
-    dates: { start: "2026-02-22", end: "2026-02-24", duration: "3 days" },
-    rates: { artistDaily: 800, days: 3, equipmentTotal: 450 },
-    equipment: [
-      { name: "Sony FX6", price: 400 },
-      { name: "Aputure 600D Pro", price: 150 },
-    ],
-    crew: [
-      {
-        name: "Sarah Johnson",
-        role: "Cinematographer",
-        callTime: "07:00 AM",
-        contact: "+1 (555) 123-4567",
-      },
-      {
-        name: "Mike Chen",
-        role: "1st AC",
-        callTime: "07:00 AM",
-        contact: "+1 (555) 234-5678",
-      },
-      {
-        name: "Emma Davis",
-        role: "Gaffer",
-        callTime: "06:30 AM",
-        contact: "+1 (555) 345-6789",
-      },
-    ],
-    paymentMilestones: [
-      {
-        label: "Deposit (50%)",
-        amount: 1625,
-        status: "paid",
-        date: "2026-02-15",
-      },
-      {
-        label: "Final Payment (50%)",
-        amount: 1625,
-        status: "pending",
-        dueDate: "2026-02-25",
-      },
-    ],
-  },
-  {
-    id: "2",
-    status: "pending",
-    artist: {
-      name: "Marcus Lee",
-      role: "Choreographer",
-      photo:
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&fit=crop",
-      contact: "+1 (555) 987-6543",
-    },
-    project: {
-      title: "Dance Performance",
-      description: "Choreography for live theater production",
-      location: "Grand Theater, 456 Arts Ave",
-    },
-    dates: { start: "2026-03-10", end: "2026-03-15", duration: "6 days" },
-    rates: { artistDaily: 600, days: 6, equipmentTotal: 0 },
-    equipment: [],
-    crew: [],
-    paymentMilestones: [],
-  },
-  {
-    id: "3",
-    status: "past",
-    artist: {
-      name: "Emma Chen",
-      role: "Makeup Artist",
-      photo:
-        "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=200&fit=crop",
-      contact: "+1 (555) 654-3210",
-    },
-    project: {
-      title: "Brand Commercial Shoot",
-      description: "Full day commercial for cosmetics brand",
-      location: "Studio B, 789 Film Row",
-    },
-    dates: { start: "2026-01-10", end: "2026-01-10", duration: "1 day" },
-    rates: { artistDaily: 500, days: 1, equipmentTotal: 0 },
-    equipment: [],
-    crew: [
-      {
-        name: "Emma Chen",
-        role: "Makeup Artist",
-        callTime: "05:00 AM",
-        contact: "+1 (555) 654-3210",
-      },
-    ],
-    paymentMilestones: [
-      {
-        label: "Full Payment",
-        amount: 500,
-        status: "paid",
-        date: "2026-01-11",
-      },
-    ],
-  },
-];
-
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Mock Data Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const calcTotal = (b) =>
   b.rates.artistDaily * b.rates.days + b.rates.equipmentTotal;
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Status badge Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function StatusBadge({ status }) {
   const map = {
     confirmed: {
@@ -204,7 +90,7 @@ function StatusBadge({ status }) {
   );
 }
 
-// ─── Avatar with fallback ─────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Avatar with fallback Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function Avatar({ src, alt, size = 64 }) {
   const [err, setErr] = useState(false);
   return err ? (
@@ -240,7 +126,7 @@ function Avatar({ src, alt, size = 64 }) {
   );
 }
 
-// ─── Call Sheet Modal ─────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Call Sheet Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function CallSheetModal({ booking, onClose }) {
   const total = calcTotal(booking);
 
@@ -407,7 +293,7 @@ function CallSheetModal({ booking, onClose }) {
               {booking.project.title}
             </p>
             <p style={{ margin: 0, fontSize: "13px", color: C.muted }}>
-              Shoot Date: {new Date(booking.dates.start).toLocaleDateString()} –{" "}
+              Shoot Date: {new Date(booking.dates.start).toLocaleDateString()} Ã¢â‚¬â€œ{" "}
               {new Date(booking.dates.end).toLocaleDateString()}
             </p>
           </div>
@@ -427,7 +313,7 @@ function CallSheetModal({ booking, onClose }) {
               { label: "Duration", value: booking.dates.duration },
               {
                 label: "Director / Producer",
-                value: "Your Name · +1 (555) 000-0000",
+                value: "Your Name Ã‚Â· +1 (555) 000-0000",
               },
             ].map(({ label, value }) => (
               <div
@@ -662,7 +548,7 @@ function CallSheetModal({ booking, onClose }) {
                         style={{ margin: 0, fontSize: "11px", color: C.muted }}
                       >
                         {m.status === "paid"
-                          ? `✓ Paid ${m.date}`
+                          ? `Ã¢Å“â€œ Paid ${m.date}`
                           : `Due ${m.dueDate}`}
                       </p>
                     </div>
@@ -762,7 +648,7 @@ function CallSheetModal({ booking, onClose }) {
   );
 }
 
-// ─── Booking Card ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Booking Card Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function BookingCard({ booking, onViewCallSheet }) {
   const [photoErr, setPhotoErr] = useState(false);
   const total = calcTotal(booking);
@@ -1017,7 +903,7 @@ function BookingCard({ booking, onViewCallSheet }) {
   );
 }
 
-// ─── Empty State ──────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Empty State Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function EmptyState({ tab, onBrowse }) {
   return (
     <motion.div
@@ -1070,12 +956,81 @@ function EmptyState({ tab, onBrowse }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Main Page Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 export default function Booking() {
   const navigate = useNavigate();
-  const [bookings] = useState(MOCK_BOOKINGS);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("upcoming");
   const [callSheetBooking, setCallSheetBooking] = useState(null);
+
+  useEffect(() => {
+    let m = true;
+    hirerAPI
+      .getBookings()
+      .then((res) => {
+        if (!m) return;
+        const list = Array.isArray(res) ? res : [];
+        const mapped = list.map((t) => {
+          const due = new Date(t.dueDate || t.createdAt || Date.now());
+          const status =
+            t.status === "pending"
+              ? "pending"
+              : t.status === "approved" || due.getTime() < Date.now()
+                ? "past"
+                : "confirmed";
+          return {
+            id: t._id,
+            status,
+            artist: {
+              name: t.artist?.name || "Artist",
+              role: t.artist?.artCategory || "Artist",
+              photo:
+                t.artist?.avatar ||
+                "",
+              contact: "-",
+            },
+            project: {
+              title: t.opportunity?.title || t.title || "Project",
+              description: t.description || "Task booking",
+              location: t.opportunity?.location || "TBD",
+            },
+            dates: {
+              start: due.toISOString(),
+              end: due.toISOString(),
+              duration: "1 day",
+            },
+            rates: { artistDaily: Number(t.amount || 0), days: 1, equipmentTotal: 0 },
+            equipment: [],
+            crew: [],
+            paymentMilestones: [
+              {
+                label: "Milestone Payment",
+                amount: Number(t.amount || 0),
+                status: t.paymentStatus === "released" ? "paid" : "pending",
+                date: t.paymentReleasedAt
+                  ? new Date(t.paymentReleasedAt).toISOString().slice(0, 10)
+                  : undefined,
+                dueDate: due.toISOString().slice(0, 10),
+              },
+            ],
+          };
+        });
+        setBookings(mapped);
+      })
+      .catch((e) => {
+        if (!m) return;
+        setError(e.message || "Failed to load bookings");
+        setBookings([]);
+      })
+      .finally(() => {
+        if (m) setLoading(false);
+      });
+    return () => {
+      m = false;
+    };
+  }, []);
 
   const TABS = [
     { key: "upcoming", label: "Upcoming" },
@@ -1098,6 +1053,11 @@ export default function Booking() {
         fontFamily: "'Inter', 'Segoe UI', sans-serif",
       }}
     >
+      {loading && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40">
+          <div className="w-10 h-10 border-2 border-[#c9a961] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
       <HirerSidebar />
 
       <div className="flex-1 flex flex-col lg:ml-72">
@@ -1178,6 +1138,11 @@ export default function Booking() {
               </div>
 
               {/* Booking cards */}
+              {error && (
+                <p style={{ color: C.danger, marginBottom: "12px", fontSize: "13px" }}>
+                  {error}
+                </p>
+              )}
               <div
                 style={{
                   display: "flex",

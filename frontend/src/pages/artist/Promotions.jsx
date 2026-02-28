@@ -17,8 +17,9 @@ import {
   Loader,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
+import { artistAPI } from "../../services/api";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Constants Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 const COLORS = {
   bg: "#1a1d24",
@@ -29,119 +30,7 @@ const COLORS = {
   muted: "#8ba3af",
 };
 
-const ALL_PROMOTIONS = [
-  {
-    id: 1,
-    projectName: "Midnight Echo",
-    poster:
-      "https://images.unsplash.com/photo-1620153850780-0883dd907257?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400",
-    promotionType: "Instagram Story",
-    reward: "$25",
-    totalSlots: 50,
-    filledSlots: 32,
-    deadline: "2026-02-20T23:59:59",
-    description:
-      "Share our movie poster on your Instagram story with the hashtag #MidnightEcho",
-    requirements: [
-      "Post must be visible for 24 hours",
-      "Must include project hashtag",
-      "Tag @midnightechomovie",
-    ],
-    createdBy: "Warner Bros Studios",
-  },
-  {
-    id: 2,
-    projectName: "The Last Horizon",
-    poster:
-      "https://images.unsplash.com/photo-1574267432644-f74f897cb112?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400",
-    promotionType: "Instagram Post",
-    reward: "$50",
-    totalSlots: 50,
-    filledSlots: 45,
-    deadline: "2026-02-18T23:59:59",
-    description: "Create a feed post about our upcoming thriller film",
-    requirements: [
-      "Minimum 100 followers",
-      "Include movie poster",
-      "Caption must be at least 50 words",
-    ],
-    createdBy: "Paramount Pictures",
-  },
-  {
-    id: 3,
-    projectName: "Dance Revolution",
-    poster:
-      "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400",
-    promotionType: "Instagram Reel",
-    reward: "$75",
-    totalSlots: 50,
-    filledSlots: 12,
-    deadline: "2026-02-25T23:59:59",
-    description:
-      "Create a 15-30 second reel featuring our dance film soundtrack",
-    requirements: [
-      "Reel must be 15-30 seconds",
-      "Use official soundtrack",
-      "Include dance moves",
-    ],
-    createdBy: "Universal Studios",
-  },
-  {
-    id: 4,
-    projectName: "Shadows & Light",
-    poster:
-      "https://images.unsplash.com/photo-1536440136628-849c177e76a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400",
-    promotionType: "Instagram Story",
-    reward: "$30",
-    totalSlots: 50,
-    filledSlots: 50,
-    deadline: "2026-02-17T23:59:59",
-    description: "Share behind-the-scenes content on your story",
-    requirements: ["Story must include swipe-up link", "24-hour visibility"],
-    createdBy: "Netflix Films",
-  },
-];
-
-const INITIAL_MY_PROMOTIONS = [
-  {
-    id: 2,
-    projectName: "The Last Horizon",
-    poster:
-      "https://images.unsplash.com/photo-1574267432644-f74f897cb112?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400",
-    promotionType: "Instagram Post",
-    reward: "$50",
-    status: "Submitted",
-    submittedAt: "2026-02-15T10:30:00",
-    deadline: "2026-02-18T23:59:59",
-    proofUrl: "https://instagram.com/p/example123",
-  },
-  {
-    id: 1,
-    projectName: "Midnight Echo",
-    poster:
-      "https://images.unsplash.com/photo-1620153850780-0883dd907257?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400",
-    promotionType: "Instagram Story",
-    reward: "$25",
-    status: "Approved",
-    submittedAt: "2026-02-14T16:45:00",
-    approvedAt: "2026-02-15T09:20:00",
-    deadline: "2026-02-20T23:59:59",
-    proofUrl: "https://instagram.com/stories/example",
-  },
-  {
-    id: 3,
-    projectName: "Dance Revolution",
-    poster:
-      "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400",
-    promotionType: "Instagram Reel",
-    reward: "$75",
-    status: "Pending",
-    acceptedAt: "2026-02-14T12:00:00",
-    deadline: "2026-02-25T23:59:59",
-  },
-];
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Sub-components Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 function ImageWithFallback({ src, alt, className }) {
   const [error, setError] = useState(false);
@@ -186,7 +75,7 @@ function Dialog({ open, onClose, children }) {
   );
 }
 
-function CreatePromotionDialog({ open, onClose }) {
+function CreatePromotionDialog({ open, onClose, onCreate }) {
   const [formData, setFormData] = useState({
     projectName: "",
     description: "",
@@ -198,16 +87,20 @@ function CreatePromotionDialog({ open, onClose }) {
 
   const update = (key, val) => setFormData((p) => ({ ...p, [key]: val }));
 
-  const handleSubmit = () => {
-    onClose();
-    setFormData({
-      projectName: "",
-      description: "",
-      promotionType: "",
-      reward: "",
-      totalSlots: "50",
-      deadline: "",
-    });
+  const handleSubmit = async () => {
+    if (!formData.projectName.trim() || !formData.description.trim()) return;
+    try {
+      await onCreate?.(formData);
+      onClose();
+      setFormData({
+        projectName: "",
+        description: "",
+        promotionType: "",
+        reward: "",
+        totalSlots: "50",
+        deadline: "",
+      });
+    } catch (_) {}
   };
 
   const inputStyle = {
@@ -416,7 +309,7 @@ function CreatePromotionDialog({ open, onClose }) {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Main Component Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 export default function ArtistPromotions() {
   const navigate = useNavigate();
@@ -427,14 +320,57 @@ export default function ArtistPromotions() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadProof, setUploadProof] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [myPromotions, setMyPromotions] = useState(INITIAL_MY_PROMOTIONS);
+  const [allPromotions, setAllPromotions] = useState([]);
+  const [myPromotions, setMyPromotions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // ── Utilities ──
+  useEffect(() => {
+    let m = true;
+    artistAPI
+      .getPromotions()
+      .then((res) => {
+        if (!m) return;
+        const list = Array.isArray(res) ? res : [];
+        const mapped = list.map((p) => ({
+          id: p._id,
+          projectName: p.title || "Promotion",
+          poster:
+            p.image ||
+            "",
+          promotionType: p.type || "Promotion",
+          reward: `$${Number(p.price || 0)}`,
+          totalSlots: 50,
+          filledSlots: 0,
+          deadline: p.endDate || p.createdAt,
+          description: p.description || "",
+          requirements: [],
+          createdBy: "Artlancerr",
+          status: p.status === "active" ? "Pending" : "Submitted",
+          submittedAt: p.createdAt,
+          proofUrl: p.link || "",
+          acceptedAt: p.createdAt,
+        }));
+        setAllPromotions(mapped);
+        setMyPromotions(mapped.map((p) => ({ ...p, status: p.status === "Submitted" ? "Submitted" : "Pending" })));
+      })
+      .catch((e) => {
+        if (m) setError(e.message || "Failed to load promotions");
+      })
+      .finally(() => {
+        if (m) setLoading(false);
+      });
+    return () => {
+      m = false;
+    };
+  }, []);
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Utilities Ã¢â€â‚¬Ã¢â€â‚¬
 
   const getTimeRemaining = (deadline) => {
     const diff = new Date(deadline).getTime() - currentTime.getTime();
@@ -483,7 +419,7 @@ export default function ArtistPromotions() {
     return map[status] || <Clock size={16} />;
   };
 
-  // ── Handlers ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Handlers Ã¢â€â‚¬Ã¢â€â‚¬
 
   const handleConfirmAccept = () => {
     if (!selectedPromo) return;
@@ -510,13 +446,50 @@ export default function ArtistPromotions() {
     setSelectedPromo(null);
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const handleCreatePromotion = async (formData) => {
+    const created = await artistAPI.createPromotion({
+      title: formData.projectName,
+      description: formData.description,
+      type: "featured",
+      duration: formData.deadline
+        ? Math.max(
+            1,
+            Math.ceil(
+              (new Date(formData.deadline).getTime() - Date.now()) /
+                86400000,
+            ),
+          )
+        : 7,
+      price: Number(formData.reward || 0),
+    });
+    const mapped = {
+      id: created._id,
+      projectName: created.title || formData.projectName,
+      poster:
+        created.image ||
+        "",
+      promotionType: created.type || formData.promotionType || "Promotion",
+      reward: `$${Number(created.price || formData.reward || 0)}`,
+      totalSlots: Number(formData.totalSlots || 50),
+      filledSlots: 0,
+      deadline: created.endDate || formData.deadline || new Date().toISOString(),
+      description: created.description || formData.description,
+      requirements: [],
+      createdBy: "Artlancerr",
+      status: "Pending",
+      acceptedAt: new Date().toISOString(),
+    };
+    setAllPromotions((prev) => [mapped, ...prev]);
+    setMyPromotions((prev) => [mapped, ...prev]);
+  };
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Render Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
   return (
     <div className="min-h-screen flex" style={{ background: COLORS.bg }}>
       <Sidebar />
 
-      {/* ── Main content — offset by sidebar width ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Main content Ã¢â‚¬â€ offset by sidebar width Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="flex-1 ml-64 min-w-0">
         <div className="max-w-5xl mx-auto p-8">
           {/* Header */}
@@ -578,10 +551,20 @@ export default function ArtistPromotions() {
             })}
           </div>
 
-          {/* ── All Promotions ── */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ All Promotions Ã¢â€â‚¬Ã¢â€â‚¬ */}
+          {loading && (
+            <div className="flex justify-center py-8">
+              <div className="w-10 h-10 border-2 border-[#c9a961] border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {error && (
+            <p className="text-sm mb-4" style={{ color: "#f87171" }}>
+              {error}
+            </p>
+          )}
           {activeTab === "all" && (
             <div className="space-y-4">
-              {ALL_PROMOTIONS.map((promo) => {
+              {(allPromotions || []).map((promo) => {
                 const remainingSlots = promo.totalSlots - promo.filledSlots;
                 const isFull = remainingSlots <= 0;
                 const timeLeft = getTimeRemaining(promo.deadline);
@@ -693,7 +676,7 @@ export default function ArtistPromotions() {
             </div>
           )}
 
-          {/* ── My Promotions ── */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ My Promotions Ã¢â€â‚¬Ã¢â€â‚¬ */}
           {activeTab === "my" && (
             <div className="space-y-4">
               {myPromotions.length === 0 ? (
@@ -835,7 +818,7 @@ export default function ArtistPromotions() {
                             >
                               Submitted on{" "}
                               {new Date(promo.submittedAt).toLocaleDateString()}{" "}
-                              — Awaiting approval
+                              Ã¢â‚¬â€ Awaiting approval
                             </p>
                           </div>
                         )}
@@ -904,7 +887,7 @@ export default function ArtistPromotions() {
         </div>
       </div>
 
-      {/* ── Accept Dialog ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Accept Dialog Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <Dialog
         open={!!selectedPromo && !showUploadDialog}
         onClose={() => setSelectedPromo(null)}
@@ -1006,7 +989,7 @@ export default function ArtistPromotions() {
                 }}
               >
                 By accepting, you commit to completing the task by the deadline.
-                Payment is processed within 3–5 business days after approval.
+                Payment is processed within 3Ã¢â‚¬â€œ5 business days after approval.
               </div>
 
               <div className="flex gap-3">
@@ -1033,7 +1016,7 @@ export default function ArtistPromotions() {
         </div>
       </Dialog>
 
-      {/* ── Submit Proof Dialog ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Submit Proof Dialog Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <Dialog
         open={showUploadDialog}
         onClose={() => setShowUploadDialog(false)}
@@ -1136,6 +1119,7 @@ export default function ArtistPromotions() {
       <CreatePromotionDialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
+        onCreate={handleCreatePromotion}
       />
     </div>
   );
