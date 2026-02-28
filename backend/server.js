@@ -5,7 +5,6 @@ const mongoSanitize = require("express-mongo-sanitize");
 const http = require("http");
 const jwt = require("jsonwebtoken");
 const { Server } = require("socket.io");
-const cors = require("cors");
 const connectDB = require("./config/db");
 const Artist = require("./models/Artist");
 const Hirer = require("./models/Hirer");
