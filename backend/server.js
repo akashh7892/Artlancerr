@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const mongoSanitize = require("express-mongo-sanitize");
 const http = require("http");
 const jwt = require("jsonwebtoken");
 const { Server } = require("socket.io");
@@ -20,6 +21,7 @@ const paymentRoutes = require("./routes/payments");
 const categoryRoutes = require("./routes/categories");
 const dashboardRoutes = require("./routes/dashboard");
 const promotionRoutes = require("./routes/promotions");
+const uploadRoutes = require("./routes/upload");
 
 const app = express();
 const server = http.createServer(app);
@@ -28,25 +30,53 @@ const server = http.createServer(app);
 connectDB();
 
 // Middleware
-const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
+const normalizeOrigin = (value) => {
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch (error) {
+    return String(value).trim().replace(/\/+$/, "");
+  }
+};
+
+const configuredOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
+
+const defaultDevOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174",
+  "http://localhost:4173",
+  "http://127.0.0.1:4173",
+];
+
+const allowedOrigins = new Set(
+  process.env.NODE_ENV === "production"
+    ? configuredOrigins
+    : [...configuredOrigins, ...defaultDevOrigins],
+);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      const normalizedOrigin = normalizeOrigin(origin);
+      if (!origin || allowedOrigins.has(normalizedOrigin)) {
         return callback(null, true);
       }
       return callback(new Error("CORS not allowed for this origin"));
     },
+    credentials: true,
   }),
 );
 app.use(express.json());
+app.use(mongoSanitize());
 
 const corsOriginCheck = (origin, callback) => {
-  if (!origin || allowedOrigins.includes(origin)) {
+  const normalizedOrigin = normalizeOrigin(origin);
+  if (!origin || allowedOrigins.has(normalizedOrigin)) {
     return callback(null, true);
   }
   return callback(new Error("CORS not allowed for this origin"));
@@ -63,6 +93,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/promotions", promotionRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

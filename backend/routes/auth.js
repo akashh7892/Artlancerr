@@ -1,9 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const Artist = require('../models/Artist');
 const Hirer = require('../models/Hirer');
 const { generateToken, protect } = require('../middleware/auth');
+const { sendOTPEmail } = require('../config/mailer');
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: 'Too many attempts. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // In-memory reset flow store.
 // For production, move this to Redis or a persistent store.
@@ -13,7 +23,7 @@ const resetStoreByToken = new Map();
 // @route   POST /api/auth/signup
 // @desc    Register a new artist or hirer
 // @access  Public
-router.post('/signup', async (req, res) => {
+router.post('/signup', authLimiter, async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
@@ -73,7 +83,7 @@ router.post('/signup', async (req, res) => {
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
@@ -159,7 +169,7 @@ router.get('/me', protect, async (req, res) => {
 // @route   POST /api/auth/forgot-password
 // @desc    Request password reset
 // @access  Public
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -178,7 +188,7 @@ router.post('/forgot-password', async (req, res) => {
 
     // Don't reveal if user exists or not
     if (!user) {
-      return res.json({ message: 'If an account exists, a reset link will be sent' });
+      return res.json({ message: 'If an account exists, a reset code has been sent' });
     }
 
     // Generate OTP and hold reset state.
@@ -192,13 +202,15 @@ router.post('/forgot-password', async (req, res) => {
       role: userRole
     });
 
-    // In production, send OTP via email and do not return it.
-    const response = { message: 'If an account exists, a reset code has been sent' };
-    if (process.env.NODE_ENV !== 'production') {
-      response.otp = otp;
+    try {
+      await sendOTPEmail(email.toLowerCase(), otp);
+    } catch (mailErr) {
+      console.error('Send OTP email error:', mailErr);
+      resetStoreByEmail.delete(email.toLowerCase());
+      return res.status(500).json({ message: 'Failed to send reset code. Please try again.' });
     }
 
-    res.json(response);
+    res.json({ message: 'If an account exists, a reset code has been sent' });
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ message: 'Server error' });

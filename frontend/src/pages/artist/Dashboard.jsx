@@ -11,6 +11,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
+import { useEffect, useState } from "react";
+import { artistAPI } from "../../services/api";
 
 // ─── Color tokens ────────────────────────────────────────────
 const C = {
@@ -22,104 +24,36 @@ const C = {
   border: "rgba(179,169,97,0.10)",
 };
 
-const STATS = [
-  {
-    label: "Profile Views",
-    value: "1,248",
-    delta: "+12%",
-    icon: Eye,
-    iconBg: "rgba(179,169,97,0.12)",
-    iconColor: "#b3a961",
-  },
-  {
-    label: "Active Projects",
-    value: "1",
-    delta: "+3",
-    icon: Briefcase,
-    iconBg: "rgba(96,165,250,0.12)",
-    iconColor: "#60a5fa",
-  },
-  {
-    label: "Total Earnings",
-    value: "$8,500",
-    delta: "+8%",
-    icon: DollarSign,
-    iconBg: "rgba(52,211,153,0.12)",
-    iconColor: "#34d399",
-  },
-  {
-    label: "Messages",
-    value: "12",
-    delta: "3 new",
-    icon: MessageSquare,
-    iconBg: "rgba(251,191,36,0.12)",
-    iconColor: "#fbbf24",
-  },
-];
-
-const APPLICATIONS = [
-  {
-    title: "Cinematographer for Music Video",
-    company: "Stellar Productions",
-    budget: "$4,500",
-    time: "3d ago",
-    status: "Shortlisted",
-    img: "https://images.unsplash.com/photo-1493804714600-6edb1cd93080?w=80&h=80&fit=crop",
-  },
-  {
-    title: "Dance Choreographer - Feature Film",
-    company: "Moonlight Studios",
-    budget: "$8,000",
-    time: "5d ago",
-    status: "In Review",
-    img: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=80&h=80&fit=crop",
-  },
-  {
-    title: "Lead Actress - Indie Short",
-    company: "Riverstone Films",
-    budget: "$3,000",
-    time: "7d ago",
-    status: "Hired",
-    img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=80&h=80&fit=crop",
-  },
-];
-
-const PAYMENTS = [
-  {
-    title: "Brand Commercial Shoot",
-    date: "2/15/2026",
-    amount: "$3,500",
-    status: "Paid",
-  },
-  {
-    title: "Documentary Series",
-    date: "2/20/2026",
-    amount: "$5,000",
-    status: "Pending",
-  },
-];
-
-const STATUS_STYLES = {
-  Shortlisted: {
-    bg: "rgba(139,92,246,0.15)",
-    color: "#a78bfa",
-    border: "rgba(139,92,246,0.25)",
-  },
-  "In Review": {
-    bg: "rgba(251,146,60,0.15)",
-    color: "#fb923c",
-    border: "rgba(251,146,60,0.25)",
-  },
-  Hired: {
-    bg: "rgba(52,211,153,0.15)",
-    color: "#34d399",
-    border: "rgba(52,211,153,0.25)",
-  },
-};
-
 export default function Dashboard() {
   const navigate = useNavigate();
-
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let m = true;
+    artistAPI.getDashboard().then((r) => { if (m) setData(r); }).catch((e) => { if (m) setError(e.message); }).finally(() => { if (m) setLoading(false); });
+    return () => { m = false; };
+  }, []);
+  const stats = data?.stats || {};
+  const applications = data?.applications || [];
+  const recentPayments = data?.recentPayments || [];
+  const formatCur = (amt, cur) => (cur === "INR" ? `₹${Number(amt).toLocaleString()}` : `$${Number(amt).toLocaleString()}`);
+  const statCards = [
+    { label: "Profile Views", value: String(stats.profileViews ?? 0), delta: "", icon: Eye, iconBg: "rgba(179,169,97,0.12)", iconColor: C.gold },
+    { label: "Active Projects", value: String(stats.activeProjects ?? 0), delta: "", icon: Briefcase, iconBg: "rgba(96,165,250,0.12)", iconColor: "#60a5fa" },
+    { label: "Total Earnings", value: formatCur(stats.totalEarnings), delta: "", icon: DollarSign, iconBg: "rgba(52,211,153,0.12)", iconColor: "#34d399" },
+    { label: "Messages", value: String(stats.messages ?? 0), delta: "", icon: MessageSquare, iconBg: "rgba(251,191,36,0.12)", iconColor: "#fbbf24" },
+  ];
+  const paymentsList = recentPayments.map((p) => ({ title: p.projectName || p.description || "Payment", date: (p.paidAt ? new Date(p.paidAt) : new Date(p.createdAt)).toLocaleDateString(), amount: formatCur(p.amount, p.currency), status: p.status === "completed" ? "Paid" : "Pending" }));
+  const STATUS_STYLES = { shortlisted: { bg: "rgba(139,92,246,0.15)", color: "#a78bfa", border: "rgba(139,92,246,0.25)" }, pending: { bg: "rgba(251,146,60,0.15)", color: "#fb923c", border: "rgba(251,146,60,0.25)" }, hired: { bg: "rgba(52,211,153,0.15)", color: "#34d399", border: "rgba(52,211,153,0.25)" } };
+  const applicationList = applications.map((app) => {
+    const opp = app.opportunity || {}; const hirer = app.hirer || {};
+    const d = app.createdAt ? new Date(app.createdAt) : new Date();
+    const timeAgo = Date.now() - d.getTime() < 86400000 ? `${Math.floor((Date.now() - d.getTime()) / 3600000)}h ago` : `${Math.floor((Date.now() - d.getTime()) / 86400000)}d ago`;
+    return { _id: app._id, title: opp.title || "Opportunity", company: hirer.companyName || hirer.name || "—", budget: opp.budget ? formatCur(opp.budget) : "—", time: timeAgo, status: (app.status || "pending").toLowerCase(), img: hirer.avatar || "https://images.unsplash.com/photo-1493804714600-6edb1cd93080?w=80&h=80&fit=crop" };
+  });
+  if (loading) return (<><Sidebar /><div className="min-h-screen lg:ml-[248px] flex items-center justify-center" style={{ background: C.bg }}><div className="w-10 h-10 border-2 border-[#b3a961] border-t-transparent rounded-full animate-spin" /></div></>);
+  if (error) return (<><Sidebar /><div className="min-h-screen lg:ml-[248px] flex items-center justify-center" style={{ background: C.bg }}><p className="text-red-500">{error}</p></div></>);
   return (
     <>
       <style>{`
@@ -189,7 +123,7 @@ export default function Dashboard() {
 
           {/* Stat cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {STATS.map(
+            {statCards.map(
               ({ label, value, delta, icon: Icon, iconBg, iconColor }) => (
                 <div
                   key={label}
@@ -257,12 +191,12 @@ export default function Dashboard() {
               </div>
 
               <div className="flex flex-col gap-3">
-                {APPLICATIONS.map(
-                  ({ title, company, budget, time, status, img }) => {
-                    const s = STATUS_STYLES[status];
+                {applicationList.map(
+                  ({ _id, title, company, budget, time, status, img }) => {
+                    const s = STATUS_STYLES[status] || STATUS_STYLES.pending;
                     return (
                       <div
-                        key={title}
+                        key={_id}
                         className="app-row flex items-center gap-4 p-4 rounded-xl cursor-pointer"
                         style={{
                           background: "rgba(255,255,255,0.018)",
@@ -395,9 +329,9 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  {PAYMENTS.map(({ title, date, amount, status }) => (
+                  {paymentsList.map((item, idx) => (
                     <div
-                      key={title}
+                      key={item.title + idx}
                       className="pay-row flex items-center justify-between px-3 py-3 rounded-xl"
                       style={{
                         borderBottom: "1px solid rgba(255,255,255,0.04)",
@@ -408,13 +342,13 @@ export default function Dashboard() {
                           className="text-[13px] font-semibold leading-tight"
                           style={{ color: C.darkText }}
                         >
-                          {title}
+                          {item.title}
                         </p>
                         <p
                           className="text-[11.5px] mt-[2px]"
                           style={{ color: C.lightText }}
                         >
-                          {date}
+                          {item.date}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1">
@@ -422,9 +356,9 @@ export default function Dashboard() {
                           className="text-[13.5px] font-bold"
                           style={{ color: C.darkText }}
                         >
-                          {amount}
+                          {item.amount}
                         </span>
-                        {status === "Paid" ? (
+                        {item.status === "Paid" ? (
                           <span
                             className="flex items-center gap-1 text-[11px] font-semibold"
                             style={{ color: "#34d399" }}

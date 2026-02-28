@@ -32,8 +32,7 @@ export default function IntroFlow() {
   const [currentScreen, setCurrentScreen] = useState(0);
   const [showEnter, setShowEnter] = useState(false);
   const navigate = useNavigate();
-  const { role } = useParams(); // <-- get role from URL
-  console.log("IntroFlow role:", role);
+  const { role } = useParams();
   useEffect(() => {
     if (currentScreen < INTRO_SCREENS.length - 1) {
       const timer = setTimeout(() => {

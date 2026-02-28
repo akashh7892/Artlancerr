@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { authAPI } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Signup() {
   const { role } = useParams(); // Get role from URL
+  const { login: authLogin } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,13 +42,13 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      await authAPI.signup({
+      const data = await authAPI.signup({
         name: formData.name,
         email: formData.email,
         password: formData.password,
         role,
       });
-
+      authLogin(data);
       navigate(`/${role}/dashboard`);
     } catch (error) {
       console.error("Signup failed:", error);

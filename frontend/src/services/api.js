@@ -294,6 +294,22 @@ export const applicationsAPI = {
   },
 };
 
+// Payments (Razorpay)
+export const paymentsAPI = {
+  createOrder: async (payload) => {
+    return fetchAPI("/payments/create-order", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  verify: async (payload) => {
+    return fetchAPI("/payments/verify", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+};
+
 // Categories API calls
 export const categoriesAPI = {
   getAll: async () => {
@@ -331,3 +347,18 @@ export const messagesAPI = {
 
 // Export utility functions
 export { getToken, setToken, getUser, setUser, clearAuth, fetchAPI };
+
+// Upload file (multipart/form-data) — do not set Content-Type so browser sets boundary
+export const uploadFile = async (file) => {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append("image", file);
+  const res = await fetch(`${API_BASE_URL}/upload`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Upload failed");
+  return data;
+};

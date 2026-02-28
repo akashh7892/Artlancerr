@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import Landing from "./pages/Landing";
 import IntroFlow from "./pages/IntroFlow";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Auth components (role‑aware)
 import Signup from "./components/auth/Signup";
@@ -30,7 +31,7 @@ import HirerPromotions from "./pages/hirer/HirerPromotions";
 import HirerSettings from "./pages/hirer/HirerSettings";
 import Booking from "./pages/hirer/Booking";
 import PostRequirement from "./pages/hirer/PostRequirement";
-import BrowseArtist from "./pages/hirer/BrowseArtist";
+import BrowseArtist from "./pages/hirer/Browseartist";
 import ArtistProfile from "./pages/hirer/ArtistProfile";
 
 function App() {
@@ -47,33 +48,30 @@ function App() {
       <Route path="/auth/:role/verify-otp" element={<VerifyOTP />} />
       <Route path="/auth/:role/reset-password" element={<ResetPassword />} />
 
-      {/* Artist routes */}
-      <Route path="/artist/dashboard" element={<Dashboard />} />
-      <Route path="/artist/message" element={<Messages />} />
-      <Route path="/artist/messages" element={<Messages />} />
-      <Route path="/artist/near-by-artists" element={<Nearbyartists />} />
-      <Route
-        path="/artist/near-by-artists/:id"
-        element={<ArtistProfileView />}
-      />
-      <Route path="/artist/opportunity" element={<Opportunities />} />
-      <Route path="/artist/payment" element={<Payment />} />
-      <Route path="/artist/plusicon" element={<Plusicon />} />
-      <Route path="/artist/portfolio" element={<Portfolio />} />
-      <Route path="/artist/profile" element={<Profile />} />
-      <Route path="/artist/promotion" element={<Promotions />} />
-      <Route path="/artist/settings" element={<Settings />} />
+      {/* Artist routes — protected */}
+      <Route path="/artist/dashboard" element={<ProtectedRoute requiredRole="artist"><Dashboard /></ProtectedRoute>} />
+      <Route path="/artist/message" element={<ProtectedRoute requiredRole="artist"><Messages /></ProtectedRoute>} />
+      <Route path="/artist/messages" element={<ProtectedRoute requiredRole="artist"><Messages /></ProtectedRoute>} />
+      <Route path="/artist/near-by-artists" element={<ProtectedRoute requiredRole="artist"><Nearbyartists /></ProtectedRoute>} />
+      <Route path="/artist/near-by-artists/:id" element={<ProtectedRoute requiredRole="artist"><ArtistProfileView /></ProtectedRoute>} />
+      <Route path="/artist/opportunity" element={<ProtectedRoute requiredRole="artist"><Opportunities /></ProtectedRoute>} />
+      <Route path="/artist/payment" element={<ProtectedRoute requiredRole="artist"><Payment /></ProtectedRoute>} />
+      <Route path="/artist/plusicon" element={<ProtectedRoute requiredRole="artist"><Plusicon /></ProtectedRoute>} />
+      <Route path="/artist/portfolio" element={<ProtectedRoute requiredRole="artist"><Portfolio /></ProtectedRoute>} />
+      <Route path="/artist/profile" element={<ProtectedRoute requiredRole="artist"><Profile /></ProtectedRoute>} />
+      <Route path="/artist/promotion" element={<ProtectedRoute requiredRole="artist"><Promotions /></ProtectedRoute>} />
+      <Route path="/artist/settings" element={<ProtectedRoute requiredRole="artist"><Settings /></ProtectedRoute>} />
 
-      {/* Hirer routes */}
-      <Route path="/hirer/dashboard" element={<HirerDashboard />} />
-      <Route path="/hirer/settings" element={<HirerSettings />} />
-      <Route path="/hirer/promotions" element={<HirerPromotions />} />
-      <Route path="/hirer/post-requirement" element={<PostRequirement />} />
-      <Route path="/hirer/browse-artists" element={<BrowseArtist />} />
-      <Route path="/hirer/browse-artists/:id" element={<ArtistProfile />} />
-      <Route path="/hirer/bookings" element={<Booking />} />
-      <Route path="/hirer/messages" element={<HirerMessages />} />
-      <Route path="/hirer/payments" element={<HirerPayment />} />
+      {/* Hirer routes — protected */}
+      <Route path="/hirer/dashboard" element={<ProtectedRoute requiredRole="hirer"><HirerDashboard /></ProtectedRoute>} />
+      <Route path="/hirer/settings" element={<ProtectedRoute requiredRole="hirer"><HirerSettings /></ProtectedRoute>} />
+      <Route path="/hirer/promotions" element={<ProtectedRoute requiredRole="hirer"><HirerPromotions /></ProtectedRoute>} />
+      <Route path="/hirer/post-requirement" element={<ProtectedRoute requiredRole="hirer"><PostRequirement /></ProtectedRoute>} />
+      <Route path="/hirer/browse-artists" element={<ProtectedRoute requiredRole="hirer"><BrowseArtist /></ProtectedRoute>} />
+      <Route path="/hirer/browse-artists/:id" element={<ProtectedRoute requiredRole="hirer"><ArtistProfile /></ProtectedRoute>} />
+      <Route path="/hirer/bookings" element={<ProtectedRoute requiredRole="hirer"><Booking /></ProtectedRoute>} />
+      <Route path="/hirer/messages" element={<ProtectedRoute requiredRole="hirer"><HirerMessages /></ProtectedRoute>} />
+      <Route path="/hirer/payments" element={<ProtectedRoute requiredRole="hirer"><HirerPayment /></ProtectedRoute>} />
     </Routes>
   );
 }

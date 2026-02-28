@@ -740,7 +740,7 @@ function ArtistCard({ artist, index, onView, onMessage }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function BrowseArtist() {
   const navigate = useNavigate();
-  const [artists, setArtists] = useState(MOCK_ARTISTS);
+  const [artists, setArtists] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -757,7 +757,7 @@ export default function BrowseArtist() {
         setIsLoading(true);
         const data = await hirerAPI.getArtists();
         const list = Array.isArray(data?.artists) ? data.artists : [];
-        if (mounted && list.length > 0) {
+        if (mounted) {
           setArtists(list.map(mapArtist));
         }
       } catch (err) {

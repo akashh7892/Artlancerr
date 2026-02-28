@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Upload, Video, Image as ImageIcon, X, ArrowLeft } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
+import { artistAPI } from "../../services/api";
+import ImageUpload from "../../components/ui/ImageUpload";
 
 // ─── Color tokens ────────────────────────────────────────────
 const C = {
@@ -14,41 +16,31 @@ const C = {
   inputBorder: "rgba(255,255,255,0.08)",
 };
 
-const MOCK_PORTFOLIO = [
-  {
-    id: 1,
-    type: "image",
-    url: "https://images.unsplash.com/photo-1770413692756-0e6168a3fb2e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYW5jZSUyMHBlcmZvcm1hbmNlJTIwc3RhZ2V8ZW58MXx8fHwxNzcxMDE2NDc3fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    title: "Modern Dance Performance",
-  },
-  {
-    id: 2,
-    type: "image",
-    url: "https://images.unsplash.com/photo-1709316131422-35a5fb1e9eb2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaWxtJTIwcHJvZHVjdGlvbiUyMGJlaGluZCUyMHNjZW5lc3xlbnwxfHx8fDE3NzEwNDQwOTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    title: "Behind the Scenes",
-  },
-  {
-    id: 3,
-    type: "image",
-    url: "https://images.unsplash.com/photo-1652823758063-a4d6057f8f8d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMHBob3RvZ3JhcGh5JTIwc3R1ZGlvfGVufDF8fHx8MTc3MDk4MTczMXww&ixlib=rb-4.1.0&q=80&w=1080",
-    title: "Portrait Session",
-  },
-  {
-    id: 4,
-    type: "image",
-    url: "https://images.unsplash.com/photo-1728890228535-a49c5e2f64f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtdXNpY2lhbiUyMG11c2ljJTIwdmlkZW8lMjBzaG9vdHxlbnwxfHx8fDE3NzEwNjEyODF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    title: "Music Video Shoot",
-  },
-];
-
 export default function Portfolio() {
   const navigate = useNavigate();
-  const [portfolio, setPortfolio] = useState(MOCK_PORTFOLIO);
+  const [portfolio, setPortfolio] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [hoveredId, setHoveredId] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [addTitle, setAddTitle] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    artistAPI.getPortfolio().then((list) => { if (mounted) setPortfolio(Array.isArray(list) ? list : []); }).catch(() => { if (mounted) setPortfolio([]); }).finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
+  }, []);
+
+  const handleUpload = (url) => {
+    artistAPI.addPortfolio({ title: addTitle || "Portfolio item", category: "General", workType: "image", mediaUrl: url }).then((item) => {
+      setPortfolio((prev) => [item, ...prev]);
+      setShowUpload(false);
+      setAddTitle("");
+    }).catch(console.error);
+  };
 
   const removeItem = (id) => {
-    setPortfolio((prev) => prev.filter((item) => item.id !== id));
+    artistAPI.deletePortfolio(id).then(() => setPortfolio((prev) => prev.filter((item) => item._id !== id))).catch(console.error);
   };
 
   return (
@@ -168,13 +160,28 @@ export default function Portfolio() {
                 background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
                 color: "#1a1d24",
               }}
+              onClick={() => setShowUpload(true)}
             >
               <Upload size={16} strokeWidth={2.2} />
               Upload
             </button>
           </div>
 
-          {/* ── Upload Zone ── */}
+          {showUpload && (
+            <div className="mb-6 p-6 rounded-2xl" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+              <p className="text-sm mb-2" style={{ color: C.lightText }}>Title (optional)</p>
+              <input type="text" value={addTitle} onChange={(e) => setAddTitle(e.target.value)} placeholder="e.g. Music Video Shoot" className="w-full max-w-xs rounded-lg py-2 px-3 mb-4 text-sm bg-transparent border border-[#5f5641] text-[#e2e3e5] outline-none focus:border-[#c9a961]" />
+              <ImageUpload onUpload={handleUpload} />
+              <button type="button" onClick={() => { setShowUpload(false); setAddTitle(""); }} className="mt-3 text-sm text-[#808590] hover:text-[#c9a961]">Cancel</button>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-10 h-10 border-2 border-[#b3a961] border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+          <>
           <div
             className="port-upload upload-zone mb-8 rounded-2xl p-12 text-center cursor-pointer"
             style={{
@@ -230,15 +237,15 @@ export default function Portfolio() {
           <div className="port-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {portfolio.map((item) => (
               <div
-                key={item.id}
+                key={item._id}
                 className="grid-item relative rounded-xl overflow-hidden cursor-pointer"
                 style={{ aspectRatio: "4/3", background: C.card }}
-                onMouseEnter={() => setHoveredId(item.id)}
+                onMouseEnter={() => setHoveredId(item._id)}
                 onMouseLeave={() => setHoveredId(null)}
               >
                 {/* Image */}
                 <img
-                  src={item.url}
+                  src={item.mediaUrl || item.thumbnailUrl}
                   alt={item.title}
                   className="card-img w-full h-full object-cover"
                   onError={(e) => {
@@ -252,7 +259,7 @@ export default function Portfolio() {
                   style={{
                     background:
                       "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.38) 50%, transparent 100%)",
-                    opacity: hoveredId === item.id ? 1 : 0,
+                    opacity: hoveredId === item._id ? 1 : 0,
                   }}
                 >
                   <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -282,7 +289,7 @@ export default function Portfolio() {
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          removeItem(item.id);
+                          removeItem(item._id);
                         }}
                       >
                         <X size={15} color="#fff" strokeWidth={2} />
@@ -300,7 +307,7 @@ export default function Portfolio() {
                       backdropFilter: "blur(6px)",
                     }}
                   >
-                    {item.type === "video" ? (
+                    {item.workType === "video" ? (
                       <Video size={14} color="#fff" strokeWidth={2} />
                     ) : (
                       <ImageIcon size={14} color="#fff" strokeWidth={2} />
@@ -337,6 +344,8 @@ export default function Portfolio() {
                 Upload your work to start showcasing it to clients
               </p>
             </div>
+          )}
+          </>
           )}
         </div>
       </div>

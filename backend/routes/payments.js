@@ -1,7 +1,92 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const Payment = require('../models/Payment');
 const { protect } = require('../middleware/auth');
+const razorpay = require('../config/razorpay');
+
+// @route   POST /api/payments/create-order
+// @desc    Create Razorpay order (amount in paise, INR)
+// @access  Private (Hirer)
+router.post('/create-order', protect, async (req, res) => {
+  try {
+    if (req.userType !== 'Hirer') {
+      return res.status(403).json({ message: 'Only hirers can create payments' });
+    }
+    const { amount, artistId, taskId, opportunityId, description, projectName } = req.body;
+    const amountNum = Math.round(Number(amount));
+    if (!amountNum || amountNum < 1) {
+      return res.status(400).json({ message: 'Valid amount is required' });
+    }
+    const amountPaise = Math.round(amountNum * 100);
+    const order = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: 'INR',
+      receipt: `artlancerr_${Date.now()}`,
+    });
+    const paymentRecord = await Payment.create({
+      artist: artistId || undefined,
+      hirer: req.user._id,
+      task: taskId || undefined,
+      opportunity: opportunityId || undefined,
+      amount: amountNum,
+      currency: 'INR',
+      status: 'pending',
+      type: 'milestone',
+      description: description || 'Payment',
+      projectName: projectName || undefined,
+      razorpayOrderId: order.id,
+    });
+    res.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId: process.env.RAZORPAY_KEY_ID,
+      paymentRecordId: paymentRecord._id,
+    });
+  } catch (error) {
+    console.error('Create order error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/payments/verify
+// @desc    Verify Razorpay HMAC-SHA256 and mark payment completed
+// @access  Private
+router.post('/verify', protect, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: 'Missing verification fields' });
+    }
+    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const expected = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest('hex');
+    if (expected !== razorpay_signature) {
+      return res.status(400).json({ message: 'Invalid signature' });
+    }
+    const payment = await Payment.findOneAndUpdate(
+      { razorpayOrderId: razorpay_order_id, hirer: req.user._id },
+      {
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
+        status: 'completed',
+        paidAt: new Date(),
+        transactionId: razorpay_payment_id,
+      },
+      { new: true }
+    ).populate('artist', 'name avatar').populate('opportunity', 'title');
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment record not found' });
+    }
+    res.json({ message: 'Payment verified', payment });
+  } catch (error) {
+    console.error('Verify payment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // @route   GET /api/payments
 // @desc    Get user's payments

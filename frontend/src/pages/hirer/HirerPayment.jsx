@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import {
   ArrowLeft,
@@ -12,6 +12,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import HirerSidebar from "./HirerSidebar";
+import { hirerAPI } from "../../services/api";
+import RazorpayCheckout from "../../components/payment/RazorpayCheckout";
 
 // ─── Color tokens (matching HirerSettings) ────────────────────────
 const C = {
@@ -239,56 +241,44 @@ const Dialog = ({ open, onClose, children }) => {
   );
 };
 
-// ─── Mock Data ───────────────────────────────────────────────────
-const MOCK_PAYMENTS = [
-  {
-    id: "1",
-    projectName: "Cinematic Short Film",
-    artistName: "Alex Rivera",
-    amount: 5000,
-    status: "in_escrow",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-    releaseDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
-    milestone: "Principal Photography Completed",
-    description: "Payment for cinematography services - 5 day shoot",
-  },
-  {
-    id: "2",
-    projectName: "Documentary Series",
-    artistName: "Maya Chen",
-    amount: 8500,
-    status: "pending",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    milestone: "Initial Consultation",
-    description: "50% upfront payment for documentary project",
-  },
-  {
-    id: "3",
-    projectName: "Brand Commercial",
-    artistName: "Jordan Miles",
-    amount: 3000,
-    status: "released",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
-    releaseDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-    milestone: "Final Delivery",
-    description: "Final payment for commercial cinematography",
-  },
-];
-
 // ─── Main Component ─────────────────────────────────────────────
 export default function HirerPayments() {
-  const [payments] = useState(MOCK_PAYMENTS);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+  const [razorpayPayload, setRazorpayPayload] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [createAmount, setCreateAmount] = useState("");
+  const [createProject, setCreateProject] = useState("");
+  const [createDescription, setCreateDescription] = useState("");
+
+  useEffect(() => {
+    let m = true;
+    hirerAPI.getPayments().then((res) => { if (m) setPayments(res.payments || []); }).catch(() => { if (m) setPayments([]); }).finally(() => { if (m) setLoading(false); });
+    return () => { m = false; };
+  }, []);
+
+  const paymentsList = payments.map((p) => ({
+    id: p._id,
+    projectName: p.projectName || p.description || "Payment",
+    artistName: p.artist?.name || "Artist",
+    amount: p.amount,
+    status: p.status === "completed" ? "released" : p.status === "pending" || p.status === "processing" ? "in_escrow" : "pending",
+    createdAt: p.paidAt ? new Date(p.paidAt) : new Date(p.createdAt),
+    releaseDate: p.paidAt ? new Date(p.paidAt) : null,
+    milestone: p.description || "—",
+    description: p.description || "—",
+  }));
 
   // Stats calculations
-  const totalPaid = payments
+  const totalPaid = paymentsList
     .filter((p) => p.status === "released")
     .reduce((sum, p) => sum + p.amount, 0);
-  const inEscrow = payments
+  const inEscrow = paymentsList
     .filter((p) => p.status === "in_escrow")
     .reduce((sum, p) => sum + p.amount, 0);
-  const pending = payments
+  const pending = paymentsList
     .filter((p) => p.status === "pending")
     .reduce((sum, p) => sum + p.amount, 0);
 
@@ -330,13 +320,33 @@ export default function HirerPayments() {
       .join(" ");
   };
 
-  const filteredPayments = payments.filter((p) => {
+  const filteredPayments = paymentsList.filter((p) => {
     if (activeTab === "all") return true;
     return p.status === activeTab;
   });
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: C.bg }}>
+      {loading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="w-10 h-10 border-2 border-[#c9a96a] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+      {razorpayPayload && (
+        <RazorpayCheckout
+          amount={razorpayPayload.amount}
+          artistId={razorpayPayload.artistId}
+          description={razorpayPayload.description}
+          projectName={razorpayPayload.projectName}
+          onSuccess={(payment) => {
+            setRazorpayPayload(null);
+            if (payment && !payment.error) {
+              hirerAPI.getPayments().then((res) => setPayments(res.payments || []));
+            }
+          }}
+          onClose={() => setRazorpayPayload(null)}
+        />
+      )}
       <HirerSidebar />
 
       <div className="flex-1 flex flex-col lg:ml-72">
@@ -600,40 +610,18 @@ export default function HirerPayments() {
             Set up a secure payment with milestone‑based release
           </p>
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="artist">Artist</Label>
-              <Select
-                options={[
-                  { value: "alex", label: "Alex Rivera" },
-                  { value: "maya", label: "Maya Chen" },
-                  { value: "jordan", label: "Jordan Miles" },
-                ]}
-                placeholder="Select artist"
-              />
-            </div>
+            <div className="space-y-4">
             <div>
               <Label htmlFor="project">Project Name</Label>
-              <Input id="project" placeholder="e.g., Brand Commercial Shoot" />
+              <Input id="project" placeholder="e.g., Brand Commercial Shoot" value={createProject} onChange={(e) => setCreateProject(e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="amount">Amount ($)</Label>
-              <Input id="amount" type="number" placeholder="5000" />
+              <Label htmlFor="amount">Amount (₹)</Label>
+              <Input id="amount" type="number" placeholder="5000" value={createAmount} onChange={(e) => setCreateAmount(e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="milestone">Milestone</Label>
-              <Input
-                id="milestone"
-                placeholder="e.g., Completion of principal photography"
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Payment details..."
-                rows={3}
-              />
+              <Label htmlFor="milestone">Description</Label>
+              <Input id="milestone" placeholder="e.g., Completion of principal photography" value={createDescription} onChange={(e) => setCreateDescription(e.target.value)} />
             </div>
 
             <div
@@ -662,8 +650,23 @@ export default function HirerPayments() {
               >
                 Cancel
               </Button>
-              <Button onClick={() => setCreateDialogOpen(false)}>
-                Create Payment
+              <Button
+                onClick={() => {
+                  const amount = Number(createAmount);
+                  if (!amount || amount < 1) return;
+                  setRazorpayPayload({
+                    amount,
+                    projectName: createProject || "Payment",
+                    description: createDescription || "Payment",
+                    artistId: undefined,
+                  });
+                  setCreateDialogOpen(false);
+                  setCreateAmount("");
+                  setCreateProject("");
+                  setCreateDescription("");
+                }}
+              >
+                Pay with Razorpay
               </Button>
             </div>
           </div>
