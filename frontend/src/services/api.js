@@ -1,4 +1,4 @@
-
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}`;
 
 // Helper function to get token from localStorage
 const getToken = () => localStorage.getItem("token");
