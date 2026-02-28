@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://artlancerr-2.onrender.com/api";
+
 
 // Helper function to get token from localStorage
 const getToken = () => localStorage.getItem("token");
