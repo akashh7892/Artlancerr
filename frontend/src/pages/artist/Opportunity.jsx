@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 
-// â”€â”€â”€ Color tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Color tokens
 const C = {
   bg: "#1a1d24",
   card: "#22252e",
@@ -29,7 +29,7 @@ const C = {
   panelBg: "#1e2129",
 };
 
-// â”€â”€â”€ 21 Categories â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// 21 Categories 
 const FILTERS = [
   "All",
   "Film & TV Production",
@@ -70,15 +70,14 @@ const LOCATIONS = [
 const DURATIONS = [
   "Any duration",
   "Less than 1 week",
-  "1â€“4 weeks",
+  "1-4 weeks",
   "1+ months",
   "Ongoing",
 ];
 const POSTED = ["Any time", "Last 24 hours", "Last week", "Last month"];
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 // StyledSelect
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function StyledSelect({ value, onChange, options }) {
   return (
     <div className="relative">
@@ -115,9 +114,7 @@ function StyledSelect({ value, onChange, options }) {
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // FilterTabs  â† THIS IS THE MISSING COMPONENT THAT CAUSED THE ERROR
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function FilterTabs({ filters, selected, onSelect }) {
   const scrollRef = useRef(null);
   const [canLeft, setCanLeft] = useState(false);
@@ -204,9 +201,8 @@ function FilterTabs({ filters, selected, onSelect }) {
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Helpers
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 function getPostedLabel(createdAt) {
   if (!createdAt) return "Recently posted";
   const d = new Date(createdAt);
@@ -224,7 +220,7 @@ function matchesDuration(duration, filter) {
   if (filter === "Any duration") return true;
   const t = String(duration || "").toLowerCase();
   if (filter === "Less than 1 week") return t.includes("day");
-  if (filter === "1â€“4 weeks") return t.includes("week");
+  if (filter === "1-4 weeks") return t.includes("week");
   if (filter === "1+ months") return t.includes("month");
   if (filter === "Ongoing") return t.includes("ongoing");
   return true;
@@ -241,9 +237,7 @@ function matchesPosted(createdAt, filter) {
   return true;
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Main page component
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function Opportunities() {
   const navigate = useNavigate();
 
@@ -446,7 +440,7 @@ export default function Opportunities() {
 
       <Sidebar />
 
-      {/* â”€â”€ Advanced Filters Sheet â”€â”€ */}
+      {/* Advanced Filters Sheet */}
       {sheetOpen && (
         <>
           <div
@@ -525,7 +519,7 @@ export default function Opportunities() {
                 >
                   Budget Range:{" "}
                   <span style={{ color: C.gold }}>
-                    ${budgetMin.toLocaleString()} â€“ $
+                    ${budgetMin.toLocaleString()} - $
                     {budgetMax.toLocaleString()}
                   </span>
                 </label>
@@ -617,7 +611,7 @@ export default function Opportunities() {
         </>
       )}
 
-      {/* â”€â”€ Main Content â”€â”€ */}
+      {/* Main Content*/}
       <div
         className="min-h-screen lg:ml-[248px]"
         style={{
@@ -698,7 +692,7 @@ export default function Opportunities() {
             />
           </div>
 
-          {/* â”€â”€ Filter Tabs (scrollable with arrows) â”€â”€ */}
+          {/*Filter Tabs (scrollable with arrows) */}
           <FilterTabs
             filters={FILTERS}
             selected={selectedFilter}

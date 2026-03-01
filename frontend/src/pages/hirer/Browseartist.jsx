@@ -201,8 +201,8 @@ function FilterDrawer({
                   onChange={setExperience}
                   options={[
                     { value: "all", label: "Any Experience" },
-                    { value: "0-3", label: "0â€“3 years" },
-                    { value: "4-7", label: "4â€“7 years" },
+                    { value: "0-3", label: "0-3 years" },
+                    { value: "4-7", label: "4-7 years" },
                     { value: "8+", label: "8+ years" },
                   ]}
                 />

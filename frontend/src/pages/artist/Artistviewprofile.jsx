@@ -17,7 +17,6 @@ import {
 import Sidebar from "../../components/common/Sidebar";
 import { fetchAPI } from "../../services/api";
 
-// â”€â”€â”€ Color tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = {
   bg: "#1a1d24",
   card: "#22252e",
@@ -262,7 +261,7 @@ export default function ArtistProfileView() {
           fontFamily: "'Plus Jakarta Sans', sans-serif",
         }}
       >
-        {/* â”€â”€ Cover Photo â”€â”€ */}
+       
         <div className="relative w-full" style={{ height: 260 }}>
           <img
             src={artist.coverPhoto}
@@ -296,7 +295,7 @@ export default function ArtistProfileView() {
           </button>
         </div>
 
-        {/* â”€â”€ Profile Card â”€â”€ */}
+       
         <div className="px-6 md:px-8">
           <div
             className="rounded-2xl p-6 -mt-10 relative z-10 mb-5"
@@ -427,7 +426,7 @@ export default function ArtistProfileView() {
             </div>
           </div>
 
-          {/* â”€â”€ Tabs â”€â”€ */}
+        
           <div
             className="flex items-center gap-1 mb-5"
             style={{ borderBottom: `1px solid ${C.inputBorder}` }}
@@ -453,7 +452,7 @@ export default function ArtistProfileView() {
             })}
           </div>
 
-          {/* â”€â”€ Tab Content â”€â”€ */}
+      
           <div
             style={{ animation: "fadeUp 0.25s ease both", paddingBottom: 48 }}
           >
