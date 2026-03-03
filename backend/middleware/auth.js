@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const Artist = require('../models/Artist');
 const Hirer = require('../models/Hirer');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'artlancing-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET ;
 
 // Protect routes - verify JWT token
 const protect = async (req, res, next) => {

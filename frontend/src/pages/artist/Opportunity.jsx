@@ -255,8 +255,15 @@ export default function Opportunities() {
   const [error, setError] = useState("");
   const [applyingId, setApplyingId] = useState(null);
 
-  const apiBaseUrl =
-    import.meta.env.VITE_API_BASE_URL;
+  const rawApiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").replace(
+    /\/+$/,
+    "",
+  );
+  const apiRoot = rawApiBaseUrl
+    ? rawApiBaseUrl.endsWith("/api")
+      ? rawApiBaseUrl
+      : `${rawApiBaseUrl}/api`
+    : "/api";
 
   // Load opportunities from API
   useEffect(() => {
@@ -269,11 +276,16 @@ export default function Opportunities() {
         if (locationFilter !== "All locations")
           params.set("location", locationFilter);
         if (searchQuery.trim()) params.set("search", searchQuery.trim());
-        params.set("minBudget", String(budgetMin));
-        params.set("maxBudget", String(budgetMax));
+        // Avoid filtering out higher-budget opportunities by default.
+        // Only send budget filters when user changes the default range.
+        const budgetFilterChanged = budgetMin > 0 || budgetMax < 30000;
+        if (budgetFilterChanged) {
+          params.set("minBudget", String(budgetMin));
+          params.set("maxBudget", String(budgetMax));
+        }
 
         const res = await fetch(
-          `${apiBaseUrl}/api/opportunities${params.toString() ? `?${params}` : ""}`,
+          `${apiRoot}/opportunities${params.toString() ? `?${params}` : ""}`,
           { signal: controller.signal },
         );
         const data = await res.json();
@@ -295,7 +307,7 @@ export default function Opportunities() {
     })();
     return () => controller.abort();
   }, [
-    apiBaseUrl,
+    apiRoot,
     budgetMax,
     budgetMin,
     locationFilter,
@@ -311,7 +323,7 @@ export default function Opportunities() {
     }
     setApplyingId(opportunityId);
     try {
-      const res = await fetch(`${apiBaseUrl}/api/applications`, {
+      const res = await fetch(`${apiRoot}/applications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

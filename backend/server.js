@@ -106,7 +106,7 @@ const io = new Server(server, {
 
 app.set("io", io);
 
-const JWT_SECRET = process.env.JWT_SECRET || "artlancing-secret-key-2024";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 /* socket auth middleware unchanged */
 io.use(async (socket, next) => {
