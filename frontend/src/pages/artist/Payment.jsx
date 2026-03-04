@@ -151,7 +151,7 @@ function PaymentCard({ payment }) {
           {/* Amount */}
           <div className="text-right flex-shrink-0">
             <p className="text-[22px] font-bold" style={{ color: "#c4d5e0" }}>
-              ${payment.amount.toLocaleString()}
+              ₹{payment.amount.toLocaleString()}
             </p>
             <p className="text-[11.5px] mt-1" style={{ color: "#3a4e5e" }}>
               {payment.createdAt.toLocaleDateString()}
@@ -472,7 +472,7 @@ export default function ArtistPayments() {
                       className="text-[28px] font-bold"
                       style={{ color: "#c4d5e0" }}
                     >
-                      ${card.value.toLocaleString()}
+                      ₹{card.value.toLocaleString()}
                     </p>
                     <p
                       className="text-[12px] mt-1"

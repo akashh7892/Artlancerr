@@ -29,6 +29,9 @@ const COLORS = {
   light: "#e8e9eb",
   muted: "#8ba3af",
 };
+const RupeeIcon = () => (
+  <span style={{ color: C.gold, fontSize: "18px", fontWeight: 700 }}>₹</span>
+);
 
 // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Sub-components Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
@@ -206,7 +209,7 @@ function CreatePromotionDialog({ open, onClose, onCreate }) {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
                   style={{ color: COLORS.muted }}
                 >
-                  $
+                  ₹
                 </span>
                 <input
                   type="number"
@@ -340,9 +343,7 @@ export default function ArtistPromotions() {
         const mapped = list.map((p) => ({
           id: p._id,
           projectName: p.title || "Promotion",
-          poster:
-            p.image ||
-            "",
+          poster: p.image || "",
           promotionType: p.type || "Promotion",
           reward: `$${Number(p.price || 0)}`,
           totalSlots: 50,
@@ -357,7 +358,12 @@ export default function ArtistPromotions() {
           acceptedAt: p.createdAt,
         }));
         setAllPromotions(mapped);
-        setMyPromotions(mapped.map((p) => ({ ...p, status: p.status === "Submitted" ? "Submitted" : "Pending" })));
+        setMyPromotions(
+          mapped.map((p) => ({
+            ...p,
+            status: p.status === "Submitted" ? "Submitted" : "Pending",
+          })),
+        );
       })
       .catch((e) => {
         if (m) setError(e.message || "Failed to load promotions");
@@ -455,8 +461,7 @@ export default function ArtistPromotions() {
         ? Math.max(
             1,
             Math.ceil(
-              (new Date(formData.deadline).getTime() - Date.now()) /
-                86400000,
+              (new Date(formData.deadline).getTime() - Date.now()) / 86400000,
             ),
           )
         : 7,
@@ -465,14 +470,13 @@ export default function ArtistPromotions() {
     const mapped = {
       id: created._id,
       projectName: created.title || formData.projectName,
-      poster:
-        created.image ||
-        "",
+      poster: created.image || "",
       promotionType: created.type || formData.promotionType || "Promotion",
       reward: `$${Number(created.price || formData.reward || 0)}`,
       totalSlots: Number(formData.totalSlots || 50),
       filledSlots: 0,
-      deadline: created.endDate || formData.deadline || new Date().toISOString(),
+      deadline:
+        created.endDate || formData.deadline || new Date().toISOString(),
       description: created.description || formData.description,
       requirements: [],
       createdBy: "Artlancerr",
@@ -625,7 +629,7 @@ export default function ArtistPromotions() {
                             className="flex items-center gap-1.5 font-semibold"
                             style={{ color: COLORS.gold }}
                           >
-                            <DollarSign size={15} />
+                            <RupeeIcon />
                             {promo.reward} reward
                           </span>
                           <span
@@ -758,7 +762,7 @@ export default function ArtistPromotions() {
                             className="flex items-center gap-1.5 font-semibold"
                             style={{ color: COLORS.gold }}
                           >
-                            <DollarSign size={15} />
+                            <RupeeIcon />
                             {promo.reward}
                           </span>
                           {!isExpired && (
@@ -940,7 +944,7 @@ export default function ArtistPromotions() {
                       className="flex items-center gap-2 font-semibold"
                       style={{ color: COLORS.gold }}
                     >
-                      <DollarSign size={15} />
+                      <RupeeIcon />
                       {selectedPromo.reward} fixed reward
                     </div>
                     <div
@@ -989,7 +993,8 @@ export default function ArtistPromotions() {
                 }}
               >
                 By accepting, you commit to completing the task by the deadline.
-                Payment is processed within 3Ã¢â‚¬â€œ5 business days after approval.
+                Payment is processed within 3Ã¢â‚¬â€œ5 business days after
+                approval.
               </div>
 
               <div className="flex gap-3">
