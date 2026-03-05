@@ -255,8 +255,20 @@ export default function HirerPayments() {
 
   useEffect(() => {
     let m = true;
-    hirerAPI.getPayments().then((res) => { if (m) setPayments(res.payments || []); }).catch(() => { if (m) setPayments([]); }).finally(() => { if (m) setLoading(false); });
-    return () => { m = false; };
+    hirerAPI
+      .getPayments()
+      .then((res) => {
+        if (m) setPayments(res.payments || []);
+      })
+      .catch(() => {
+        if (m) setPayments([]);
+      })
+      .finally(() => {
+        if (m) setLoading(false);
+      });
+    return () => {
+      m = false;
+    };
   }, []);
 
   const paymentsList = payments.map((p) => ({
@@ -264,7 +276,12 @@ export default function HirerPayments() {
     projectName: p.projectName || p.description || "Payment",
     artistName: p.artist?.name || "Artist",
     amount: p.amount,
-    status: p.status === "completed" ? "released" : p.status === "pending" || p.status === "processing" ? "in_escrow" : "pending",
+    status:
+      p.status === "completed"
+        ? "released"
+        : p.status === "pending" || p.status === "processing"
+          ? "in_escrow"
+          : "pending",
     createdAt: p.paidAt ? new Date(p.paidAt) : new Date(p.createdAt),
     releaseDate: p.paidAt ? new Date(p.paidAt) : null,
     milestone: p.description || "—",
@@ -341,7 +358,9 @@ export default function HirerPayments() {
           onSuccess={(payment) => {
             setRazorpayPayload(null);
             if (payment && !payment.error) {
-              hirerAPI.getPayments().then((res) => setPayments(res.payments || []));
+              hirerAPI
+                .getPayments()
+                .then((res) => setPayments(res.payments || []));
             }
           }}
           onClose={() => setRazorpayPayload(null)}
@@ -402,7 +421,7 @@ export default function HirerPayments() {
                     className="text-3xl font-semibold"
                     style={{ color: C.text }}
                   >
-                    ${totalPaid.toLocaleString()}
+                    ₹{totalPaid.toLocaleString()}
                   </p>
                   <p className="text-xs mt-1" style={{ color: C.muted }}>
                     Successfully completed
@@ -426,7 +445,7 @@ export default function HirerPayments() {
                     className="text-3xl font-semibold"
                     style={{ color: C.text }}
                   >
-                    ${inEscrow.toLocaleString()}
+                    ₹{inEscrow.toLocaleString()}
                   </p>
                   <p className="text-xs mt-1" style={{ color: C.muted }}>
                     Protected funds
@@ -450,7 +469,7 @@ export default function HirerPayments() {
                     className="text-3xl font-semibold"
                     style={{ color: C.text }}
                   >
-                    ${pending.toLocaleString()}
+                    ₹{pending.toLocaleString()}
                   </p>
                   <p className="text-xs mt-1" style={{ color: C.muted }}>
                     Awaiting action
@@ -533,7 +552,7 @@ export default function HirerPayments() {
                             className="text-2xl font-semibold"
                             style={{ color: C.text }}
                           >
-                            ${payment.amount.toLocaleString()}
+                            ₹{payment.amount.toLocaleString()}
                           </p>
                           <p
                             className="text-xs mt-1"
@@ -610,18 +629,34 @@ export default function HirerPayments() {
             Set up a secure payment with milestone‑based release
           </p>
 
-            <div className="space-y-4">
+          <div className="space-y-4">
             <div>
               <Label htmlFor="project">Project Name</Label>
-              <Input id="project" placeholder="e.g., Brand Commercial Shoot" value={createProject} onChange={(e) => setCreateProject(e.target.value)} />
+              <Input
+                id="project"
+                placeholder="e.g., Brand Commercial Shoot"
+                value={createProject}
+                onChange={(e) => setCreateProject(e.target.value)}
+              />
             </div>
             <div>
               <Label htmlFor="amount">Amount (₹)</Label>
-              <Input id="amount" type="number" placeholder="5000" value={createAmount} onChange={(e) => setCreateAmount(e.target.value)} />
+              <Input
+                id="amount"
+                type="number"
+                placeholder="5000"
+                value={createAmount}
+                onChange={(e) => setCreateAmount(e.target.value)}
+              />
             </div>
             <div>
               <Label htmlFor="milestone">Description</Label>
-              <Input id="milestone" placeholder="e.g., Completion of principal photography" value={createDescription} onChange={(e) => setCreateDescription(e.target.value)} />
+              <Input
+                id="milestone"
+                placeholder="e.g., Completion of principal photography"
+                value={createDescription}
+                onChange={(e) => setCreateDescription(e.target.value)}
+              />
             </div>
 
             <div
