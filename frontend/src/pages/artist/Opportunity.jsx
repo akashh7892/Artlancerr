@@ -29,7 +29,7 @@ const C = {
   panelBg: "#1e2129",
 };
 
-// 21 Categories 
+// 21 Categories
 const FILTERS = [
   "All",
   "Film & TV Production",
@@ -75,7 +75,6 @@ const DURATIONS = [
   "Ongoing",
 ];
 const POSTED = ["Any time", "Last 24 hours", "Last week", "Last month"];
-
 
 // StyledSelect
 function StyledSelect({ value, onChange, options }) {
@@ -299,7 +298,7 @@ export default function Opportunities() {
         );
       } catch (err) {
         if (err.name === "AbortError") return;
-        // API unavailable â€” keep showing mock data, no error banner
+        // API unavailable keep showing mock data, no error banner
         setOpportunities([]);
       } finally {
         setIsLoading(false);
@@ -531,7 +530,7 @@ export default function Opportunities() {
                 >
                   Budget Range:{" "}
                   <span style={{ color: C.gold }}>
-                    ${budgetMin.toLocaleString()} - $
+                    ₹{budgetMin.toLocaleString()} - ₹
                     {budgetMax.toLocaleString()}
                   </span>
                 </label>

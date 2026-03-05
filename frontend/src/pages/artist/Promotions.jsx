@@ -30,6 +30,9 @@ const COLORS = {
   light: "#e8e9eb",
   muted: "#8ba3af",
 };
+const RupeeIcon = () => (
+  <span style={{ color: C.gold, fontSize: "18px", fontWeight: 700 }}>₹</span>
+);
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
@@ -207,7 +210,7 @@ function CreatePromotionDialog({ open, onClose, onCreate }) {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
                   style={{ color: COLORS.muted }}
                 >
-                  $
+                  ₹
                 </span>
                 <input
                   type="number"
@@ -704,7 +707,11 @@ export default function ArtistPromotions() {
                             className="flex items-center gap-1 font-semibold"
                             style={{ color: COLORS.gold }}
                           >
+<<<<<<< HEAD
                             <DollarSign size={13} />
+=======
+                            <RupeeIcon />
+>>>>>>> dff1b8a944715315241061ebc5d083e293b3deff
                             {promo.reward} reward
                           </span>
                           <span
@@ -840,7 +847,11 @@ export default function ArtistPromotions() {
                             className="flex items-center gap-1 font-semibold"
                             style={{ color: COLORS.gold }}
                           >
+<<<<<<< HEAD
                             <DollarSign size={13} />
+=======
+                            <RupeeIcon />
+>>>>>>> dff1b8a944715315241061ebc5d083e293b3deff
                             {promo.reward}
                           </span>
                           {!isExpired && (
@@ -1022,7 +1033,7 @@ export default function ArtistPromotions() {
                       className="flex items-center gap-2 font-semibold"
                       style={{ color: COLORS.gold }}
                     >
-                      <DollarSign size={15} />
+                      <RupeeIcon />
                       {selectedPromo.reward} fixed reward
                     </div>
                     <div
@@ -1071,7 +1082,12 @@ export default function ArtistPromotions() {
                 }}
               >
                 By accepting, you commit to completing the task by the deadline.
+<<<<<<< HEAD
                 Payment is processed within 3–5 business days after approval.
+=======
+                Payment is processed within 3Ã¢â‚¬â€œ5 business days after
+                approval.
+>>>>>>> dff1b8a944715315241061ebc5d083e293b3deff
               </div>
 
               <div className="flex gap-3">
