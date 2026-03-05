@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   User,
   Bell,
@@ -16,14 +16,14 @@ import {
   Lock,
   Trash2,
   Download,
-  ToggleLeft,
-  ToggleRight,
   AlertTriangle,
+  Menu,
+  X,
 } from "lucide-react";
 import HirerSidebar from "./HirerSidebar";
 import { getUser, hirerAPI, setUser } from "../../services/api";
 
-// ─── Color tokens (matching dashboard) ────────────────────────
+// ─── Color tokens ────────────────────────
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -176,6 +176,7 @@ export default function HirerSettings() {
   const [activeTab, setActiveTab] = useState("profile");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [settingsNavOpen, setSettingsNavOpen] = useState(false);
 
   // ── Profile state ──
   const [profile, setProfile] = useState({
@@ -191,7 +192,6 @@ export default function HirerSettings() {
     timezone: "America/Los_Angeles",
   });
 
-  // ── Notification state ──
   const [notif, setNotif] = useState({
     newApplications: true,
     projectUpdates: true,
@@ -203,7 +203,6 @@ export default function HirerSettings() {
     smsAlerts: false,
   });
 
-  // ── Security state ──
   const [security, setSecurity] = useState({
     currentPassword: "",
     newPassword: "",
@@ -216,7 +215,6 @@ export default function HirerSettings() {
     sessionTimeout: "30",
   });
 
-  // ── Privacy state ──
   const [privacy, setPrivacy] = useState({
     profilePublic: true,
     showBudgetRange: false,
@@ -230,12 +228,10 @@ export default function HirerSettings() {
     const localUser = getUser();
     if (localUser) {
       const parts = (localUser.name || "").split(" ");
-      const firstName = parts[0] || "";
-      const lastName = parts.slice(1).join(" ") || "";
       setProfile((prev) => ({
         ...prev,
-        firstName: firstName || prev.firstName,
-        lastName: lastName || prev.lastName,
+        firstName: parts[0] || prev.firstName,
+        lastName: parts.slice(1).join(" ") || prev.lastName,
         email: localUser.email || prev.email,
       }));
     }
@@ -311,6 +307,13 @@ export default function HirerSettings() {
   const patchSec = (key, val) => setSecurity((s) => ({ ...s, [key]: val }));
   const patchPrivacy = (key, val) => setPrivacy((p) => ({ ...p, [key]: val }));
 
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    setSettingsNavOpen(false);
+  };
+
+  const activeNav = NAV.find((n) => n.key === activeTab);
+
   return (
     <div
       className="min-h-screen flex"
@@ -328,18 +331,22 @@ export default function HirerSettings() {
         .danger-btn:hover { background: rgba(248,113,113,0.08) !important; border-color: rgba(248,113,113,0.4) !important; }
       `}</style>
 
+      {/* App-level sidebar (handles its own mobile toggle) */}
       <HirerSidebar />
 
       <div className="flex-1 flex flex-col lg:ml-72">
-        <main className="flex-1 overflow-auto p-6 lg:p-8">
+        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-5xl mx-auto">
             {/* Page header */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
+              className="mb-6 sm:mb-8 mt-10 lg:mt-0"
             >
-              <h1 className="text-3xl font-bold mb-1" style={{ color: C.text }}>
+              <h1
+                className="text-2xl sm:text-3xl font-bold mb-1"
+                style={{ color: C.text }}
+              >
                 Settings
               </h1>
               <p style={{ color: C.muted }}>
@@ -348,12 +355,12 @@ export default function HirerSettings() {
             </motion.div>
 
             <div className="flex gap-6 flex-col lg:flex-row">
-              {/* ── Settings Sidebar nav ── */}
+              {/* ── Settings Nav: Desktop sidebar (lg+) ── */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="lg:w-56 flex-shrink-0"
+                className="hidden lg:block lg:w-56 flex-shrink-0"
               >
                 <Card className="p-2" style={{ padding: "8px" }}>
                   {NAV.map(({ key, icon: Icon, label }) => {
@@ -361,7 +368,7 @@ export default function HirerSettings() {
                     return (
                       <button
                         key={key}
-                        onClick={() => setActiveTab(key)}
+                        onClick={() => handleTabChange(key)}
                         className="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-left outline-none border-0 cursor-pointer mb-0.5"
                         style={{
                           background: active ? C.goldDim : "transparent",
@@ -382,6 +389,79 @@ export default function HirerSettings() {
                 </Card>
               </motion.div>
 
+              {/* ── Settings Nav: Mobile/Tablet dropdown trigger ── */}
+              <div className="lg:hidden">
+                <button
+                  onClick={() => setSettingsNavOpen(!settingsNavOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium outline-none border-0 cursor-pointer"
+                  style={{
+                    background: C.card,
+                    border: `1px solid ${C.border}`,
+                    color: C.text,
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    {activeNav && (
+                      <activeNav.icon size={16} style={{ color: C.gold }} />
+                    )}
+                    <span>{activeNav?.label}</span>
+                  </div>
+                  <div
+                    className="flex items-center gap-2"
+                    style={{ color: C.muted }}
+                  >
+                    <span className="text-xs">All sections</span>
+                    {settingsNavOpen ? <X size={16} /> : <Menu size={16} />}
+                  </div>
+                </button>
+
+                {/* Mobile dropdown nav */}
+                <AnimatePresence>
+                  {settingsNavOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: "auto" }}
+                      exit={{ opacity: 0, y: -8, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden mt-1 rounded-xl"
+                      style={{
+                        background: C.card,
+                        border: `1px solid ${C.border}`,
+                      }}
+                    >
+                      <div className="p-2">
+                        {NAV.map(({ key, icon: Icon, label }) => {
+                          const active = activeTab === key;
+                          return (
+                            <button
+                              key={key}
+                              onClick={() => handleTabChange(key)}
+                              className="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-left outline-none border-0 cursor-pointer mb-0.5"
+                              style={{
+                                background: active ? C.goldDim : "transparent",
+                                color: active ? C.gold : C.muted,
+                                borderLeft: active
+                                  ? `2px solid ${C.gold}`
+                                  : "2px solid transparent",
+                              }}
+                            >
+                              <Icon
+                                size={16}
+                                strokeWidth={active ? 2.2 : 1.8}
+                              />
+                              {label}
+                              {active && (
+                                <ChevronRight size={14} className="ml-auto" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               {/* ── Panel content ── */}
               <div className="flex-1 min-w-0">
                 {/* ══ PROFILE ══════════════════════════════════════ */}
@@ -392,16 +472,15 @@ export default function HirerSettings() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6 settings-panel"
                   >
-                    {/* Avatar */}
                     <Card>
                       <SectionTitle>Profile Information</SectionTitle>
                       <div
-                        className="flex items-center gap-5 mb-6 pb-6"
+                        className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 mb-6 pb-6"
                         style={{ borderBottom: `1px solid ${C.borderSubtle}` }}
                       >
-                        <div className="relative">
+                        <div className="relative flex-shrink-0">
                           <div
-                            className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
+                            className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold"
                             style={{
                               background: `linear-gradient(135deg, ${C.gold}, #b8913a)`,
                               color: "#1a1d24",
@@ -435,7 +514,7 @@ export default function HirerSettings() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="firstName">First Name</Label>
                           <Input
@@ -517,7 +596,7 @@ export default function HirerSettings() {
                             }
                           />
                         </div>
-                        <div className="md:col-span-2">
+                        <div className="sm:col-span-2">
                           <Label htmlFor="bio">Bio</Label>
                           <textarea
                             id="bio"
@@ -552,7 +631,7 @@ export default function HirerSettings() {
                       </div>
                     </Card>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       {saved && (
                         <span
                           className="flex items-center gap-1.5 text-sm"
@@ -576,7 +655,6 @@ export default function HirerSettings() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6 settings-panel"
                   >
-                    {/* Email notifications */}
                     <Card>
                       <div className="flex items-center gap-3 mb-5">
                         <div
@@ -589,47 +667,44 @@ export default function HirerSettings() {
                           Email Notifications
                         </SectionTitle>
                       </div>
-                      <div className="space-y-0">
-                        <Toggle
-                          checked={notif.newApplications}
-                          onChange={(v) => patchNotif("newApplications", v)}
-                          label="New Applications"
-                          description="Get notified when artists apply to your postings"
-                        />
-                        <Toggle
-                          checked={notif.projectUpdates}
-                          onChange={(v) => patchNotif("projectUpdates", v)}
-                          label="Project Updates"
-                          description="Milestone completions and status changes"
-                        />
-                        <Toggle
-                          checked={notif.paymentAlerts}
-                          onChange={(v) => patchNotif("paymentAlerts", v)}
-                          label="Payment Alerts"
-                          description="Escrow releases, invoices, and payment confirmations"
-                        />
-                        <Toggle
-                          checked={notif.artistMessages}
-                          onChange={(v) => patchNotif("artistMessages", v)}
-                          label="Artist Messages"
-                          description="New messages from hired artists"
-                        />
-                        <Toggle
-                          checked={notif.weeklyDigest}
-                          onChange={(v) => patchNotif("weeklyDigest", v)}
-                          label="Weekly Digest"
-                          description="A weekly summary of your activity and top talent"
-                        />
-                        <Toggle
-                          checked={notif.marketingEmails}
-                          onChange={(v) => patchNotif("marketingEmails", v)}
-                          label="Product & Marketing"
-                          description="News, features, and tips from Artlancing"
-                        />
-                      </div>
+                      <Toggle
+                        checked={notif.newApplications}
+                        onChange={(v) => patchNotif("newApplications", v)}
+                        label="New Applications"
+                        description="Get notified when artists apply to your postings"
+                      />
+                      <Toggle
+                        checked={notif.projectUpdates}
+                        onChange={(v) => patchNotif("projectUpdates", v)}
+                        label="Project Updates"
+                        description="Milestone completions and status changes"
+                      />
+                      <Toggle
+                        checked={notif.paymentAlerts}
+                        onChange={(v) => patchNotif("paymentAlerts", v)}
+                        label="Payment Alerts"
+                        description="Escrow releases, invoices, and payment confirmations"
+                      />
+                      <Toggle
+                        checked={notif.artistMessages}
+                        onChange={(v) => patchNotif("artistMessages", v)}
+                        label="Artist Messages"
+                        description="New messages from hired artists"
+                      />
+                      <Toggle
+                        checked={notif.weeklyDigest}
+                        onChange={(v) => patchNotif("weeklyDigest", v)}
+                        label="Weekly Digest"
+                        description="A weekly summary of your activity and top talent"
+                      />
+                      <Toggle
+                        checked={notif.marketingEmails}
+                        onChange={(v) => patchNotif("marketingEmails", v)}
+                        label="Product & Marketing"
+                        description="News, features, and tips from Artlancing"
+                      />
                     </Card>
 
-                    {/* Push & SMS */}
                     <Card>
                       <div className="flex items-center gap-3 mb-5">
                         <div
@@ -670,7 +745,6 @@ export default function HirerSettings() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6 settings-panel"
                   >
-                    {/* Change password */}
                     <Card>
                       <div className="flex items-center gap-3 mb-5">
                         <div
@@ -737,7 +811,6 @@ export default function HirerSettings() {
                               </button>
                             }
                           />
-                          {/* Password strength bar */}
                           {security.newPassword.length > 0 && (
                             <div className="mt-2 space-y-1">
                               <div className="flex gap-1">
@@ -826,7 +899,6 @@ export default function HirerSettings() {
                       </div>
                     </Card>
 
-                    {/* 2FA & Sessions */}
                     <Card>
                       <div className="flex items-center gap-3 mb-5">
                         <div
@@ -856,7 +928,7 @@ export default function HirerSettings() {
                         <Label htmlFor="sessionTimeout">
                           Auto-logout After
                         </Label>
-                        <div className="relative w-48">
+                        <div className="relative w-full sm:w-48">
                           <select
                             id="sessionTimeout"
                             value={security.sessionTimeout}
@@ -897,7 +969,6 @@ export default function HirerSettings() {
                       </div>
                     </Card>
 
-                    {/* Active sessions */}
                     <Card>
                       <SectionTitle>Active Sessions</SectionTitle>
                       {[
@@ -928,9 +999,9 @@ export default function HirerSettings() {
                               i < 2 ? `1px solid ${C.borderSubtle}` : "none",
                           }}
                         >
-                          <div>
+                          <div className="flex-1 min-w-0 pr-3">
                             <p
-                              className="text-sm font-medium"
+                              className="text-sm font-medium truncate"
                               style={{ color: C.text }}
                             >
                               {s.device}
@@ -955,7 +1026,7 @@ export default function HirerSettings() {
                           </div>
                           {!s.current && (
                             <button
-                              className="text-xs outline-none border-0 bg-transparent cursor-pointer transition-colors"
+                              className="text-xs outline-none border-0 bg-transparent cursor-pointer flex-shrink-0 transition-colors"
                               style={{ color: C.red }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.opacity = "0.7";
@@ -981,11 +1052,10 @@ export default function HirerSettings() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6 settings-panel"
                   >
-                    {/* Current plan */}
                     <Card>
                       <SectionTitle>Current Plan</SectionTitle>
                       <div
-                        className="flex items-start justify-between p-4 rounded-xl mb-4"
+                        className="flex flex-col sm:flex-row items-start justify-between gap-4 p-4 rounded-xl mb-4"
                         style={{
                           background: C.goldDim,
                           border: `1px solid ${C.border}`,
@@ -1030,7 +1100,7 @@ export default function HirerSettings() {
                           </span>
                         </p>
                       </div>
-                      <div className="flex gap-3">
+                      <div className="flex flex-wrap gap-3">
                         <button
                           className="px-4 py-2 rounded-lg text-sm font-medium outline-none border-0 cursor-pointer transition-all"
                           style={{ background: C.gold, color: "#1a1d24" }}
@@ -1050,7 +1120,6 @@ export default function HirerSettings() {
                       </div>
                     </Card>
 
-                    {/* Payment method */}
                     <Card>
                       <SectionTitle>Payment Method</SectionTitle>
                       <div
@@ -1061,12 +1130,12 @@ export default function HirerSettings() {
                         }}
                       >
                         <div
-                          className="w-12 h-8 rounded-md flex items-center justify-center text-xs font-bold"
+                          className="w-12 h-8 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0"
                           style={{ background: "#1a56db", color: "#fff" }}
                         >
                           VISA
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <p
                             className="text-sm font-medium"
                             style={{ color: C.text }}
@@ -1078,7 +1147,7 @@ export default function HirerSettings() {
                           </p>
                         </div>
                         <span
-                          className="text-xs px-2 py-1 rounded-full"
+                          className="text-xs px-2 py-1 rounded-full flex-shrink-0"
                           style={{
                             background: "rgba(74,222,128,0.1)",
                             color: C.green,
@@ -1095,7 +1164,6 @@ export default function HirerSettings() {
                       </button>
                     </Card>
 
-                    {/* Billing history */}
                     <Card>
                       <div className="flex items-center justify-between mb-5">
                         <SectionTitle>Billing History</SectionTitle>
@@ -1106,8 +1174,8 @@ export default function HirerSettings() {
                           <Download size={14} /> Export
                         </button>
                       </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                      <div className="overflow-x-auto -mx-2 px-2">
+                        <table className="w-full text-sm min-w-[400px]">
                           <thead>
                             <tr
                               style={{
@@ -1164,7 +1232,7 @@ export default function HirerSettings() {
                                 }}
                               >
                                 <td
-                                  className="py-3 pr-4"
+                                  className="py-3 pr-4 whitespace-nowrap"
                                   style={{ color: C.muted }}
                                 >
                                   {row.date}
@@ -1176,7 +1244,7 @@ export default function HirerSettings() {
                                   {row.desc}
                                 </td>
                                 <td
-                                  className="py-3 pr-4"
+                                  className="py-3 pr-4 whitespace-nowrap"
                                   style={{ color: C.text }}
                                 >
                                   {row.amount}
@@ -1259,7 +1327,6 @@ export default function HirerSettings() {
                       />
                     </Card>
 
-                    {/* Data & account */}
                     <Card>
                       <SectionTitle>Data & Account</SectionTitle>
                       <div className="space-y-3">

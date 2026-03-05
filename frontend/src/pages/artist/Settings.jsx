@@ -19,6 +19,8 @@ import {
   Mail,
   Phone,
   Shield,
+  Menu,
+  X,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 import { artistAPI, authAPI, getUser, setUser } from "../../services/api";
@@ -294,7 +296,7 @@ function FieldInput({
 function SectionCard({ title, description, icon: Icon, children }) {
   return (
     <div
-      className="rounded-xl p-6"
+      className="rounded-xl p-4 sm:p-6"
       style={{ background: COLORS.card, border: `1px solid ${COLORS.border}` }}
     >
       <div className="flex items-center gap-3 mb-5">
@@ -348,7 +350,9 @@ export default function ArtistSettings() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
+  const [settingsNavOpen, setSettingsNavOpen] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: "" });
 
   const [profile, setProfile] = useState({
@@ -406,6 +410,14 @@ export default function ArtistSettings() {
     payoutSchedule: "Weekly (every Friday)",
   });
 
+  // Lock body scroll when mobile sidebar or settings nav is open
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
   useEffect(() => {
     const localUser = getUser();
     if (localUser) {
@@ -415,7 +427,6 @@ export default function ArtistSettings() {
         email: localUser.email || prev.email,
       }));
     }
-
     (async () => {
       try {
         const data = await artistAPI.getProfile();
@@ -435,9 +446,8 @@ export default function ArtistSettings() {
           artCategory: data.artCategory || prev.artCategory,
           experience: data.experience || prev.experience,
         }));
-        if (data.notifications) {
+        if (data.notifications)
           setNotifications((prev) => ({ ...prev, ...data.notifications }));
-        }
       } catch (error) {
         console.error("Failed to load artist profile", error);
       }
@@ -487,13 +497,12 @@ export default function ArtistSettings() {
           experience: profile.experience,
         });
         const localUser = getUser();
-        if (localUser) {
+        if (localUser)
           setUser({
             ...localUser,
             name: updated?.name || profile.name,
             email: updated?.email || localUser.email,
           });
-        }
       } else if (activeTab === "notifications") {
         await artistAPI.updateProfile({ notifications });
       }
@@ -523,17 +532,71 @@ export default function ArtistSettings() {
     color: COLORS.light,
   };
 
+  const activeTabLabel =
+    TABS.find((t) => t.id === activeTab)?.label || "Settings";
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen flex" style={{ background: COLORS.bg }}>
-      <Sidebar />
+      {/* ── Mobile sidebar backdrop ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-[40] bg-black/65 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      {/* ── Main content — offset by sidebar width ── */}
-      <div className="flex-1 ml-64 min-w-0">
-        <div className="max-w-5xl mx-auto p-8">
+      {/* ── Sidebar (fixed on lg, off-canvas on mobile) ── */}
+      <div
+        className={`
+          fixed top-0 left-0 h-screen z-[50]
+          transition-transform duration-300 ease-in-out
+          lg:translate-x-0
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+        style={{ width: "256px" }}
+      >
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="absolute top-4 right-4 lg:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors z-10"
+          style={{ color: COLORS.muted }}
+        >
+          <X size={18} />
+        </button>
+        <Sidebar />
+      </div>
+
+      {/* ── Main content ── */}
+      <div className="flex-1 min-w-0 lg:ml-64">
+        {/* Mobile top bar */}
+        <div
+          className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
+          style={{
+            background: COLORS.bg,
+            borderBottom: `1px solid ${COLORS.border}`,
+          }}
+        >
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-lg transition-colors hover:bg-white/10 flex-shrink-0"
+            style={{ color: COLORS.light }}
+            aria-label="Open sidebar"
+          >
+            <Menu size={20} />
+          </button>
+          <span
+            className="text-base font-semibold"
+            style={{ color: COLORS.light }}
+          >
+            Settings
+          </span>
+        </div>
+
+        {/* Page content */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex items-center gap-4 mb-6 lg:mb-8">
             <button
               onClick={() => navigate("/artist/dashboard")}
               className="p-2 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
@@ -543,20 +606,25 @@ export default function ArtistSettings() {
             </button>
             <div>
               <h1
-                className="text-3xl font-semibold"
+                className="hidden lg:block text-3xl font-semibold"
                 style={{ color: COLORS.light }}
               >
                 Settings
               </h1>
-              <p className="text-sm mt-1" style={{ color: COLORS.muted }}>
+              <p
+                className="hidden lg:block text-sm mt-1"
+                style={{ color: COLORS.muted }}
+              >
                 Manage your account preferences
               </p>
             </div>
           </div>
 
           <div className="flex gap-6">
-            {/* Settings Sidebar Nav */}
-            <div className="w-52 flex-shrink-0">
+            {/* ── Settings Tab Nav — desktop: sticky sidebar, mobile: horizontal scroll bar ── */}
+
+            {/* Desktop nav */}
+            <div className="hidden lg:block w-52 flex-shrink-0">
               <nav
                 className="rounded-xl p-2 sticky top-8"
                 style={{
@@ -587,23 +655,53 @@ export default function ArtistSettings() {
               </nav>
             </div>
 
-            {/* Tab Content */}
-            <div className="flex-1 min-w-0 space-y-5">
+            {/* Mobile tab bar — horizontal scrollable pills */}
+            <div
+              className="lg:hidden w-full mb-2 -mx-4 px-4 overflow-x-auto"
+              style={{ scrollbarWidth: "none" }}
+            >
+              <div
+                className="flex gap-2 pb-1"
+                style={{ minWidth: "max-content" }}
+              >
+                {TABS.map(({ id, label, icon: Icon }) => {
+                  const isActive = activeTab === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setActiveTab(id)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all flex-shrink-0"
+                      style={{
+                        background: isActive ? `${COLORS.gold}20` : COLORS.card,
+                        border: `1px solid ${isActive ? COLORS.gold : COLORS.border}`,
+                        color: isActive ? COLORS.gold : COLORS.muted,
+                      }}
+                    >
+                      <Icon size={14} />
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Tab Content ── */}
+            <div className="flex-1 min-w-0 space-y-4 sm:space-y-5">
               {/* ════ PROFILE ════ */}
               {activeTab === "profile" && (
                 <>
                   {/* Avatar card */}
                   <div
-                    className="rounded-xl p-6"
+                    className="rounded-xl p-4 sm:p-6"
                     style={{
                       background: COLORS.card,
                       border: `1px solid ${COLORS.border}`,
                     }}
                   >
-                    <div className="flex items-center gap-5">
+                    <div className="flex items-center gap-4 sm:gap-5">
                       <div className="relative">
                         <div
-                          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold"
+                          className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold"
                           style={{
                             background: `${COLORS.gold}25`,
                             color: COLORS.gold,
@@ -639,12 +737,15 @@ export default function ArtistSettings() {
                       </div>
                       <div>
                         <h3
-                          className="font-semibold text-base"
+                          className="font-semibold text-sm sm:text-base"
                           style={{ color: COLORS.light }}
                         >
                           {profile.name}
                         </h3>
-                        <p className="text-sm" style={{ color: COLORS.muted }}>
+                        <p
+                          className="text-xs sm:text-sm"
+                          style={{ color: COLORS.muted }}
+                        >
                           @{profile.username} · {profile.artCategory}
                         </p>
                         <button
@@ -668,7 +769,7 @@ export default function ArtistSettings() {
                     description="Update your basic profile details"
                     icon={User}
                   >
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FieldInput
                         label="Full Name"
                         value={profile.name}
@@ -751,7 +852,7 @@ export default function ArtistSettings() {
                     description="Your professional information"
                     icon={Globe}
                   >
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {[
                         {
                           key: "artCategory",
@@ -1051,7 +1152,7 @@ export default function ArtistSettings() {
                           style={{ background: COLORS.bg }}
                         >
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <p
                                 className="text-sm font-medium"
                                 style={{ color: COLORS.light }}
@@ -1079,7 +1180,7 @@ export default function ArtistSettings() {
                           </div>
                           {!session.active && (
                             <button
-                              className="text-xs px-3 py-1 rounded-lg transition-all hover:bg-red-500/20"
+                              className="text-xs px-3 py-1 rounded-lg transition-all hover:bg-red-500/20 flex-shrink-0"
                               style={{ color: "#f87171" }}
                             >
                               Revoke
@@ -1091,7 +1192,7 @@ export default function ArtistSettings() {
                   </SectionCard>
 
                   <div
-                    className="rounded-xl p-6"
+                    className="rounded-xl p-4 sm:p-6"
                     style={{
                       background: COLORS.card,
                       border: "1px solid rgba(248,113,113,0.3)",
@@ -1119,7 +1220,7 @@ export default function ArtistSettings() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
                         <p
                           className="text-sm font-medium"
@@ -1136,7 +1237,7 @@ export default function ArtistSettings() {
                         </p>
                       </div>
                       <button
-                        className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-red-500/20"
+                        className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-red-500/20 self-start sm:self-auto"
                         style={{
                           border: "1px solid rgba(248,113,113,0.5)",
                           color: "#f87171",
@@ -1157,14 +1258,14 @@ export default function ArtistSettings() {
                     description="Choose how you want to receive your earnings"
                     icon={CreditCard}
                   >
-                    <div className="flex gap-3 mb-5">
+                    <div className="flex gap-2 sm:gap-3 mb-5 flex-wrap">
                       {PAYOUT_METHODS.map(({ id, label }) => {
                         const isSelected = payment.method === id;
                         return (
                           <button
                             key={id}
                             onClick={() => handleUpdatePayment("method", id)}
-                            className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
+                            className="flex-1 min-w-[80px] py-2.5 rounded-lg text-sm font-medium transition-all"
                             style={{
                               background: isSelected
                                 ? `${COLORS.gold}20`
@@ -1304,7 +1405,7 @@ export default function ArtistSettings() {
                   </SectionCard>
 
                   <div
-                    className="rounded-xl p-6"
+                    className="rounded-xl p-4 sm:p-6"
                     style={{
                       background: COLORS.card,
                       border: `1px solid ${COLORS.border}`,
@@ -1316,7 +1417,7 @@ export default function ArtistSettings() {
                     >
                       Earnings Overview
                     </h3>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                       {[
                         {
                           label: "Total Earned",
@@ -1336,7 +1437,7 @@ export default function ArtistSettings() {
                       ].map(({ label, value, sub }) => (
                         <div
                           key={label}
-                          className="rounded-lg p-4"
+                          className="rounded-lg p-3 sm:p-4"
                           style={{ background: COLORS.bg }}
                         >
                           <p
@@ -1388,7 +1489,7 @@ export default function ArtistSettings() {
                               {tx.type} · {tx.date}
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right flex-shrink-0">
                             <p
                               className="text-sm font-bold"
                               style={{ color: COLORS.gold }}
@@ -1421,7 +1522,7 @@ export default function ArtistSettings() {
                 <div className="flex justify-end pt-2 pb-8">
                   <button
                     onClick={handleSaveChanges}
-                    className="px-8 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
+                    className="px-6 sm:px-8 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
                     style={{ background: COLORS.gold, color: "#1a1d24" }}
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.boxShadow =

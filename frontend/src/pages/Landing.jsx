@@ -9,12 +9,12 @@ const Landing = () => {
           {/* Logo and Title */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-5">
             <img
-              src="/logo.jpeg"
+              src="/logo.png"
               alt="Logo"
               className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16"
             />
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal text-[#e8e9eb] tracking-tight text-center">
-              Artlancing
+              Szylo
             </h1>
           </div>
 
