@@ -132,9 +132,7 @@ export default function HirerDashboard() {
             id: t._id,
             projectName: t.opportunity?.title || t.title || "Project",
             artistName: t.artist?.name || "Artist",
-            artistImage:
-              t.artist?.avatar ||
-              "",
+            artistImage: t.artist?.avatar || "",
             milestone: t.milestone || "Milestone",
             amount: Number(t.amount || 0),
             dueDate: new Date(t.dueDate || t.createdAt),
@@ -152,7 +150,8 @@ export default function HirerDashboard() {
             completion:
               p.maxSlots && p.maxSlots > 0
                 ? Math.round(
-                    ((p.maxSlots - Number(p.availableSlots || 0)) / p.maxSlots) *
+                    ((p.maxSlots - Number(p.availableSlots || 0)) /
+                      p.maxSlots) *
                       100,
                   )
                 : 0,
@@ -162,8 +161,7 @@ export default function HirerDashboard() {
                   ? new Date(new Date(p.createdAt).getTime() + 12096e5)
                   : Date.now()),
             ),
-            image:
-              "",
+            image: "",
           })),
         );
       })
@@ -390,7 +388,7 @@ export default function HirerDashboard() {
                       </span>
                     </div>
                     <p className="text-2xl mb-1" style={{ color: "#ffffff" }}>
-                      ${totalSpent.toLocaleString()}
+                      ₹{totalSpent.toLocaleString()}
                     </p>
                     <p className="text-sm" style={{ color: "#9ca3af" }}>
                       Total Spent
@@ -425,7 +423,7 @@ export default function HirerDashboard() {
                       </span>
                     </div>
                     <p className="text-2xl mb-1" style={{ color: "#ffffff" }}>
-                      ${inEscrow.toLocaleString()}
+                      ₹{inEscrow.toLocaleString()}
                     </p>
                     <p className="text-sm" style={{ color: "#9ca3af" }}>
                       In Escrow
@@ -548,7 +546,7 @@ export default function HirerDashboard() {
                                     style={{ color: "#9ca3af" }}
                                   >
                                     <span className="flex items-center gap-1">
-                                      <DollarSign className="w-4 h-4" />$
+                                      <DollarSign className="w-4 h-4" />₹
                                       {task.amount.toLocaleString()}
                                     </span>
                                     <span className="flex items-center gap-1">
@@ -644,7 +642,7 @@ export default function HirerDashboard() {
                               style={{ color: "#9ca3af" }}
                             >
                               <span>{project.artistsHired} artists</span>
-                              <span>${project.budget.toLocaleString()}</span>
+                              <span>₹{project.budget.toLocaleString()}</span>
                             </div>
                             <div className="space-y-1">
                               <div className="flex items-center justify-between text-xs">
@@ -747,7 +745,7 @@ export default function HirerDashboard() {
                               className="w-3 h-3"
                               style={{ color: "#4ade80" }}
                             />
-                            ${totalSpent.toLocaleString()}
+                            ₹{totalSpent.toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -900,7 +898,7 @@ export default function HirerDashboard() {
                     <div className="flex items-center justify-between text-sm">
                       <span style={{ color: "#9ca3af" }}>Amount</span>
                       <span className="text-2xl" style={{ color: "#ffffff" }}>
-                        ${selectedTask.amount.toLocaleString()}
+                        ₹{selectedTask.amount.toLocaleString()}
                       </span>
                     </div>
                   </div>

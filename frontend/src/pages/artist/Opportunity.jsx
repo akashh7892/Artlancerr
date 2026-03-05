@@ -113,7 +113,7 @@ function StyledSelect({ value, onChange, options }) {
   );
 }
 
-// FilterTabs  â† THIS IS THE MISSING COMPONENT THAT CAUSED THE ERROR
+// FilterTabs   THIS IS THE MISSING COMPONENT THAT CAUSED THE ERROR
 function FilterTabs({ filters, selected, onSelect }) {
   const scrollRef = useRef(null);
   const [canLeft, setCanLeft] = useState(false);
