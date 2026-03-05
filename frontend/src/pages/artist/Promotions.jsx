@@ -4,7 +4,7 @@ import {
   ArrowLeft,
   Upload,
   Instagram,
-  DollarSign,
+  IndianRupee,
   Users,
   Clock,
   CheckCircle,
@@ -205,7 +205,7 @@ function CreatePromotionDialog({ open, onClose, onCreate }) {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
                   style={{ color: COLORS.muted }}
                 >
-                  <DollarSign size={14} />
+                  <IndianRupee size={14} />
                 </span>
                 <input
                   type="number"
@@ -626,7 +626,7 @@ export default function ArtistPromotions() {
                             className="flex items-center gap-1 font-semibold"
                             style={{ color: COLORS.gold }}
                           >
-                            <DollarSign size={13} /> {promo.reward} reward
+                            <IndianRupee size={13} /> {promo.reward} reward
                           </span>
                           <span
                             className="flex items-center gap-1"
@@ -756,7 +756,7 @@ export default function ArtistPromotions() {
                             className="flex items-center gap-1 font-semibold"
                             style={{ color: COLORS.gold }}
                           >
-                            <DollarSign size={13} /> {promo.reward}
+                            <IndianRupee size={13} /> {promo.reward}
                           </span>
                           {!isExpired && (
                             <span
@@ -935,7 +935,7 @@ export default function ArtistPromotions() {
                       className="flex items-center gap-2 font-semibold"
                       style={{ color: COLORS.gold }}
                     >
-                      <DollarSign size={15} /> {selectedPromo.reward} fixed
+                      <IndianRupee size={15} /> {selectedPromo.reward} fixed
                       reward
                     </div>
                     <div

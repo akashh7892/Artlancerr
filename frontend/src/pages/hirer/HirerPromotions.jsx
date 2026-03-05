@@ -3,7 +3,7 @@ import {
   Upload,
   Clock,
   Users,
-  DollarSign,
+  IndianRupee,
   ArrowLeft,
   Instagram,
   CheckCircle,
@@ -604,7 +604,7 @@ export default function HirerPromotions() {
                               className="flex items-center gap-1 font-semibold"
                               style={{ color: C.gold }}
                             >
-                              <DollarSign size={13} /> {p.reward} reward
+                              <IndianRupee size={13} /> {p.reward} reward
                             </span>
                             <span
                               className="flex items-center gap-1"
@@ -722,7 +722,7 @@ export default function HirerPromotions() {
                               className="flex items-center gap-1 font-semibold"
                               style={{ color: C.gold }}
                             >
-                              <DollarSign size={13} /> {p.reward} per artist
+                              <IndianRupee size={13} /> {p.reward} per artist
                             </span>
                             {p.status === "Active" && tl !== "Expired" && (
                               <span
@@ -897,7 +897,7 @@ export default function HirerPromotions() {
                     color: C.muted,
                   },
                   {
-                    Icon: DollarSign,
+                    Icon: IndianRupee,
                     label: `${detailPromo.reward} fixed reward`,
                     color: C.gold,
                   },

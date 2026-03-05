@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import {
   MapPin,
-  DollarSign,
+  IndianRupee,
   Calendar,
   Clock,
   ArrowLeft,
@@ -16,7 +16,6 @@ import { useNavigate } from "react-router";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// â”€â”€â”€ Design Tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -31,7 +30,6 @@ const C = {
   successBorder: "rgba(74,222,128,0.2)",
 };
 
-// â”€â”€â”€ Shared input base style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const baseInput = {
   width: "100%",
   borderRadius: "10px",
@@ -43,7 +41,6 @@ const baseInput = {
   boxSizing: "border-box",
 };
 
-// â”€â”€â”€ Label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Label({ children }) {
   return (
     <label
@@ -62,7 +59,7 @@ function Label({ children }) {
   );
 }
 
-// â”€â”€â”€ TextInput â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 function TextInput({
   icon: Icon,
   type = "text",
@@ -109,7 +106,6 @@ function TextInput({
   );
 }
 
-// â”€â”€â”€ Textarea â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Textarea({ value, onChange, placeholder, required }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -134,7 +130,7 @@ function Textarea({ value, onChange, placeholder, required }) {
   );
 }
 
-// â”€â”€â”€ Select â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 function SelectInput({ value, onChange, options, placeholder }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -188,29 +184,50 @@ function SelectInput({ value, onChange, options, placeholder }) {
   );
 }
 
-// â”€â”€â”€ Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 const PROJECT_TYPES = [
   { value: "Film & TV Production", label: "Film & TV Production" },
-  { value: "Advertising & Commercial Shoots", label: "Advertising & Commercial Shoots" },
+  {
+    value: "Advertising & Commercial Shoots",
+    label: "Advertising & Commercial Shoots",
+  },
   { value: "Music Videos", label: "Music Videos" },
   { value: "Event Videography", label: "Event Videography" },
   { value: "Wedding Cinematography", label: "Wedding Cinematography" },
   { value: "Documentary Production", label: "Documentary Production" },
-  { value: "Streaming Content Production", label: "Streaming Content Production" },
+  {
+    value: "Streaming Content Production",
+    label: "Streaming Content Production",
+  },
   { value: "YouTubers Hiring Editors", label: "YouTubers Hiring Editors" },
-  { value: "Influencers Hiring Videographers", label: "Influencers Hiring Videographers" },
+  {
+    value: "Influencers Hiring Videographers",
+    label: "Influencers Hiring Videographers",
+  },
   { value: "Podcast Production Teams", label: "Podcast Production Teams" },
-  { value: "Social Media Content Studios", label: "Social Media Content Studios" },
-  { value: "Brand Creator Collaborations", label: "Brand Creator Collaborations" },
+  {
+    value: "Social Media Content Studios",
+    label: "Social Media Content Studios",
+  },
+  {
+    value: "Brand Creator Collaborations",
+    label: "Brand Creator Collaborations",
+  },
   { value: "Game Cinematics", label: "Game Cinematics" },
   { value: "Motion Capture Crews", label: "Motion Capture Crews" },
   { value: "3D Animation Teams", label: "3D Animation Teams" },
-  { value: "Virtual Production Specialists", label: "Virtual Production Specialists" },
+  {
+    value: "Virtual Production Specialists",
+    label: "Virtual Production Specialists",
+  },
   { value: "Unreal Engine Artists", label: "Unreal Engine Artists" },
   { value: "Corporate Video Production", label: "Corporate Video Production" },
   { value: "Training Content Creation", label: "Training Content Creation" },
   { value: "Marketing Media Teams", label: "Marketing Media Teams" },
-  { value: "Internal Communication Studios", label: "Internal Communication Studios" },
+  {
+    value: "Internal Communication Studios",
+    label: "Internal Communication Studios",
+  },
   { value: "acting", label: "Acting" },
   { value: "dance", label: "Dance / Choreography" },
   { value: "cinematography", label: "Cinematography" },
@@ -221,7 +238,6 @@ const PROJECT_TYPES = [
   { value: "other", label: "Other" },
 ];
 
-// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function PostRequirement() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -255,7 +271,7 @@ export default function PostRequirement() {
         const list = Array.isArray(res) ? res : [];
         const mapped = list.slice(0, 3).map((o) => ({
           title: o.title || "Requirement",
-          meta: `Posted ${new Date(o.createdAt).toLocaleDateString()} Â· ${Number(o.applicationCount || 0)} applications`,
+          meta: `Posted ${new Date(o.createdAt).toLocaleDateString()} ${Number(o.applicationCount || 0)} applications`,
         }));
         setRecentPosts(mapped);
       })
@@ -325,7 +341,7 @@ export default function PostRequirement() {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: C.bg }}>
-      {/* Sidebar â€” identical pattern to HirerDashboard */}
+      {/* Sidebar identical pattern to HirerDashboard */}
       <HirerSidebar />
 
       {/* Main content offset by sidebar width on lg+ */}
@@ -339,7 +355,7 @@ export default function PostRequirement() {
                 padding: "clamp(20px, 4vw, 40px) clamp(16px, 3vw, 32px)",
               }}
             >
-              {/* â”€â”€ Page Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+             
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -394,7 +410,7 @@ export default function PostRequirement() {
                 </div>
               </motion.div>
 
-              {/* â”€â”€ Form Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -482,10 +498,9 @@ export default function PostRequirement() {
                       <div>
                         <Label>Budget Range</Label>
                         <TextInput
-                          icon={DollarSign}
                           value={formData.budget}
                           onChange={set("budget")}
-                          placeholder="e.g., $5,000 - $8,000"
+                          placeholder="e.g., ₹5,000 - ₹8,000"
                           required
                         />
                       </div>
@@ -602,7 +617,13 @@ export default function PostRequirement() {
                     </motion.button>
 
                     {submitError && (
-                      <p style={{ color: "#f87171", margin: 0, fontSize: "13px" }}>
+                      <p
+                        style={{
+                          color: "#f87171",
+                          margin: 0,
+                          fontSize: "13px",
+                        }}
+                      >
                         {submitError}
                       </p>
                     )}
@@ -610,7 +631,7 @@ export default function PostRequirement() {
                 </form>
               </motion.div>
 
-              {/* â”€â”€ Recent Posts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+  
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -4,7 +4,7 @@ import {
   ChevronLeft,
   ChevronDown,
   Camera,
-  DollarSign,
+  IndianRupee,
   CalendarDays,
   Package,
   MapPin,
@@ -723,7 +723,7 @@ function Equipment({ equipment, onChange, onSave, saving }) {
                           className="text-[13px] font-semibold"
                           style={{ color: C.darkText }}
                         >
-                          ${rental}/day
+                          ₹{rental}/day
                         </p>
                         <div className="flex items-center gap-3">
                           <button

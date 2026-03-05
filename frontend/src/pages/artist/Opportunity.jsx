@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   MapPin,
   Calendar,
-  DollarSign,
+  IndianRupee,
   Clock,
   ArrowLeft,
   Search,
@@ -28,6 +28,9 @@ const C = {
   inputBorder: "rgba(255,255,255,0.08)",
   panelBg: "#1e2129",
 };
+const RupeeIcon = () => (
+  <span style={{ color: C.gold, fontSize: "18px", fontWeight: 700 }}>₹</span>
+);
 
 // 21 Categories
 const FILTERS = [
@@ -798,7 +801,7 @@ export default function Opportunities() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
                   {[
                     { Icon: MapPin, val: opp.location },
-                    { Icon: DollarSign, val: opp.budget },
+                    { Icon: IndianRupee, val: opp.budget },
                     { Icon: Clock, val: opp.duration },
                     { Icon: Calendar, val: "ASAP" },
                   ].map(({ Icon, val }, idx) => (

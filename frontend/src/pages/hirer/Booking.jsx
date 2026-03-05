@@ -3,7 +3,7 @@ import {
   Calendar as CalendarIcon,
   Clock,
   MapPin,
-  DollarSign,
+  IndianRupee,
   CheckCircle,
   XCircle,
   FileText,
@@ -293,8 +293,8 @@ function CallSheetModal({ booking, onClose }) {
               {booking.project.title}
             </p>
             <p style={{ margin: 0, fontSize: "13px", color: C.muted }}>
-              Shoot Date: {new Date(booking.dates.start).toLocaleDateString()} Ã¢â‚¬â€œ{" "}
-              {new Date(booking.dates.end).toLocaleDateString()}
+              Shoot Date: {new Date(booking.dates.start).toLocaleDateString()}{" "}
+              Ã¢â‚¬â€œ {new Date(booking.dates.end).toLocaleDateString()}
             </p>
           </div>
 
@@ -783,7 +783,7 @@ function BookingCard({ booking, onViewCallSheet }) {
               { icon: Clock, text: booking.dates.duration },
               { icon: MapPin, text: booking.project.location },
               {
-                icon: DollarSign,
+                icon: IndianRupee,
                 text: `$${total.toLocaleString()} total`,
                 bold: true,
               },
@@ -986,9 +986,7 @@ export default function Booking() {
             artist: {
               name: t.artist?.name || "Artist",
               role: t.artist?.artCategory || "Artist",
-              photo:
-                t.artist?.avatar ||
-                "",
+              photo: t.artist?.avatar || "",
               contact: "-",
             },
             project: {
@@ -1001,7 +999,11 @@ export default function Booking() {
               end: due.toISOString(),
               duration: "1 day",
             },
-            rates: { artistDaily: Number(t.amount || 0), days: 1, equipmentTotal: 0 },
+            rates: {
+              artistDaily: Number(t.amount || 0),
+              days: 1,
+              equipmentTotal: 0,
+            },
             equipment: [],
             crew: [],
             paymentMilestones: [
@@ -1139,7 +1141,13 @@ export default function Booking() {
 
               {/* Booking cards */}
               {error && (
-                <p style={{ color: C.danger, marginBottom: "12px", fontSize: "13px" }}>
+                <p
+                  style={{
+                    color: C.danger,
+                    marginBottom: "12px",
+                    fontSize: "13px",
+                  }}
+                >
                   {error}
                 </p>
               )}

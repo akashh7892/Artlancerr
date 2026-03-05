@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import {
   Users,
-  DollarSign,
+  IndianRupee,
   Briefcase,
   MessageSquare,
   TrendingUp,
@@ -378,7 +378,7 @@ export default function HirerDashboard() {
                         className="p-2 rounded-lg"
                         style={{ backgroundColor: "rgba(34, 197, 94, 0.1)" }}
                       >
-                        <DollarSign
+                        <IndianRupee
                           className="w-5 h-5"
                           style={{ color: "#4ade80" }}
                         />
@@ -546,7 +546,7 @@ export default function HirerDashboard() {
                                     style={{ color: "#9ca3af" }}
                                   >
                                     <span className="flex items-center gap-1">
-                                      <DollarSign className="w-4 h-4" />₹
+                                      <IndianRupee className="w-4 h-4" />₹
                                       {task.amount.toLocaleString()}
                                     </span>
                                     <span className="flex items-center gap-1">
