@@ -11,7 +11,7 @@ import {
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router";
 import HirerSidebar from "./HirerSidebar";
-import { getToken, getUser, messagesAPI } from "../../services/api";
+import { getToken, getUser, messagesAPI, uploadFile } from "../../services/api";
 import { connectSocket } from "../../socket";
 
 const C = {
@@ -39,6 +39,14 @@ const formatTime = (date) => {
 
 const formatMsgTime = (date) =>
   date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+const formatBytes = (bytes) => {
+  if (!bytes || Number.isNaN(Number(bytes))) return "";
+  const val = Number(bytes);
+  if (val < 1024) return `${val} B`;
+  if (val < 1024 * 1024) return `${(val / 1024).toFixed(1)} KB`;
+  return `${(val / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const toInitials = (name = "") =>
   name
@@ -172,6 +180,7 @@ export default function HirerMessages() {
   const [selectedId, setSelectedId] = useState(null);
   const [messagesByConv, setMessagesByConv] = useState({});
   const [messageText, setMessageText] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileShowThread, setMobileShowThread] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -237,6 +246,7 @@ export default function HirerMessages() {
             id: m._id,
             senderId: m.sender?._id === currentUserId ? "hirer" : "artist",
             text: m.content,
+            attachment: m.attachment || null,
             timestamp: new Date(m.createdAt),
             read: Boolean(m.isRead),
           })),
@@ -278,6 +288,7 @@ export default function HirerMessages() {
               id: msg._id,
               senderId: senderId === currentUserId ? "hirer" : "artist",
               text: msg.content,
+              attachment: msg.attachment || null,
               timestamp: new Date(msg.createdAt),
               read: Boolean(msg.isRead),
             },
@@ -351,13 +362,35 @@ export default function HirerMessages() {
 
   const sendMessage = async () => {
     const content = messageText.trim();
-    if (!content || !selectedId) return;
+    if ((!content && !selectedFile) || !selectedId) return;
     setMessageText("");
+    const fileToSend = selectedFile;
+    setSelectedFile(null);
     try {
-      await messagesAPI.sendMessage({ receiverId: selectedId, content });
+      let attachment;
+      if (fileToSend) {
+        const uploaded = await uploadFile(fileToSend, {
+          bucket: "chat-files",
+          type: "chat",
+          fieldName: "file",
+        });
+        attachment = {
+          url: uploaded.url,
+          name: fileToSend.name,
+          mimeType: fileToSend.type,
+          size: fileToSend.size,
+        };
+      }
+
+      await messagesAPI.sendMessage({
+        receiverId: selectedId,
+        content: content || (attachment?.name || "Attachment"),
+        attachment,
+      });
     } catch (error) {
       console.error("Failed to send message:", error);
       setMessageText(content);
+      setSelectedFile(fileToSend);
     }
   };
 
@@ -556,6 +589,21 @@ export default function HirerMessages() {
                                 color: isOut ? "#1a1d24" : C.text,
                               }}
                             >
+                              {msg.attachment?.url && (
+                                <a
+                                  href={msg.attachment.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{
+                                    display: "block",
+                                    marginBottom: "4px",
+                                    textDecoration: "underline",
+                                    color: isOut ? "#1a1d24" : C.gold,
+                                  }}
+                                >
+                                  {msg.attachment.name || "Open attachment"}
+                                </a>
+                              )}
                               {msg.text}
                             </p>
                             <div
@@ -600,6 +648,8 @@ export default function HirerMessages() {
                   }}
                 >
                   <button
+                    type="button"
+                    onClick={() => document.getElementById("hirer-chat-file-input")?.click()}
                     style={{
                       padding: "10px",
                       background: "transparent",
@@ -612,6 +662,16 @@ export default function HirerMessages() {
                   >
                     <Paperclip size={16} />
                   </button>
+                  <input
+                    id="hirer-chat-file-input"
+                    type="file"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setSelectedFile(file);
+                      e.target.value = "";
+                    }}
+                  />
                   <textarea
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
@@ -636,16 +696,16 @@ export default function HirerMessages() {
                   />
                   <button
                     onClick={sendMessage}
-                    disabled={!messageText.trim()}
+                    disabled={!messageText.trim() && !selectedFile}
                     style={{
                       padding: "10px 14px",
-                      background: messageText.trim()
+                      background: messageText.trim() || selectedFile
                         ? `linear-gradient(135deg, ${C.gold}, #a8863d)`
                         : "rgba(255,255,255,0.06)",
                       border: "none",
                       borderRadius: "10px",
-                      color: messageText.trim() ? "#1a1d24" : C.muted,
-                      cursor: messageText.trim() ? "pointer" : "not-allowed",
+                      color: messageText.trim() || selectedFile ? "#1a1d24" : C.muted,
+                      cursor: messageText.trim() || selectedFile ? "pointer" : "not-allowed",
                       display: "flex",
                       alignItems: "center",
                     }}
@@ -653,6 +713,24 @@ export default function HirerMessages() {
                     <Send size={16} />
                   </button>
                 </div>
+                {selectedFile && (
+                  <div
+                    style={{
+                      padding: "0 22px 10px",
+                      color: C.muted,
+                      fontSize: "11.5px",
+                    }}
+                  >
+                    Attached: {selectedFile.name} ({formatBytes(selectedFile.size)}){" "}
+                    <button
+                      type="button"
+                      style={{ color: C.gold, background: "transparent", border: "none", cursor: "pointer" }}
+                      onClick={() => setSelectedFile(null)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               <div

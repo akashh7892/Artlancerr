@@ -17,7 +17,7 @@ import {
   ChevronRight as NextIcon,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
-import { artistAPI, getUser } from "../../services/api";
+import { artistAPI, getUser, setUser, uploadFile } from "../../services/api";
 
 const C = {
   bg: "#1a1d24",
@@ -132,8 +132,9 @@ function SaveBtn({ label, onClick, saving = false }) {
   );
 }
 
-function BasicInfo({ basicInfo, onChange, onSave, saving }) {
+function BasicInfo({ basicInfo, onChange, onSave, saving, onAvatarPick, avatarUploading }) {
   const set = (k) => (v) => onChange((prev) => ({ ...prev, [k]: v }));
+  const fileInputRef = useRef(null);
 
   return (
     <div className="flex flex-col gap-5">
@@ -143,14 +144,31 @@ function BasicInfo({ basicInfo, onChange, onSave, saving }) {
       >
         <div className="relative flex-shrink-0">
           <div
+            onClick={() => fileInputRef.current?.click()}
             className="w-[88px] h-[88px] rounded-full flex items-center justify-center"
             style={{
               background: "rgba(255,255,255,0.05)",
               border: `3px solid rgba(179,169,97,0.35)`,
+              cursor: "pointer",
             }}
           >
-            <Camera size={28} style={{ color: C.lightText }} />
+            {basicInfo.avatar ? (
+              <img
+                src={basicInfo.avatar}
+                alt="Profile"
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
+              <Camera size={28} style={{ color: C.lightText }} />
+            )}
           </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={onAvatarPick}
+          />
         </div>
         <div>
           <p
@@ -162,6 +180,11 @@ function BasicInfo({ basicInfo, onChange, onSave, saving }) {
           <p className="text-[12.5px] mb-3" style={{ color: C.lightText }}>
             Update your public profile details
           </p>
+          {avatarUploading && (
+            <p className="text-[12px]" style={{ color: C.gold }}>
+              Uploading photo...
+            </p>
+          )}
         </div>
       </div>
 
@@ -783,6 +806,7 @@ export default function Profile() {
     experience: "",
     location: "",
     bio: "",
+    avatar: "",
   });
   const [rates, setRates] = useState({ daily: "", weekly: "", project: "" });
   const [availability, setAvailability] = useState({
@@ -796,6 +820,7 @@ export default function Profile() {
   const [savingAvailability, setSavingAvailability] = useState(false);
   const [syncingAvailability, setSyncingAvailability] = useState(false);
   const [savingEquipment, setSavingEquipment] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -812,6 +837,7 @@ export default function Profile() {
           experience: profile.experience || "",
           location: profile.location || "",
           bio: profile.bio || "",
+          avatar: profile.avatar || "",
         });
         setRates({
           daily: profile.rates?.daily || "",
@@ -853,9 +879,38 @@ export default function Profile() {
         experience: basicInfo.experience,
         location: basicInfo.location,
         bio: basicInfo.bio,
+        avatar: basicInfo.avatar,
       });
     } finally {
       setSavingBasic(false);
+    }
+  };
+
+  const handleAvatarPick = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!String(file.type || "").startsWith("image/")) return;
+
+    setUploadingAvatar(true);
+    try {
+      const uploaded = await uploadFile(file, {
+        bucket: "profile-images",
+        type: "profile",
+        fieldName: "file",
+      });
+      const updated = await artistAPI.updateProfile({ avatar: uploaded.url });
+      const avatarUrl = updated?.avatar || uploaded.url;
+      setBasicInfo((prev) => ({ ...prev, avatar: avatarUrl }));
+
+      const localUser = getUser();
+      if (localUser) {
+        setUser({ ...localUser, avatar: avatarUrl });
+      }
+    } catch (error) {
+      console.error("Failed to upload profile photo", error);
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -905,6 +960,8 @@ export default function Profile() {
       onChange={setBasicInfo}
       onSave={saveBasicInfo}
       saving={savingBasic}
+      onAvatarPick={handleAvatarPick}
+      avatarUploading={uploadingAvatar}
     />,
     <Rates
       key="rates"

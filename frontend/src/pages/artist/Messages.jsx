@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Search,
@@ -10,7 +10,7 @@ import {
   CheckCheck,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
-import { getToken, getUser, messagesAPI } from "../../services/api";
+import { getToken, getUser, messagesAPI, uploadFile } from "../../services/api";
 import { connectSocket } from "../../socket";
 
 const toInitials = (name = "") =>
@@ -41,10 +41,19 @@ const formatMsgTime = (dateString) =>
     minute: "2-digit",
   });
 
+const formatBytes = (bytes) => {
+  if (!bytes || Number.isNaN(Number(bytes))) return "";
+  const val = Number(bytes);
+  if (val < 1024) return `${val} B`;
+  if (val < 1024 * 1024) return `${(val / 1024).toFixed(1)} KB`;
+  return `${(val / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 const normalizeMessage = (msg, currentUserId) => ({
   id: msg._id,
   from: msg.sender?._id === currentUserId ? "me" : "them",
   text: msg.content,
+  attachment: msg.attachment || null,
   time: formatMsgTime(msg.createdAt),
   read: Boolean(msg.isRead),
 });
@@ -68,8 +77,10 @@ export default function Messages() {
   const [messagesByConv, setMessagesByConv] = useState({});
   const [selectedId, setSelectedId] = useState(null);
   const [input, setInput] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
   const [search, setSearch] = useState("");
   const [mobileView, setMobileView] = useState("list");
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -205,13 +216,35 @@ export default function Messages() {
 
   const handleSend = async () => {
     const content = input.trim();
-    if (!content || !selectedId) return;
+    if ((!content && !selectedFile) || !selectedId) return;
     setInput("");
+    const fileToSend = selectedFile;
+    setSelectedFile(null);
     try {
-      await messagesAPI.sendMessage({ receiverId: selectedId, content });
+      let attachment;
+      if (fileToSend) {
+        const uploaded = await uploadFile(fileToSend, {
+          bucket: "chat-files",
+          type: "chat",
+          fieldName: "file",
+        });
+        attachment = {
+          url: uploaded.url,
+          name: fileToSend.name,
+          mimeType: fileToSend.type,
+          size: fileToSend.size,
+        };
+      }
+
+      await messagesAPI.sendMessage({
+        receiverId: selectedId,
+        content: content || (attachment?.name || "Attachment"),
+        attachment,
+      });
     } catch (error) {
       console.error("Failed to send message:", error);
       setInput(content);
+      setSelectedFile(fileToSend);
     }
   };
 
@@ -435,6 +468,19 @@ export default function Messages() {
                             }
                       }
                     >
+                      {msg.attachment?.url && (
+                        <a
+                          href={msg.attachment.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block underline mb-1"
+                          style={{
+                            color: msg.from === "me" ? "#1a1d24" : "#c9a961",
+                          }}
+                        >
+                          {msg.attachment.name || "Open attachment"}
+                        </a>
+                      )}
                       {msg.text}
                     </div>
                     <div className="flex items-center gap-1 mt-[5px]">
@@ -465,9 +511,20 @@ export default function Messages() {
                 <button
                   className="attach-btn flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0"
                   style={{ color: "#5a6e7d" }}
+                  onClick={() => fileInputRef.current?.click()}
                 >
                   <Paperclip size={17} />
                 </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setSelectedFile(file);
+                    e.target.value = "";
+                  }}
+                />
                 <input
                   type="text"
                   value={input}
@@ -485,14 +542,26 @@ export default function Messages() {
                 <button
                   className="send-btn flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0"
                   style={{
-                    background: input.trim() ? "#c9a961" : "#2d3139",
-                    color: input.trim() ? "#1a1d24" : "#3a4e5e",
+                    background: input.trim() || selectedFile ? "#c9a961" : "#2d3139",
+                    color: input.trim() || selectedFile ? "#1a1d24" : "#3a4e5e",
                   }}
                   onClick={handleSend}
                 >
                   <Send size={16} strokeWidth={2.2} />
                 </button>
               </div>
+              {selectedFile && (
+                <div className="px-4 pb-3 text-xs text-[#8ba390]">
+                  Attached: {selectedFile.name} ({formatBytes(selectedFile.size)}){" "}
+                  <button
+                    type="button"
+                    className="text-[#c9a961]"
+                    onClick={() => setSelectedFile(null)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center gap-3">

@@ -402,10 +402,13 @@ export const messagesAPI = {
 export { getToken, setToken, getUser, setUser, clearAuth, fetchAPI };
 
 // Upload file (multipart/form-data) — do not set Content-Type so browser sets boundary
-export const uploadFile = async (file) => {
+export const uploadFile = async (file, options = {}) => {
   const token = getToken();
   const formData = new FormData();
-  formData.append("image", file);
+  formData.append(options.fieldName || "file", file);
+  if (options.bucket) formData.append("bucket", options.bucket);
+  if (options.type) formData.append("type", options.type);
+  if (options.context) formData.append("context", options.context);
   const res = await fetch(`${API_BASE_URL}/upload`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},

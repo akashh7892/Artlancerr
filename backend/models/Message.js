@@ -26,7 +26,14 @@ const messageSchema = new mongoose.Schema({
   // Message content
   content: {
     type: String,
-    required: true
+    default: ""
+  },
+  // Optional attachment metadata (chat images/docs/video/audio)
+  attachment: {
+    url: { type: String },
+    name: { type: String },
+    mimeType: { type: String },
+    size: { type: Number },
   },
   // Related opportunity (optional)
   opportunity: {

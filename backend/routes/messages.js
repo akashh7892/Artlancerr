@@ -126,13 +126,19 @@ router.get("/:userId", protect, async (req, res) => {
 // @access  Private
 router.post("/", protect, async (req, res) => {
   try {
-    const { receiverId, receiverModel, content, opportunityId, applicationId } =
-      req.body;
+    const {
+      receiverId,
+      receiverModel,
+      content,
+      opportunityId,
+      applicationId,
+      attachment,
+    } = req.body;
 
-    if (!receiverId || !content) {
+    if (!receiverId) {
       return res
         .status(400)
-        .json({ message: "Receiver and content are required" });
+        .json({ message: "Receiver is required" });
     }
 
     if (!Types.ObjectId.isValid(receiverId)) {
@@ -146,10 +152,22 @@ router.post("/", protect, async (req, res) => {
     }
 
     const safeContent = String(content || "").trim();
-    if (!safeContent) {
+    const safeAttachment =
+      attachment && attachment.url
+        ? {
+            url: String(attachment.url),
+            name: attachment.name ? String(attachment.name) : "",
+            mimeType: attachment.mimeType ? String(attachment.mimeType) : "",
+            size: Number.isFinite(Number(attachment.size))
+              ? Number(attachment.size)
+              : undefined,
+          }
+        : undefined;
+
+    if (!safeContent && !safeAttachment) {
       return res
         .status(400)
-        .json({ message: "Message content cannot be empty" });
+        .json({ message: "Message content or attachment is required" });
     }
 
     const message = await Message.create({
@@ -161,6 +179,7 @@ router.post("/", protect, async (req, res) => {
       content: safeContent,
       opportunity: opportunityId,
       application: applicationId,
+      attachment: safeAttachment,
     });
 
     const populated = await Message.findById(message._id)

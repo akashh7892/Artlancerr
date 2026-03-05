@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Video, Image as ImageIcon, X, ArrowLeft } from "lucide-react";
+import {
+  Upload,
+  Video,
+  Image as ImageIcon,
+  X,
+  ArrowLeft,
+  FileText,
+  Music,
+} from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 import { artistAPI } from "../../services/api";
 import ImageUpload from "../../components/ui/ImageUpload";
@@ -31,8 +39,15 @@ export default function Portfolio() {
     return () => { mounted = false; };
   }, []);
 
-  const handleUpload = (url) => {
-    artistAPI.addPortfolio({ title: addTitle || "Portfolio item", category: "General", workType: "image", mediaUrl: url }).then((item) => {
+  const detectWorkType = (mimeType = "") => {
+    if (mimeType.startsWith("image/")) return "image";
+    if (mimeType.startsWith("video/")) return "video";
+    if (mimeType.startsWith("audio/")) return "audio";
+    return "document";
+  };
+
+  const handleUpload = (url, _id, fileMeta) => {
+    artistAPI.addPortfolio({ title: addTitle || "Portfolio item", category: "General", workType: detectWorkType(fileMeta?.type || ""), mediaUrl: url }).then((item) => {
       setPortfolio((prev) => [item, ...prev]);
       setShowUpload(false);
       setAddTitle("");
@@ -171,7 +186,12 @@ export default function Portfolio() {
             <div className="mb-6 p-6 rounded-2xl" style={{ background: C.card, border: `1px solid ${C.border}` }}>
               <p className="text-sm mb-2" style={{ color: C.lightText }}>Title (optional)</p>
               <input type="text" value={addTitle} onChange={(e) => setAddTitle(e.target.value)} placeholder="e.g. Music Video Shoot" className="w-full max-w-xs rounded-lg py-2 px-3 mb-4 text-sm bg-transparent border border-[#5f5641] text-[#e2e3e5] outline-none focus:border-[#c9a961]" />
-              <ImageUpload onUpload={handleUpload} />
+              <ImageUpload
+                onUpload={handleUpload}
+                accept="*/*"
+                maxSizeMB={20}
+                uploadOptions={{ type: "portfolio", bucket: "portfolios" }}
+              />
               <button type="button" onClick={() => { setShowUpload(false); setAddTitle(""); }} className="mt-3 text-sm text-[#808590] hover:text-[#c9a961]">Cancel</button>
             </div>
           )}
@@ -244,14 +264,26 @@ export default function Portfolio() {
                 onMouseLeave={() => setHoveredId(null)}
               >
                 {/* Image */}
-                <img
-                  src={item.mediaUrl || item.thumbnailUrl}
-                  alt={item.title}
-                  className="card-img w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                  }}
-                />
+                {item.workType === "image" ? (
+                  <img
+                    src={item.mediaUrl || item.thumbnailUrl}
+                    alt={item.title}
+                    className="card-img w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-[rgba(255,255,255,0.04)]">
+                    {item.workType === "video" ? (
+                      <Video size={42} style={{ color: "rgba(255,255,255,0.35)" }} />
+                    ) : item.workType === "audio" ? (
+                      <Music size={42} style={{ color: "rgba(255,255,255,0.35)" }} />
+                    ) : (
+                      <FileText size={42} style={{ color: "rgba(255,255,255,0.35)" }} />
+                    )}
+                  </div>
+                )}
 
                 {/* Hover overlay */}
                 <div
@@ -271,15 +303,19 @@ export default function Portfolio() {
                     </h4>
                     <div className="flex gap-2">
                       {/* View */}
-                      <button
+                      <a
                         className="action-btn w-8 h-8 rounded-lg flex items-center justify-center border-0 outline-none cursor-pointer"
                         style={{
                           background: "rgba(255,255,255,0.2)",
                           backdropFilter: "blur(6px)",
                         }}
+                        href={item.mediaUrl || item.thumbnailUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <ImageIcon size={15} color="#fff" strokeWidth={2} />
-                      </button>
+                      </a>
                       {/* Remove */}
                       <button
                         className="action-btn w-8 h-8 rounded-lg flex items-center justify-center border-0 outline-none cursor-pointer"
@@ -309,6 +345,10 @@ export default function Portfolio() {
                   >
                     {item.workType === "video" ? (
                       <Video size={14} color="#fff" strokeWidth={2} />
+                    ) : item.workType === "audio" ? (
+                      <Music size={14} color="#fff" strokeWidth={2} />
+                    ) : item.workType === "document" ? (
+                      <FileText size={14} color="#fff" strokeWidth={2} />
                     ) : (
                       <ImageIcon size={14} color="#fff" strokeWidth={2} />
                     )}

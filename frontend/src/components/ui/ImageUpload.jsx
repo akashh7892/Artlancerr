@@ -1,40 +1,59 @@
 import { useState, useRef } from "react";
-import { Upload, X } from "lucide-react";
+import { Upload, X, FileText } from "lucide-react";
 import { uploadFile } from "../../services/api";
 
 const C = {
   border: "rgba(179,169,97,0.25)",
   gold: "#b3a961",
   goldBg: "rgba(179,169,97,0.12)",
-  darkText: "#e8e9eb",
-  lightText: "#8ba390",
 };
 
-export default function ImageUpload({ onUpload, maxSizeMB = 5, accept = "image/*" }) {
+export default function ImageUpload({
+  onUpload,
+  maxSizeMB = 5,
+  accept = "image/*",
+  uploadOptions = {},
+}) {
   const [dragging, setDragging] = useState(false);
   const [preview, setPreview] = useState(null);
+  const [fileLabel, setFileLabel] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef(null);
 
+  const imageOnly = accept === "image/*";
+
   const handleFile = async (file) => {
     setError("");
-    if (!file || !file.type.startsWith("image/")) {
+    if (!file) return;
+
+    if (imageOnly && !String(file.type || "").startsWith("image/")) {
       setError("Please select an image file.");
       return;
     }
+
     if (maxSizeMB && file.size > maxSizeMB * 1024 * 1024) {
       setError(`File must be under ${maxSizeMB}MB.`);
       return;
     }
-    setPreview(URL.createObjectURL(file));
+
+    const isImage = String(file.type || "").startsWith("image/");
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(isImage ? URL.createObjectURL(file) : null);
+    setFileLabel(file.name || "");
     setUploading(true);
+
     try {
-      const data = await uploadFile(file);
-      onUpload?.(data.url, data.public_id);
+      const data = await uploadFile(file, uploadOptions);
+      onUpload?.(data.url, data.public_id, {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
     } catch (err) {
       setError(err.message || "Upload failed");
       setPreview(null);
+      setFileLabel("");
     } finally {
       setUploading(false);
     }
@@ -56,14 +75,22 @@ export default function ImageUpload({ onUpload, maxSizeMB = 5, accept = "image/*
   const clearPreview = () => {
     if (preview) URL.revokeObjectURL(preview);
     setPreview(null);
+    setFileLabel("");
     setError("");
   };
 
   return (
     <div className="space-y-2">
-      {preview ? (
-        <div className="relative inline-block rounded-xl overflow-hidden border border-[rgba(179,169,97,0.25)]">
-          <img src={preview} alt="Preview" className="w-32 h-32 object-cover" />
+      {preview || fileLabel ? (
+        <div className="relative inline-block rounded-xl overflow-hidden border border-[rgba(179,169,97,0.25)] min-w-[128px] min-h-[128px]">
+          {preview ? (
+            <img src={preview} alt="Preview" className="w-32 h-32 object-cover" />
+          ) : (
+            <div className="w-40 h-32 p-3 flex flex-col items-center justify-center text-center bg-[rgba(255,255,255,0.03)]">
+              <FileText size={22} className="text-[#b3a961] mb-2" />
+              <p className="text-xs text-[#e8e9eb] break-all">{fileLabel}</p>
+            </div>
+          )}
           {uploading && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <div className="w-10 h-10 border-2 border-[#b3a961] border-t-transparent rounded-full animate-spin" />
@@ -84,7 +111,10 @@ export default function ImageUpload({ onUpload, maxSizeMB = 5, accept = "image/*
           role="button"
           tabIndex={0}
           onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
           className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-colors p-6 min-h-[120px]"
@@ -107,7 +137,7 @@ export default function ImageUpload({ onUpload, maxSizeMB = 5, accept = "image/*
             Drag & drop or click to upload
           </p>
           <p className="text-xs mt-1 text-[#8ba390]">
-            Images only, max {maxSizeMB}MB
+            {imageOnly ? "Images only" : "Any file type"}, max {maxSizeMB}MB
           </p>
         </div>
       )}

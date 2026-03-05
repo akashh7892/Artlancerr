@@ -21,7 +21,13 @@ import {
   Shield,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
-import { artistAPI, authAPI, getUser, setUser } from "../../services/api";
+import {
+  artistAPI,
+  authAPI,
+  getUser,
+  setUser,
+  uploadFile,
+} from "../../services/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -458,6 +464,35 @@ export default function ArtistSettings() {
     setShowPasswords((p) => ({ ...p, [k]: !p[k] }));
   const handleUpdatePayment = (k, v) => setPayment((p) => ({ ...p, [k]: v }));
 
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!String(file.type || "").startsWith("image/")) {
+      showToast("Please select an image file");
+      return;
+    }
+
+    try {
+      const uploaded = await uploadFile(file, {
+        bucket: "profile-images",
+        type: "profile",
+        fieldName: "file",
+      });
+      const updated = await artistAPI.updateProfile({ avatar: uploaded.url });
+      setProfile((prev) => ({ ...prev, avatar: updated.avatar || uploaded.url }));
+
+      const localUser = getUser();
+      if (localUser) {
+        setUser({ ...localUser, avatar: updated.avatar || uploaded.url });
+      }
+
+      showToast("Profile photo updated");
+    } catch (error) {
+      showToast(error.message || "Failed to upload profile photo");
+    }
+  };
+
   const handlePasswordSave = () => {
     (async () => {
       try {
@@ -634,6 +669,7 @@ export default function ArtistSettings() {
                           ref={fileInputRef}
                           type="file"
                           accept="image/*"
+                          onChange={handleAvatarChange}
                           className="hidden"
                         />
                       </div>
