@@ -4,7 +4,7 @@ import {
   ArrowLeft,
   Upload,
   Instagram,
-  DollarSign,
+  IndianRupee,
   Users,
   Clock,
   CheckCircle,
@@ -19,8 +19,7 @@ import {
 import Sidebar from "../../components/common/Sidebar";
 import { artistAPI } from "../../services/api";
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Constants Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-
+// ── Design tokens ──────────────────────────────────────────────
 const COLORS = {
   bg: "#1a1d24",
   card: "#20242d",
@@ -29,11 +28,8 @@ const COLORS = {
   light: "#e8e9eb",
   muted: "#8ba3af",
 };
-const RupeeIcon = () => (
-  <span style={{ color: C.gold, fontSize: "18px", fontWeight: 700 }}>₹</span>
-);
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Sub-components Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// ── Sub-components ─────────────────────────────────────────────
 
 function ImageWithFallback({ src, alt, className }) {
   const [error, setError] = useState(false);
@@ -209,14 +205,14 @@ function CreatePromotionDialog({ open, onClose, onCreate }) {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
                   style={{ color: COLORS.muted }}
                 >
-                  ₹
+                  <IndianRupee size={14} />
                 </span>
                 <input
                   type="number"
                   value={formData.reward}
                   onChange={(e) => update("reward", e.target.value)}
                   placeholder="25"
-                  className="w-full pl-7 pr-4 py-2.5 rounded-lg text-sm outline-none transition-all"
+                  className="w-full pl-8 pr-4 py-2.5 rounded-lg text-sm outline-none transition-all"
                   style={inputStyle}
                   {...focusHandlers}
                 />
@@ -312,15 +308,15 @@ function CreatePromotionDialog({ open, onClose, onCreate }) {
   );
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Main Component Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// ── Main Component ─────────────────────────────────────────────
 
 export default function ArtistPromotions() {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("all");
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showCreateDialog, setShowCreate] = useState(false);
   const [selectedPromo, setSelectedPromo] = useState(null);
-  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showUploadDialog, setShowUpload] = useState(false);
   const [uploadProof, setUploadProof] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [allPromotions, setAllPromotions] = useState([]);
@@ -328,17 +324,18 @@ export default function ArtistPromotions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // ── Effects ──
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    let m = true;
+    let alive = true;
     artistAPI
       .getPromotions()
       .then((res) => {
-        if (!m) return;
+        if (!alive) return;
         const list = Array.isArray(res) ? res : [];
         const mapped = list.map((p) => ({
           id: p._id,
@@ -366,18 +363,17 @@ export default function ArtistPromotions() {
         );
       })
       .catch((e) => {
-        if (m) setError(e.message || "Failed to load promotions");
+        if (alive) setError(e.message || "Failed to load promotions");
       })
       .finally(() => {
-        if (m) setLoading(false);
+        if (alive) setLoading(false);
       });
     return () => {
-      m = false;
+      alive = false;
     };
   }, []);
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ Utilities Ã¢â€â‚¬Ã¢â€â‚¬
-
+  // ── Utilities ──
   const getTimeRemaining = (deadline) => {
     const diff = new Date(deadline).getTime() - currentTime.getTime();
     if (diff <= 0) return "Expired";
@@ -416,17 +412,14 @@ export default function ArtistPromotions() {
     );
   };
 
-  const getStatusIcon = (status) => {
-    const map = {
+  const getStatusIcon = (status) =>
+    ({
       Approved: <CheckCircle size={16} />,
       Submitted: <Loader size={16} className="animate-spin" />,
       Rejected: <XCircle size={16} />,
-    };
-    return map[status] || <Clock size={16} />;
-  };
+    })[status] || <Clock size={16} />;
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ Handlers Ã¢â€â‚¬Ã¢â€â‚¬
-
+  // ── Handlers ──
   const handleConfirmAccept = () => {
     if (!selectedPromo) return;
     const newPromo = {
@@ -447,7 +440,7 @@ export default function ArtistPromotions() {
   };
 
   const handleSubmitProof = () => {
-    setShowUploadDialog(false);
+    setShowUpload(false);
     setUploadProof("");
     setSelectedPromo(null);
   };
@@ -487,17 +480,17 @@ export default function ArtistPromotions() {
     setMyPromotions((prev) => [mapped, ...prev]);
   };
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ Render Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-
+  // ── Render ──
   return (
     <div className="min-h-screen flex" style={{ background: COLORS.bg }}>
+      {/* Sidebar manages its own mobile toggle internally */}
       <Sidebar />
 
-      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Main content Ã¢â‚¬â€ offset by sidebar width Ã¢â€â‚¬Ã¢â€â‚¬ */}
-      <div className="flex-1 ml-64 min-w-0">
-        <div className="max-w-5xl mx-auto p-8">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
+      {/* Main content — lg:ml-64 clears the fixed sidebar on desktop */}
+      <div className="flex-1 min-w-0 lg:ml-64">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          {/* ── Header ── */}
+          <div className="flex items-center gap-4 mb-8 mt-10 lg:mt-0">
             <button
               onClick={() => navigate("/artist/dashboard")}
               className="p-2 rounded-lg transition-colors hover:bg-white/10 flex-shrink-0"
@@ -507,26 +500,30 @@ export default function ArtistPromotions() {
             </button>
             <div className="flex-1 min-w-0">
               <h1
-                className="text-3xl font-semibold"
+                className="text-2xl sm:text-3xl font-semibold"
                 style={{ color: COLORS.light }}
               >
                 Promotions
               </h1>
-              <p className="text-sm mt-1" style={{ color: COLORS.muted }}>
+              <p
+                className="text-sm mt-1 hidden sm:block"
+                style={{ color: COLORS.muted }}
+              >
                 Accept promotion missions and earn rewards
               </p>
             </div>
             <button
-              onClick={() => setShowCreateDialog(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all hover:opacity-90 flex-shrink-0"
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-medium text-sm transition-all hover:opacity-90 flex-shrink-0"
               style={{ background: COLORS.gold, color: "#1a1d24" }}
             >
               <Upload size={16} />
-              Create Promotion
+              <span className="hidden sm:inline">Create Promotion</span>
+              <span className="sm:hidden">Create</span>
             </button>
           </div>
 
-          {/* Tabs */}
+          {/* ── Tabs ── */}
           <div
             className="flex mb-6"
             style={{ borderBottom: `1px solid ${COLORS.border}` }}
@@ -540,7 +537,7 @@ export default function ArtistPromotions() {
                 <button
                   key={id}
                   onClick={() => setActiveTab(id)}
-                  className="px-6 py-3 text-sm relative transition-colors"
+                  className="px-4 sm:px-6 py-3 text-sm relative transition-colors"
                   style={{ color: isActive ? COLORS.gold : COLORS.muted }}
                 >
                   {label}
@@ -555,7 +552,6 @@ export default function ArtistPromotions() {
             })}
           </div>
 
-          {/* Ã¢â€â‚¬Ã¢â€â‚¬ All Promotions Ã¢â€â‚¬Ã¢â€â‚¬ */}
           {loading && (
             <div className="flex justify-center py-8">
               <div className="w-10 h-10 border-2 border-[#c9a961] border-t-transparent rounded-full animate-spin" />
@@ -566,9 +562,11 @@ export default function ArtistPromotions() {
               {error}
             </p>
           )}
+
+          {/* ── All Promotions ── */}
           {activeTab === "all" && (
             <div className="space-y-4">
-              {(allPromotions || []).map((promo) => {
+              {allPromotions.map((promo) => {
                 const remainingSlots = promo.totalSlots - promo.filledSlots;
                 const isFull = remainingSlots <= 0;
                 const timeLeft = getTimeRemaining(promo.deadline);
@@ -593,7 +591,7 @@ export default function ArtistPromotions() {
                     }}
                   >
                     {/* Poster */}
-                    <div className="w-40 flex-shrink-0 relative">
+                    <div className="w-28 sm:w-36 md:w-40 flex-shrink-0 relative">
                       <ImageWithFallback
                         src={promo.poster}
                         alt={promo.projectName}
@@ -609,54 +607,50 @@ export default function ArtistPromotions() {
                     </div>
 
                     {/* Info */}
-                    <div className="flex-1 p-5 flex flex-col justify-between min-w-0">
+                    <div className="flex-1 p-3 sm:p-5 flex flex-col justify-between min-w-0">
                       <div>
                         <h3
-                          className="text-lg font-semibold mb-2"
+                          className="text-base sm:text-lg font-semibold mb-2"
                           style={{ color: COLORS.light }}
                         >
                           {promo.projectName}
                         </h3>
-                        <div className="flex flex-wrap items-center gap-4 text-sm mb-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm mb-3">
                           <span
-                            className="flex items-center gap-1.5"
+                            className="flex items-center gap-1"
                             style={{ color: COLORS.muted }}
                           >
-                            <Instagram size={15} />
-                            {promo.promotionType}
+                            <Instagram size={13} /> {promo.promotionType}
                           </span>
                           <span
-                            className="flex items-center gap-1.5 font-semibold"
+                            className="flex items-center gap-1 font-semibold"
                             style={{ color: COLORS.gold }}
                           >
-                            <RupeeIcon />
-                            {promo.reward} reward
+                            <IndianRupee size={13} /> {promo.reward} reward
                           </span>
                           <span
-                            className="flex items-center gap-1.5"
+                            className="flex items-center gap-1"
                             style={{ color: COLORS.muted }}
                           >
-                            <Users size={15} />
-                            {remainingSlots} / {promo.totalSlots} slots left
+                            <Users size={13} /> {remainingSlots}/
+                            {promo.totalSlots} slots
                           </span>
                           <span
-                            className="flex items-center gap-1.5"
+                            className="flex items-center gap-1"
                             style={{
                               color: isExpired ? "#f87171" : COLORS.muted,
                             }}
                           >
-                            <Clock size={15} />
-                            {timeLeft}
+                            <Clock size={13} /> {timeLeft}
                           </span>
                         </div>
                         <p
-                          className="text-sm mb-4 line-clamp-2"
+                          className="text-xs sm:text-sm mb-4 line-clamp-2"
                           style={{ color: COLORS.muted }}
                         >
                           {promo.description}
                         </p>
                       </div>
-
                       <div className="flex items-center justify-between">
                         <span
                           className="text-xs"
@@ -667,7 +661,7 @@ export default function ArtistPromotions() {
                         <button
                           onClick={() => !disabled && setSelectedPromo(promo)}
                           disabled={disabled}
-                          className="px-5 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ background: COLORS.gold, color: "#1a1d24" }}
                         >
                           Accept Promotion
@@ -680,7 +674,7 @@ export default function ArtistPromotions() {
             </div>
           )}
 
-          {/* Ã¢â€â‚¬Ã¢â€â‚¬ My Promotions Ã¢â€â‚¬Ã¢â€â‚¬ */}
+          {/* ── My Promotions ── */}
           {activeTab === "my" && (
             <div className="space-y-4">
               {myPromotions.length === 0 ? (
@@ -724,71 +718,69 @@ export default function ArtistPromotions() {
                       }}
                     >
                       {/* Poster */}
-                      <div className="w-40 flex-shrink-0 relative">
+                      <div className="w-28 sm:w-36 md:w-40 flex-shrink-0 relative">
                         <ImageWithFallback
                           src={promo.poster}
                           alt={promo.projectName}
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute top-3 right-3">
+                        <div className="absolute top-2 right-2">
                           <div
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-sm"
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm"
                             style={statusStyle}
                           >
                             {getStatusIcon(promo.status)}
-                            {promo.status}
+                            <span className="hidden sm:inline">
+                              {promo.status}
+                            </span>
                           </div>
                         </div>
                       </div>
 
                       {/* Info */}
-                      <div className="flex-1 p-5 min-w-0">
+                      <div className="flex-1 p-3 sm:p-5 min-w-0">
                         <h3
-                          className="text-lg font-semibold mb-2"
+                          className="text-base sm:text-lg font-semibold mb-2"
                           style={{ color: COLORS.light }}
                         >
                           {promo.projectName}
                         </h3>
-
-                        <div className="flex flex-wrap items-center gap-4 text-sm mb-4">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm mb-4">
                           <span
-                            className="flex items-center gap-1.5"
+                            className="flex items-center gap-1"
                             style={{ color: COLORS.muted }}
                           >
-                            <Instagram size={15} />
-                            {promo.promotionType}
+                            <Instagram size={13} /> {promo.promotionType}
                           </span>
                           <span
-                            className="flex items-center gap-1.5 font-semibold"
+                            className="flex items-center gap-1 font-semibold"
                             style={{ color: COLORS.gold }}
                           >
-                            <RupeeIcon />
-                            {promo.reward}
+                            <IndianRupee size={13} /> {promo.reward}
                           </span>
                           {!isExpired && (
                             <span
-                              className="flex items-center gap-1.5"
+                              className="flex items-center gap-1"
                               style={{ color: COLORS.muted }}
                             >
-                              <Clock size={15} />
-                              {timeLeft} left
+                              <Clock size={13} /> {timeLeft} left
                             </span>
                           )}
                         </div>
 
                         {promo.status === "Approved" && (
                           <div
-                            className="rounded-lg p-4 mb-3"
+                            className="rounded-lg p-3 sm:p-4 mb-3"
                             style={{
                               background: "rgba(74,222,128,0.1)",
                               border: "1px solid rgba(74,222,128,0.2)",
                             }}
                           >
                             <div
-                              className="flex items-center gap-2 mb-1 text-sm font-medium"
+                              className="flex items-center gap-2 mb-1 text-xs sm:text-sm font-medium"
                               style={{ color: "#4ade80" }}
                             >
-                              <CheckCircle size={16} /> Approved! Payment will
+                              <CheckCircle size={15} /> Approved! Payment will
                               be processed
                             </div>
                             <p
@@ -803,17 +795,17 @@ export default function ArtistPromotions() {
 
                         {promo.status === "Submitted" && (
                           <div
-                            className="rounded-lg p-4 mb-3"
+                            className="rounded-lg p-3 sm:p-4 mb-3"
                             style={{
                               background: "rgba(250,204,21,0.1)",
                               border: "1px solid rgba(250,204,21,0.2)",
                             }}
                           >
                             <div
-                              className="flex items-center gap-2 mb-1 text-sm font-medium"
+                              className="flex items-center gap-2 mb-1 text-xs sm:text-sm font-medium"
                               style={{ color: "#facc15" }}
                             >
-                              <Loader size={16} className="animate-spin" />{" "}
+                              <Loader size={15} className="animate-spin" />{" "}
                               Under Review
                             </div>
                             <p
@@ -822,24 +814,24 @@ export default function ArtistPromotions() {
                             >
                               Submitted on{" "}
                               {new Date(promo.submittedAt).toLocaleDateString()}{" "}
-                              Ã¢â‚¬â€ Awaiting approval
+                              — Awaiting approval
                             </p>
                           </div>
                         )}
 
                         {promo.status === "Pending" && !isExpired && (
                           <div
-                            className="rounded-lg p-4 mb-3"
+                            className="rounded-lg p-3 sm:p-4 mb-3"
                             style={{
                               background: "rgba(96,165,250,0.1)",
                               border: "1px solid rgba(96,165,250,0.2)",
                             }}
                           >
                             <div
-                              className="flex items-center gap-2 mb-1 text-sm font-medium"
+                              className="flex items-center gap-2 mb-1 text-xs sm:text-sm font-medium"
                               style={{ color: "#60a5fa" }}
                             >
-                              <AlertCircle size={16} /> Action Required
+                              <AlertCircle size={15} /> Action Required
                             </div>
                             <p
                               className="text-xs mb-3"
@@ -851,9 +843,9 @@ export default function ArtistPromotions() {
                             <button
                               onClick={() => {
                                 setSelectedPromo(promo);
-                                setShowUploadDialog(true);
+                                setShowUpload(true);
                               }}
-                              className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
+                              className="flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
                               style={{
                                 background: COLORS.gold,
                                 color: "#1a1d24",
@@ -891,7 +883,7 @@ export default function ArtistPromotions() {
         </div>
       </div>
 
-      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Accept Dialog Ã¢â€â‚¬Ã¢â€â‚¬ */}
+      {/* ── Accept Dialog ── */}
       <Dialog
         open={!!selectedPromo && !showUploadDialog}
         onClose={() => setSelectedPromo(null)}
@@ -937,22 +929,20 @@ export default function ArtistPromotions() {
                       className="flex items-center gap-2"
                       style={{ color: COLORS.muted }}
                     >
-                      <Instagram size={15} />
-                      {selectedPromo.promotionType}
+                      <Instagram size={15} /> {selectedPromo.promotionType}
                     </div>
                     <div
                       className="flex items-center gap-2 font-semibold"
                       style={{ color: COLORS.gold }}
                     >
-                      <RupeeIcon />
-                      {selectedPromo.reward} fixed reward
+                      <IndianRupee size={15} /> {selectedPromo.reward} fixed
+                      reward
                     </div>
                     <div
                       className="flex items-center gap-2"
                       style={{ color: COLORS.muted }}
                     >
-                      <Calendar size={15} />
-                      Deadline:{" "}
+                      <Calendar size={15} /> Deadline:{" "}
                       {new Date(selectedPromo.deadline).toLocaleDateString()}
                     </div>
                   </div>
@@ -993,8 +983,7 @@ export default function ArtistPromotions() {
                 }}
               >
                 By accepting, you commit to completing the task by the deadline.
-                Payment is processed within 3Ã¢â‚¬â€œ5 business days after
-                approval.
+                Payment is processed within 3–5 business days after approval.
               </div>
 
               <div className="flex gap-3">
@@ -1021,11 +1010,8 @@ export default function ArtistPromotions() {
         </div>
       </Dialog>
 
-      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Submit Proof Dialog Ã¢â€â‚¬Ã¢â€â‚¬ */}
-      <Dialog
-        open={showUploadDialog}
-        onClose={() => setShowUploadDialog(false)}
-      >
+      {/* ── Submit Proof Dialog ── */}
+      <Dialog open={showUploadDialog} onClose={() => setShowUpload(false)}>
         <div className="p-6">
           <div className="flex items-center justify-between mb-1">
             <h2
@@ -1035,7 +1021,7 @@ export default function ArtistPromotions() {
               Submit Proof
             </h2>
             <button
-              onClick={() => setShowUploadDialog(false)}
+              onClick={() => setShowUpload(false)}
               className="p-1 rounded-lg hover:bg-white/10 transition-colors"
             >
               <X size={20} style={{ color: COLORS.muted }} />
@@ -1107,7 +1093,7 @@ export default function ArtistPromotions() {
                 Submit for Review
               </button>
               <button
-                onClick={() => setShowUploadDialog(false)}
+                onClick={() => setShowUpload(false)}
                 className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all hover:bg-white/10"
                 style={{
                   border: `1px solid ${COLORS.border}`,
@@ -1121,9 +1107,10 @@ export default function ArtistPromotions() {
         </div>
       </Dialog>
 
+      {/* ── Create Promotion Dialog ── */}
       <CreatePromotionDialog
         open={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
+        onClose={() => setShowCreate(false)}
         onCreate={handleCreatePromotion}
       />
     </div>

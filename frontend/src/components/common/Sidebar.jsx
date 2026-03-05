@@ -270,7 +270,7 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        id="artlancing-sidebar"
+        id="SzyloSidebar"
         className={`fixed top-0 left-0 h-screen z-[1000] flex flex-col w-[248px] transition-transform duration-300 ease-in-out lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
         style={{
           background: "#1f2229",
@@ -288,7 +288,7 @@ export default function Sidebar() {
             onClick={() => setOpen(false)}
           >
             <img
-              src="/logo.jpeg"
+              src="/logo.png"
               alt="Artlancing"
               className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
               style={{ border: "1.5px solid rgba(201,169,97,0.3)" }}
@@ -302,7 +302,7 @@ export default function Sidebar() {
                 letterSpacing: "0.01em",
               }}
             >
-              Artlancing
+              Szylo
             </span>
           </NavLink>
           <p

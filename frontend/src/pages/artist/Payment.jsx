@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
-  DollarSign,
+  IndianRupee,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -40,7 +40,7 @@ const STATUS_STYLES = {
 function StatusIcon({ status }) {
   const props = { size: 13, strokeWidth: 2 };
   if (status === "pending") return <Clock {...props} />;
-  if (status === "in_escrow") return <DollarSign {...props} />;
+  if (status === "in_escrow") return <IndianRupee {...props} />;
   if (status === "released") return <CheckCircle {...props} />;
   if (status === "disputed") return <AlertCircle {...props} />;
   return <Clock {...props} />;
@@ -370,7 +370,7 @@ export default function ArtistPayments() {
       label: "In Escrow",
       value: inEscrow,
       sub: "Held securely",
-      icon: <DollarSign size={20} color="#3b82f6" />,
+      icon: <IndianRupee size={20} color="#3b82f6" />,
       delay: 0.2,
     },
     {

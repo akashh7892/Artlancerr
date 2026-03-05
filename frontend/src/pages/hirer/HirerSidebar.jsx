@@ -92,12 +92,17 @@ export default function HirerSidebar() {
           style={{ borderBottom: "1px solid rgba(201, 169, 97, 0.1)" }}
         >
           <div className="flex items-center gap-2">
-            <Film className="w-6 h-6" style={{ color: "#c9a961" }} />
+            <img
+              src="/logo.png"
+              alt="Artlancing"
+              className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+              style={{ border: "1.5px solid rgba(201,169,97,0.3)" }}
+            />
             <span
               className="text-lg font-semibold"
               style={{ color: "#ffffff" }}
             >
-              Artlancing
+              Szylo
             </span>
           </div>
           <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>

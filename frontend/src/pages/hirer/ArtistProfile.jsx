@@ -9,7 +9,7 @@ import {
   CheckCircle,
   Users,
   Calendar,
-  DollarSign,
+  IndianRupee,
   Play,
   Heart,
   Share2,
@@ -27,7 +27,7 @@ import { useNavigate, useParams, useLocation } from "react-router";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Design Tokens Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Design Tokens and Constants
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -47,7 +47,7 @@ const C = {
   dangerBorder: "rgba(239,68,68,0.2)",
 };
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Fallback Data Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Full DATA MAPPING AND TRANSFORMATION LOGIC FOR ARTIST PROFILE
 const FALLBACK_ARTIST = {
   id: "",
   name: "",
@@ -75,7 +75,6 @@ const FALLBACK_ARTIST = {
   reviews_list: [],
 };
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Category icon/color maps Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const parseBookedDays = (blockedDates = []) => {
   if (!Array.isArray(blockedDates)) return [];
   const days = blockedDates
@@ -87,11 +86,18 @@ const parseBookedDays = (blockedDates = []) => {
   return [...new Set(days)];
 };
 
+// Always uses ₹ symbol
 const asMoney = (value, fallback) => {
   if (value === null || value === undefined) return fallback;
   const s = String(value).trim();
   if (!s) return fallback;
-  return s.startsWith("$") ? s : `$${s}`;
+  // Remove any existing $ prefix and replace with ₹
+  const clean = s.startsWith("₹")
+    ? s.slice(1)
+    : s.startsWith("₹")
+      ? s.slice(1)
+      : s;
+  return `₹${clean}`;
 };
 
 const mapPortfolioItem = (item) => ({
@@ -114,7 +120,9 @@ const mapArtistProfile = (apiArtist, fallback = FALLBACK_ARTIST) => {
   const blockedDates = apiArtist?.availability?.blockedDates || [];
   const freeDates = apiArtist?.availability?.freeDates || [];
   const profileViews = Number(apiArtist?.profileViews || 0);
-  const backendReviews = Array.isArray(apiArtist?.reviews) ? apiArtist.reviews : [];
+  const backendReviews = Array.isArray(apiArtist?.reviews)
+    ? apiArtist.reviews
+    : [];
   const reviewCount = backendReviews.length;
   const avgRating =
     reviewCount > 0
@@ -125,8 +133,11 @@ const mapArtistProfile = (apiArtist, fallback = FALLBACK_ARTIST) => {
           ).toFixed(1),
         )
       : null;
-  const dailyRate = asMoney(apiArtist?.rates?.daily, fallback.dailyRate || "$500");
-  const weeklyRate = asMoney(apiArtist?.rates?.weekly, fallback.weeklyRate || "$2500");
+  const dailyRate = asMoney(apiArtist?.rates?.daily, fallback.dailyRate || "");
+  const weeklyRate = asMoney(
+    apiArtist?.rates?.weekly,
+    fallback.weeklyRate || "",
+  );
 
   return {
     ...fallback,
@@ -143,10 +154,13 @@ const mapArtistProfile = (apiArtist, fallback = FALLBACK_ARTIST) => {
     reviewCount,
     profileViews,
     projects: Math.max(1, Math.floor(profileViews / 10)),
-    available: Array.isArray(freeDates) ? freeDates.length > 0 : fallback.available,
+    available: Array.isArray(freeDates)
+      ? freeDates.length > 0
+      : fallback.available,
     dailyRate,
     weeklyRate,
-    projectRate: apiArtist?.rates?.project || fallback.projectRate || "Negotiable",
+    projectRate:
+      apiArtist?.rates?.project || fallback.projectRate || "Negotiable",
     bookedDates: parseBookedDays(blockedDates),
     equipment: Array.isArray(apiArtist?.equipment)
       ? apiArtist.equipment.map(mapEquipmentItem)
@@ -196,7 +210,6 @@ const MONTHS = [
 ];
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Section Card wrapper Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function SectionCard({ children, delay = 0 }) {
   return (
     <motion.div
@@ -243,7 +256,6 @@ function SectionTitle({ icon: Icon, children, subtitle }) {
   );
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Stat Pill Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function StatPill({ icon: Icon, label, value }) {
   return (
     <div
@@ -285,7 +297,6 @@ function StatPill({ icon: Icon, label, value }) {
   );
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Rate Tab Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function RateTab({ label, active, onClick }) {
   return (
     <button
@@ -307,7 +318,6 @@ function RateTab({ label, active, onClick }) {
   );
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Portfolio Card Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function PortfolioCard({ item }) {
   const [imgErr, setImgErr] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -399,7 +409,6 @@ function PortfolioCard({ item }) {
   );
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Review Card Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function ReviewCard({ review }) {
   const [imgErr, setImgErr] = useState(false);
   return (
@@ -477,7 +486,6 @@ function ReviewCard({ review }) {
   );
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Availability Calendar (read-only for hirer) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function AvailabilityCalendar({ bookedDates = [] }) {
   const [current, setCurrent] = useState({ year: 2026, month: 1 });
   const bookedSet = new Set(bookedDates);
@@ -520,7 +528,7 @@ function AvailabilityCalendar({ bookedDates = [] }) {
     <SectionCard delay={0.2}>
       <SectionTitle
         icon={CalendarDays}
-        subtitle="Green = available Ã‚Â· Red = booked by another project"
+        subtitle="Green = available  ·  Red = booked by another project"
       >
         Availability Calendar
       </SectionTitle>
@@ -755,7 +763,7 @@ function AvailabilityCalendar({ bookedDates = [] }) {
   );
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Equipment Section (read-only, with rent option) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Equipment Section (with rental availability)
 function EquipmentSection({ equipment = [] }) {
   const [selectedEquip, setSelectedEquip] = useState(null);
 
@@ -932,7 +940,7 @@ function EquipmentSection({ equipment = [] }) {
                           : "rgba(201,169,97,0.35)",
                       }}
                     >
-                      ${item.rental}/day
+                      {item.rental ? `₹${item.rental}/day` : "—"}
                     </p>
                   </div>
                   <div
@@ -987,7 +995,7 @@ function EquipmentSection({ equipment = [] }) {
                       transition: "all 0.2s",
                     }}
                   >
-                    {isSelected ? "Ã¢Å“â€œ Added to Booking" : "+ Add to Booking"}
+                    {isSelected ? "Added to Booking" : "+ Add to Booking"}
                   </motion.button>
                 )}
               </div>
@@ -1023,7 +1031,7 @@ function EquipmentSection({ equipment = [] }) {
   );
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Main Page Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Main page
 export default function ArtistProfile() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -1050,7 +1058,6 @@ export default function ArtistProfile() {
         setLoadingProfile(false);
         return;
       }
-
       try {
         setLoadingProfile(true);
         setProfileError("");
@@ -1068,7 +1075,6 @@ export default function ArtistProfile() {
     };
 
     loadProfile();
-
     return () => {
       mounted = false;
     };
@@ -1080,8 +1086,8 @@ export default function ArtistProfile() {
   }, [artist.photo, artist.coverPhoto]);
 
   const rateValue = {
-    "Daily Rate": artist.dailyRate || "-",
-    "Weekly Rate": artist.weeklyRate || "-",
+    "Daily Rate": artist.dailyRate || "—",
+    "Weekly Rate": artist.weeklyRate || "—",
     "Project Rate": artist.projectRate || "Negotiable",
   }[activeRate];
 
@@ -1098,7 +1104,7 @@ export default function ArtistProfile() {
       <div className="flex-1 flex flex-col lg:ml-72">
         <main className="flex-1 overflow-auto">
           <div style={{ backgroundColor: C.bg, minHeight: "100vh" }}>
-            {/* Ã¢â€â‚¬Ã¢â€â‚¬ Cover Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+            {/* Cover image */}
             <div
               style={{
                 position: "relative",
@@ -1131,7 +1137,7 @@ export default function ArtistProfile() {
                 }}
               />
 
-              {/* Back */}
+              {/* Back button */}
               <motion.button
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.95 }}
@@ -1154,7 +1160,7 @@ export default function ArtistProfile() {
                 <ArrowLeft size={17} />
               </motion.button>
 
-              {/* Top-right */}
+              {/* Top-right actions */}
               <div
                 style={{
                   position: "absolute",
@@ -1200,7 +1206,6 @@ export default function ArtistProfile() {
               </div>
             </div>
 
-            {/* Ã¢â€â‚¬Ã¢â€â‚¬ Page content Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <div
               style={{
                 maxWidth: "960px",
@@ -1208,7 +1213,6 @@ export default function ArtistProfile() {
                 padding: "0 clamp(14px, 3vw, 30px) 48px",
               }}
             >
-              {/* Ã¢â€â‚¬Ã¢â€â‚¬ Profile Card Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
               {loadingProfile && (
                 <div
                   style={{
@@ -1221,7 +1225,6 @@ export default function ArtistProfile() {
                   Loading latest artist profile...
                 </div>
               )}
-
               {profileError && (
                 <div
                   style={{
@@ -1239,6 +1242,7 @@ export default function ArtistProfile() {
                 </div>
               )}
 
+              {/* Hero card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1416,7 +1420,7 @@ export default function ArtistProfile() {
                   ))}
                 </div>
 
-                {/* Stats inline row */}
+                {/* Stats row */}
                 <div
                   style={{
                     display: "flex",
@@ -1428,7 +1432,9 @@ export default function ArtistProfile() {
                   {[
                     {
                       icon: Star,
-                      text: artist.rating ? `${artist.rating} (${artist.reviewCount} reviews)` : `${artist.profileViews} profile views`,
+                      text: artist.rating
+                        ? `${artist.rating} (${artist.reviewCount} reviews)`
+                        : `${artist.profileViews} profile views`,
                       gold: true,
                     },
                     { icon: Briefcase, text: `${artist.projects} projects` },
@@ -1556,7 +1562,7 @@ export default function ArtistProfile() {
                 </div>
               </motion.div>
 
-              {/* Ã¢â€â‚¬Ã¢â€â‚¬ Stats Pills Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+              {/* Stat pills */}
               <motion.div
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1581,21 +1587,21 @@ export default function ArtistProfile() {
                 <StatPill
                   icon={Users}
                   label="Experience"
-                  value={artist.experience}
+                  value={artist.experience || "—"}
                 />
                 <StatPill
                   icon={Clock}
                   label="Response Time"
-                  value={artist.responseTime}
+                  value={artist.responseTime || "—"}
                 />
                 <StatPill
-                  icon={DollarSign}
+                  icon={IndianRupee}
                   label="Daily Rate"
-                  value={artist.dailyRate || "$800"}
+                  value={artist.dailyRate || "—"}
                 />
               </motion.div>
 
-              {/* Ã¢â€â‚¬Ã¢â€â‚¬ Portfolio Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+              {/* Portfolio */}
               <SectionCard delay={0.14}>
                 <SectionTitle>Portfolio</SectionTitle>
                 {(artist.portfolio || []).length > 0 ? (
@@ -1627,13 +1633,10 @@ export default function ArtistProfile() {
                 )}
               </SectionCard>
 
-              {/* Ã¢â€â‚¬Ã¢â€â‚¬ Availability Calendar Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
               <AvailabilityCalendar bookedDates={artist.bookedDates || []} />
-
-              {/* Ã¢â€â‚¬Ã¢â€â‚¬ Equipment Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
               <EquipmentSection equipment={artist.equipment || []} />
 
-              {/* Ã¢â€â‚¬Ã¢â€â‚¬ Reviews Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+              {/* Reviews */}
               <SectionCard delay={0.3}>
                 <div
                   style={{
@@ -1672,10 +1675,10 @@ export default function ArtistProfile() {
                         color: C.gold,
                       }}
                     >
-                      {artist.rating ? artist.rating : "N/A"}
+                      {artist.rating ?? "N/A"}
                     </span>
                     <span style={{ fontSize: "11px", color: C.muted }}>
-                      Â· {artist.reviewCount} reviews
+                      {artist.reviewCount} reviews
                     </span>
                   </div>
                 </div>
@@ -1707,7 +1710,7 @@ export default function ArtistProfile() {
                 </div>
               </SectionCard>
 
-              {/* Ã¢â€â‚¬Ã¢â€â‚¬ Sticky CTA footer Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+              {/* Sticky bottom bar */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1747,9 +1750,11 @@ export default function ArtistProfile() {
                     }}
                   >
                     {artist.available
-                      ? "Ã¢Å“â€œ Available for projects"
-                      : "Currently unavailable"}{" "}
-                    Ã‚Â· {artist.dailyRate}/day
+                      ? "Available for projects"
+                      : "Currently unavailable"}
+                    {artist.dailyRate
+                      ? ` · ₹${artist.dailyRate.toString().replace("$", "")}/day`
+                      : ""}
                   </p>
                 </div>
                 <div style={{ display: "flex", gap: "10px" }}>
@@ -1816,4 +1821,3 @@ export default function ArtistProfile() {
     </div>
   );
 }
-

@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Eye,
   Briefcase,
-  DollarSign,
+  IndianRupee,
   MessageSquare,
   ArrowRight,
   Clock,
@@ -31,29 +31,130 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   useEffect(() => {
     let m = true;
-    artistAPI.getDashboard().then((r) => { if (m) setData(r); }).catch((e) => { if (m) setError(e.message); }).finally(() => { if (m) setLoading(false); });
-    return () => { m = false; };
+    artistAPI
+      .getDashboard()
+      .then((r) => {
+        if (m) setData(r);
+      })
+      .catch((e) => {
+        if (m) setError(e.message);
+      })
+      .finally(() => {
+        if (m) setLoading(false);
+      });
+    return () => {
+      m = false;
+    };
   }, []);
   const stats = data?.stats || {};
   const applications = data?.applications || [];
   const recentPayments = data?.recentPayments || [];
-  const formatCur = (amt, cur) => (cur === "INR" ? `₹${Number(amt).toLocaleString()}` : `$${Number(amt).toLocaleString()}`);
+  const formatCur = (amt, cur) =>
+    cur === "INR"
+      ? `₹${Number(amt).toLocaleString()}`
+      : `${Number(amt).toLocaleString()}`;
   const statCards = [
-    { label: "Profile Views", value: String(stats.profileViews ?? 0), delta: "", icon: Eye, iconBg: "rgba(179,169,97,0.12)", iconColor: C.gold },
-    { label: "Active Projects", value: String(stats.activeProjects ?? 0), delta: "", icon: Briefcase, iconBg: "rgba(96,165,250,0.12)", iconColor: "#60a5fa" },
-    { label: "Total Earnings", value: formatCur(stats.totalEarnings), delta: "", icon: DollarSign, iconBg: "rgba(52,211,153,0.12)", iconColor: "#34d399" },
-    { label: "Messages", value: String(stats.messages ?? 0), delta: "", icon: MessageSquare, iconBg: "rgba(251,191,36,0.12)", iconColor: "#fbbf24" },
+    {
+      label: "Profile Views",
+      value: String(stats.profileViews ?? 0),
+      delta: "",
+      icon: Eye,
+      iconBg: "rgba(179,169,97,0.12)",
+      iconColor: C.gold,
+    },
+    {
+      label: "Active Projects",
+      value: String(stats.activeProjects ?? 0),
+      delta: "",
+      icon: Briefcase,
+      iconBg: "rgba(96,165,250,0.12)",
+      iconColor: "#60a5fa",
+    },
+    {
+      label: "Total Earnings",
+      value: formatCur(stats.totalEarnings),
+      delta: "",
+      icon: IndianRupee,
+      iconBg: "rgba(52,211,153,0.12)",
+      iconColor: "#34d399",
+    },
+    {
+      label: "Messages",
+      value: String(stats.messages ?? 0),
+      delta: "",
+      icon: MessageSquare,
+      iconBg: "rgba(251,191,36,0.12)",
+      iconColor: "#fbbf24",
+    },
   ];
-  const paymentsList = recentPayments.map((p) => ({ title: p.projectName || p.description || "Payment", date: (p.paidAt ? new Date(p.paidAt) : new Date(p.createdAt)).toLocaleDateString(), amount: formatCur(p.amount, p.currency), status: p.status === "completed" ? "Paid" : "Pending" }));
-  const STATUS_STYLES = { shortlisted: { bg: "rgba(139,92,246,0.15)", color: "#a78bfa", border: "rgba(139,92,246,0.25)" }, pending: { bg: "rgba(251,146,60,0.15)", color: "#fb923c", border: "rgba(251,146,60,0.25)" }, hired: { bg: "rgba(52,211,153,0.15)", color: "#34d399", border: "rgba(52,211,153,0.25)" } };
+  const paymentsList = recentPayments.map((p) => ({
+    title: p.projectName || p.description || "Payment",
+    date: (p.paidAt
+      ? new Date(p.paidAt)
+      : new Date(p.createdAt)
+    ).toLocaleDateString(),
+    amount: formatCur(p.amount, p.currency),
+    status: p.status === "completed" ? "Paid" : "Pending",
+  }));
+  const STATUS_STYLES = {
+    shortlisted: {
+      bg: "rgba(139,92,246,0.15)",
+      color: "#a78bfa",
+      border: "rgba(139,92,246,0.25)",
+    },
+    pending: {
+      bg: "rgba(251,146,60,0.15)",
+      color: "#fb923c",
+      border: "rgba(251,146,60,0.25)",
+    },
+    hired: {
+      bg: "rgba(52,211,153,0.15)",
+      color: "#34d399",
+      border: "rgba(52,211,153,0.25)",
+    },
+  };
   const applicationList = applications.map((app) => {
-    const opp = app.opportunity || {}; const hirer = app.hirer || {};
+    const opp = app.opportunity || {};
+    const hirer = app.hirer || {};
     const d = app.createdAt ? new Date(app.createdAt) : new Date();
-    const timeAgo = Date.now() - d.getTime() < 86400000 ? `${Math.floor((Date.now() - d.getTime()) / 3600000)}h ago` : `${Math.floor((Date.now() - d.getTime()) / 86400000)}d ago`;
-    return { _id: app._id, title: opp.title || "Opportunity", company: hirer.companyName || hirer.name || "—", budget: opp.budget ? formatCur(opp.budget) : "—", time: timeAgo, status: (app.status || "pending").toLowerCase(), img: hirer.avatar || "" };
+    const timeAgo =
+      Date.now() - d.getTime() < 86400000
+        ? `${Math.floor((Date.now() - d.getTime()) / 3600000)}h ago`
+        : `${Math.floor((Date.now() - d.getTime()) / 86400000)}d ago`;
+    return {
+      _id: app._id,
+      title: opp.title || "Opportunity",
+      company: hirer.companyName || hirer.name || "—",
+      budget: opp.budget ? formatCur(opp.budget) : "—",
+      time: timeAgo,
+      status: (app.status || "pending").toLowerCase(),
+      img: hirer.avatar || "",
+    };
   });
-  if (loading) return (<><Sidebar /><div className="min-h-screen lg:ml-[248px] flex items-center justify-center" style={{ background: C.bg }}><div className="w-10 h-10 border-2 border-[#b3a961] border-t-transparent rounded-full animate-spin" /></div></>);
-  if (error) return (<><Sidebar /><div className="min-h-screen lg:ml-[248px] flex items-center justify-center" style={{ background: C.bg }}><p className="text-red-500">{error}</p></div></>);
+  if (loading)
+    return (
+      <>
+        <Sidebar />
+        <div
+          className="min-h-screen lg:ml-[248px] flex items-center justify-center"
+          style={{ background: C.bg }}
+        >
+          <div className="w-10 h-10 border-2 border-[#b3a961] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </>
+    );
+  if (error)
+    return (
+      <>
+        <Sidebar />
+        <div
+          className="min-h-screen lg:ml-[248px] flex items-center justify-center"
+          style={{ background: C.bg }}
+        >
+          <p className="text-red-500">{error}</p>
+        </div>
+      </>
+    );
   return (
     <>
       <style>{`
@@ -239,7 +340,10 @@ export default function Dashboard() {
                               className="flex items-center gap-1 text-[12px]"
                               style={{ color: C.lightText }}
                             >
-                              <DollarSign size={12} style={{ color: C.gold }} />{" "}
+                              <IndianRupee
+                                size={12}
+                                style={{ color: C.gold }}
+                              />{" "}
                               {budget}
                             </span>
                             <span

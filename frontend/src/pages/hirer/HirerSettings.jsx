@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   User,
   Bell,
@@ -16,14 +16,17 @@ import {
   Lock,
   Trash2,
   Download,
-  ToggleLeft,
-  ToggleRight,
   AlertTriangle,
+  Menu,
+  X,
+  Plus,
+  Loader2,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import HirerSidebar from "./HirerSidebar";
 import { getUser, hirerAPI, setUser } from "../../services/api";
 
-// ─── Color tokens (matching dashboard) ────────────────────────
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -41,7 +44,7 @@ const C = {
   blue: "#60a5fa",
 };
 
-// ─── Reusable primitives ───────────────────────────────────────
+// ─── Primitives ───────────────────────────────────────────────
 const Card = ({ children, className = "", style = {} }) => (
   <div
     className={`rounded-xl p-6 ${className}`}
@@ -162,7 +165,78 @@ const SaveBtn = ({ onClick, loading }) => (
   </button>
 );
 
-// ─── Sidebar nav items ────────────────────────────────────────
+// ─── Modal ────────────────────────────────────────────────────
+const Modal = ({ open, onClose, title, children }) => {
+  if (!open) return null;
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.94, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.94 }}
+          transition={{ duration: 0.2 }}
+          className="w-full max-w-md rounded-2xl p-6"
+          style={{ backgroundColor: C.card, border: `1px solid ${C.border}` }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="font-semibold text-base" style={{ color: C.text }}>
+              {title}
+            </h3>
+            <button
+              onClick={onClose}
+              className="border-0 bg-transparent outline-none cursor-pointer"
+              style={{ color: C.muted }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+          {children}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+// ─── Toast ────────────────────────────────────────────────────
+const Toast = ({ message, type, visible }) => (
+  <AnimatePresence>
+    {visible && (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-2xl"
+        style={{
+          background:
+            type === "success"
+              ? "rgba(74,222,128,0.12)"
+              : "rgba(248,113,113,0.12)",
+          border: `1px solid ${type === "success" ? "rgba(74,222,128,0.3)" : "rgba(248,113,113,0.3)"}`,
+          backdropFilter: "blur(12px)",
+        }}
+      >
+        {type === "success" ? (
+          <CheckCircle2 size={16} style={{ color: C.green }} />
+        ) : (
+          <XCircle size={16} style={{ color: C.red }} />
+        )}
+        <span className="text-sm font-medium" style={{ color: C.text }}>
+          {message}
+        </span>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
 const NAV = [
   { key: "profile", icon: User, label: "Profile" },
   { key: "notifications", icon: Bell, label: "Notifications" },
@@ -171,39 +245,96 @@ const NAV = [
   { key: "privacy", icon: Globe, label: "Privacy" },
 ];
 
-// ─── Main ──────────────────────────────────────────────────────
+// ─── Plans ───────────────────────────────────────────────────
+const PLANS = [
+  {
+    id: "starter",
+    name: "Starter",
+    price: 999,
+    desc: "Up to 5 job postings · Email support · Basic analytics",
+    popular: false,
+  },
+  {
+    id: "pro",
+    name: "Hirer Pro",
+    price: 5999,
+    desc: "Unlimited postings · Priority support · Advanced analytics",
+    popular: true,
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    price: 14999,
+    desc: "Custom postings · Dedicated manager · Full analytics suite",
+    popular: false,
+  },
+];
+
 export default function HirerSettings() {
   const [activeTab, setActiveTab] = useState("profile");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [settingsNavOpen, setSettingsNavOpen] = useState(false);
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
+
+  // ── Billing modals ──
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [showInvoicesModal, setShowInvoicesModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [planLoading, setPlanLoading] = useState(false);
+
+  // ── New payment card form ──
+  const [newCard, setNewCard] = useState({
+    number: "",
+    expiry: "",
+    cvv: "",
+    name: "",
+  });
+  const [addingCard, setAddingCard] = useState(false);
+
+  // ── Delete confirmation ──
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  // ── Billing state ──
+  const [billing, setBilling] = useState({
+    plan: null, // loaded from API
+    renewDate: null,
+    paymentMethods: [], // loaded from API
+    invoices: [], // loaded from API
+  });
+  const [billingLoading, setBillingLoading] = useState(false);
 
   // ── Profile state ──
   const [profile, setProfile] = useState({
-    firstName: "James",
-    lastName: "Anderson",
-    email: "james.anderson@studioworks.com",
-    phone: "+1 (555) 012-3456",
-    company: "StudioWorks Productions",
-    role: "Executive Producer",
-    website: "https://studioworks.com",
-    bio: "Emmy-nominated producer with 12+ years in commercial and documentary production. Passionate about connecting talented artists with impactful projects.",
-    location: "Los Angeles, CA",
-    timezone: "America/Los_Angeles",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    company: "",
+    role: "",
+    website: "",
+    bio: "",
+    location: "",
+    timezone: "",
   });
 
-  // ── Notification state ──
   const [notif, setNotif] = useState({
-    newApplications: true,
-    projectUpdates: true,
-    paymentAlerts: true,
+    newApplications: false,
+    projectUpdates: false,
+    paymentAlerts: false,
     weeklyDigest: false,
-    artistMessages: true,
+    artistMessages: false,
     marketingEmails: false,
-    pushEnabled: true,
+    pushEnabled: false,
     smsAlerts: false,
   });
 
-  // ── Security state ──
   const [security, setSecurity] = useState({
     currentPassword: "",
     newPassword: "",
@@ -211,32 +342,37 @@ export default function HirerSettings() {
     showCurrent: false,
     showNew: false,
     showConfirm: false,
-    twoFactor: true,
-    loginAlerts: true,
+    twoFactor: false,
+    loginAlerts: false,
     sessionTimeout: "30",
   });
 
-  // ── Privacy state ──
   const [privacy, setPrivacy] = useState({
-    profilePublic: true,
+    profilePublic: false,
     showBudgetRange: false,
-    showHiringHistory: true,
-    allowArtistContact: true,
-    dataAnalytics: true,
-    showOnlineStatus: true,
+    showHiringHistory: false,
+    allowArtistContact: false,
+    dataAnalytics: false,
+    showOnlineStatus: false,
   });
+
+  // ── Sessions (real or empty) ──
+  const [sessions, setSessions] = useState([]);
+
+  const showToast = (message, type = "success") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 3000);
+  };
 
   useEffect(() => {
     const localUser = getUser();
     if (localUser) {
       const parts = (localUser.name || "").split(" ");
-      const firstName = parts[0] || "";
-      const lastName = parts.slice(1).join(" ") || "";
       setProfile((prev) => ({
         ...prev,
-        firstName: firstName || prev.firstName,
-        lastName: lastName || prev.lastName,
-        email: localUser.email || prev.email,
+        firstName: parts[0] || "",
+        lastName: parts.slice(1).join(" ") || "",
+        email: localUser.email || "",
       }));
     }
 
@@ -255,11 +391,59 @@ export default function HirerSettings() {
           bio: data.bio || "",
           location: data.location || "",
         }));
-      } catch (error) {
-        console.error("Failed to load hirer profile", error);
+        if (data.notifications) {
+          setNotif({
+            newApplications: data.notifications.emailApplications || false,
+            projectUpdates: data.notifications.pushApplications || false,
+            paymentAlerts: data.notifications.emailPayments || false,
+            weeklyDigest: data.notifications.weeklyDigest || false,
+            artistMessages: data.notifications.emailMessages || false,
+            marketingEmails: data.notifications.marketingEmails || false,
+            pushEnabled: data.notifications.pushMessages || false,
+            smsAlerts: data.notifications.smsAlerts || false,
+          });
+        }
+        if (data.privacy) setPrivacy(data.privacy);
+        if (data.security) {
+          setSecurity((prev) => ({
+            ...prev,
+            twoFactor: data.security.twoFactor || false,
+            loginAlerts: data.security.loginAlerts || false,
+            sessionTimeout: data.security.sessionTimeout || "30",
+          }));
+        }
+        if (data.sessions) setSessions(data.sessions);
+      } catch (err) {
+        console.error("Failed to load hirer profile", err);
       }
     })();
   }, []);
+
+  // ── Load billing when tab opens ──
+  useEffect(() => {
+    if (activeTab !== "billing") return;
+    setBillingLoading(true);
+    (async () => {
+      try {
+        const [planData, paymentData, invoiceData] = await Promise.all([
+          hirerAPI.getBillingPlan?.() || Promise.resolve(null),
+          hirerAPI.getPaymentMethods?.() || Promise.resolve([]),
+          hirerAPI.getInvoices?.() || Promise.resolve([]),
+        ]);
+        setBilling({
+          plan: planData,
+          renewDate: planData?.renewDate || null,
+          paymentMethods: Array.isArray(paymentData) ? paymentData : [],
+          invoices: Array.isArray(invoiceData) ? invoiceData : [],
+        });
+      } catch (err) {
+        console.error("Failed to load billing data", err);
+        showToast("Failed to load billing information", "error");
+      } finally {
+        setBillingLoading(false);
+      }
+    })();
+  }, [activeTab]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -275,13 +459,12 @@ export default function HirerSettings() {
           companyWebsite: profile.website,
         });
         const localUser = getUser();
-        if (localUser) {
+        if (localUser)
           setUser({
             ...localUser,
             name: updated?.name || fullName,
             email: updated?.email || localUser.email,
           });
-        }
       }
       if (activeTab === "notifications") {
         await hirerAPI.updateProfile({
@@ -294,15 +477,222 @@ export default function HirerSettings() {
             pushMessages: notif.pushEnabled,
             pushApplications: notif.projectUpdates,
             pushPayments: notif.paymentAlerts,
+            smsAlerts: notif.smsAlerts,
           },
         });
       }
+      if (activeTab === "privacy") {
+        await hirerAPI.updateProfile({ privacy });
+      }
       setSaved(true);
+      showToast("Changes saved successfully");
       setTimeout(() => setSaved(false), 2500);
-    } catch (error) {
-      console.error("Save settings failed", error);
+    } catch (err) {
+      console.error("Save settings failed", err);
+      showToast("Failed to save changes", "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ── Upgrade plan ──
+  const handleUpgradePlan = async () => {
+    if (!selectedPlan) return;
+    setPlanLoading(true);
+    try {
+      await hirerAPI.upgradePlan?.({ planId: selectedPlan });
+      const planInfo = PLANS.find((p) => p.id === selectedPlan);
+      setBilling((prev) => ({
+        ...prev,
+        plan: {
+          ...prev.plan,
+          id: selectedPlan,
+          name: planInfo?.name,
+          price: planInfo?.price,
+        },
+      }));
+      setShowUpgradeModal(false);
+      showToast(`Upgraded to ${planInfo?.name} successfully`);
+    } catch (err) {
+      console.error("Plan upgrade failed", err);
+      showToast("Failed to upgrade plan. Please try again.", "error");
+    } finally {
+      setPlanLoading(false);
+    }
+  };
+
+  // ── Add payment method ──
+  const handleAddPayment = async () => {
+    if (!newCard.number || !newCard.expiry || !newCard.cvv || !newCard.name) {
+      showToast("Please fill in all card details", "error");
+      return;
+    }
+    setAddingCard(true);
+    try {
+      const added = await hirerAPI.addPaymentMethod?.({
+        cardNumber: newCard.number.replace(/\s/g, ""),
+        expiry: newCard.expiry,
+        cvv: newCard.cvv,
+        cardholderName: newCard.name,
+      });
+      setBilling((prev) => ({
+        ...prev,
+        paymentMethods: [
+          ...prev.paymentMethods,
+          added || {
+            id: Date.now(),
+            last4: newCard.number.slice(-4),
+            brand: "Card",
+            expiry: newCard.expiry,
+            isDefault: prev.paymentMethods.length === 0,
+          },
+        ],
+      }));
+      setNewCard({ number: "", expiry: "", cvv: "", name: "" });
+      setShowAddPaymentModal(false);
+      showToast("Payment method added successfully");
+    } catch (err) {
+      console.error("Add payment failed", err);
+      showToast("Failed to add payment method", "error");
+    } finally {
+      setAddingCard(false);
+    }
+  };
+
+  // ── Remove payment method ──
+  const handleRemovePayment = async (methodId) => {
+    try {
+      await hirerAPI.removePaymentMethod?.({ methodId });
+      setBilling((prev) => ({
+        ...prev,
+        paymentMethods: prev.paymentMethods.filter((m) => m.id !== methodId),
+      }));
+      showToast("Payment method removed");
+    } catch (err) {
+      showToast("Failed to remove payment method", "error");
+    }
+  };
+
+  // ── Set default payment ──
+  const handleSetDefault = async (methodId) => {
+    try {
+      await hirerAPI.setDefaultPaymentMethod?.({ methodId });
+      setBilling((prev) => ({
+        ...prev,
+        paymentMethods: prev.paymentMethods.map((m) => ({
+          ...m,
+          isDefault: m.id === methodId,
+        })),
+      }));
+      showToast("Default payment method updated");
+    } catch (err) {
+      showToast("Failed to update default payment method", "error");
+    }
+  };
+
+  // ── Export invoices ──
+  const handleExportInvoices = () => {
+    if (billing.invoices.length === 0) {
+      showToast("No invoices to export", "error");
+      return;
+    }
+    const csv = [
+      "Date,Description,Amount,Status",
+      ...billing.invoices.map(
+        (inv) =>
+          `${inv.date},"${inv.description}",₹${inv.amount},${inv.status}`,
+      ),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `invoices_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("Invoices exported as CSV");
+  };
+
+  // ── Download my data ──
+  const handleDownloadData = async () => {
+    try {
+      const data = await hirerAPI.exportUserData?.();
+      if (data) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `my_data_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      showToast("Your data download has started");
+    } catch (err) {
+      showToast("Failed to download data. Please try again.", "error");
+    }
+  };
+
+  // ── Delete account ──
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      showToast("Please type DELETE to confirm", "error");
+      return;
+    }
+    try {
+      await hirerAPI.deleteAccount?.();
+      showToast("Account deleted. Redirecting…");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+    } catch (err) {
+      showToast("Failed to delete account. Contact support.", "error");
+    }
+  };
+
+  // ── Revoke session ──
+  const handleRevokeSession = async (sessionId) => {
+    try {
+      await hirerAPI.revokeSession?.({ sessionId });
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      showToast("Session revoked");
+    } catch (err) {
+      showToast("Failed to revoke session", "error");
+    }
+  };
+
+  // ── Update password ──
+  const handleUpdatePassword = async () => {
+    if (!security.currentPassword || !security.newPassword) {
+      showToast("Please fill in all password fields", "error");
+      return;
+    }
+    if (security.newPassword !== security.confirmPassword) {
+      showToast("Passwords do not match", "error");
+      return;
+    }
+    if (security.newPassword.length < 8) {
+      showToast("Password must be at least 8 characters", "error");
+      return;
+    }
+    try {
+      await hirerAPI.updatePassword?.({
+        currentPassword: security.currentPassword,
+        newPassword: security.newPassword,
+      });
+      setSecurity((s) => ({
+        ...s,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
+      showToast("Password updated successfully");
+    } catch (err) {
+      showToast(
+        "Failed to update password. Check your current password.",
+        "error",
+      );
     }
   };
 
@@ -310,6 +700,24 @@ export default function HirerSettings() {
   const patchNotif = (key, val) => setNotif((n) => ({ ...n, [key]: val }));
   const patchSec = (key, val) => setSecurity((s) => ({ ...s, [key]: val }));
   const patchPrivacy = (key, val) => setPrivacy((p) => ({ ...p, [key]: val }));
+  const patchCard = (key, val) => setNewCard((c) => ({ ...c, [key]: val }));
+
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    setSettingsNavOpen(false);
+  };
+  const activeNav = NAV.find((n) => n.key === activeTab);
+
+  const formatCardNumber = (val) =>
+    val
+      .replace(/\D/g, "")
+      .slice(0, 16)
+      .replace(/(.{4})/g, "$1 ")
+      .trim();
+  const formatExpiry = (val) => {
+    const d = val.replace(/\D/g, "").slice(0, 4);
+    return d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
+  };
 
   return (
     <div
@@ -326,20 +734,24 @@ export default function HirerSettings() {
         .nav-item { transition: background 0.15s, color 0.15s, border-color 0.15s; }
         .danger-btn { transition: background 0.15s, border-color 0.15s; }
         .danger-btn:hover { background: rgba(248,113,113,0.08) !important; border-color: rgba(248,113,113,0.4) !important; }
+        .plan-card:hover { border-color: rgba(201,169,97,0.4) !important; transform: translateY(-2px); }
+        .plan-card { transition: border-color 0.2s, transform 0.2s; }
       `}</style>
 
       <HirerSidebar />
 
       <div className="flex-1 flex flex-col lg:ml-72">
-        <main className="flex-1 overflow-auto p-6 lg:p-8">
+        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-5xl mx-auto">
-            {/* Page header */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
+              className="mb-6 sm:mb-8 mt-10 lg:mt-0"
             >
-              <h1 className="text-3xl font-bold mb-1" style={{ color: C.text }}>
+              <h1
+                className="text-2xl sm:text-3xl font-bold mb-1"
+                style={{ color: C.text }}
+              >
                 Settings
               </h1>
               <p style={{ color: C.muted }}>
@@ -348,12 +760,12 @@ export default function HirerSettings() {
             </motion.div>
 
             <div className="flex gap-6 flex-col lg:flex-row">
-              {/* ── Settings Sidebar nav ── */}
+              {/* Desktop nav */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="lg:w-56 flex-shrink-0"
+                className="hidden lg:block lg:w-56 flex-shrink-0"
               >
                 <Card className="p-2" style={{ padding: "8px" }}>
                   {NAV.map(({ key, icon: Icon, label }) => {
@@ -361,7 +773,7 @@ export default function HirerSettings() {
                     return (
                       <button
                         key={key}
-                        onClick={() => setActiveTab(key)}
+                        onClick={() => handleTabChange(key)}
                         className="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-left outline-none border-0 cursor-pointer mb-0.5"
                         style={{
                           background: active ? C.goldDim : "transparent",
@@ -382,7 +794,78 @@ export default function HirerSettings() {
                 </Card>
               </motion.div>
 
-              {/* ── Panel content ── */}
+              {/* Mobile nav */}
+              <div className="lg:hidden">
+                <button
+                  onClick={() => setSettingsNavOpen(!settingsNavOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium outline-none border-0 cursor-pointer"
+                  style={{
+                    background: C.card,
+                    border: `1px solid ${C.border}`,
+                    color: C.text,
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    {activeNav && (
+                      <activeNav.icon size={16} style={{ color: C.gold }} />
+                    )}
+                    <span>{activeNav?.label}</span>
+                  </div>
+                  <div
+                    className="flex items-center gap-2"
+                    style={{ color: C.muted }}
+                  >
+                    <span className="text-xs">All sections</span>
+                    {settingsNavOpen ? <X size={16} /> : <Menu size={16} />}
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {settingsNavOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: "auto" }}
+                      exit={{ opacity: 0, y: -8, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden mt-1 rounded-xl"
+                      style={{
+                        background: C.card,
+                        border: `1px solid ${C.border}`,
+                      }}
+                    >
+                      <div className="p-2">
+                        {NAV.map(({ key, icon: Icon, label }) => {
+                          const active = activeTab === key;
+                          return (
+                            <button
+                              key={key}
+                              onClick={() => handleTabChange(key)}
+                              className="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-left outline-none border-0 cursor-pointer mb-0.5"
+                              style={{
+                                background: active ? C.goldDim : "transparent",
+                                color: active ? C.gold : C.muted,
+                                borderLeft: active
+                                  ? `2px solid ${C.gold}`
+                                  : "2px solid transparent",
+                              }}
+                            >
+                              <Icon
+                                size={16}
+                                strokeWidth={active ? 2.2 : 1.8}
+                              />
+                              {label}
+                              {active && (
+                                <ChevronRight size={14} className="ml-auto" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Panel content */}
               <div className="flex-1 min-w-0">
                 {/* ══ PROFILE ══════════════════════════════════════ */}
                 {activeTab === "profile" && (
@@ -392,22 +875,22 @@ export default function HirerSettings() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6 settings-panel"
                   >
-                    {/* Avatar */}
                     <Card>
                       <SectionTitle>Profile Information</SectionTitle>
                       <div
-                        className="flex items-center gap-5 mb-6 pb-6"
+                        className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 mb-6 pb-6"
                         style={{ borderBottom: `1px solid ${C.borderSubtle}` }}
                       >
-                        <div className="relative">
+                        <div className="relative flex-shrink-0">
                           <div
-                            className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
+                            className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold"
                             style={{
                               background: `linear-gradient(135deg, ${C.gold}, #b8913a)`,
                               color: "#1a1d24",
                             }}
                           >
-                            JA
+                            {profile.firstName?.[0]?.toUpperCase() || "?"}
+                            {profile.lastName?.[0]?.toUpperCase() || ""}
                           </div>
                           <button
                             className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center border-0 outline-none cursor-pointer"
@@ -421,10 +904,14 @@ export default function HirerSettings() {
                             className="font-semibold text-base"
                             style={{ color: C.text }}
                           >
-                            {profile.firstName} {profile.lastName}
+                            {profile.firstName || profile.lastName
+                              ? `${profile.firstName} ${profile.lastName}`.trim()
+                              : "—"}
                           </p>
                           <p className="text-sm" style={{ color: C.muted }}>
-                            {profile.role} at {profile.company}
+                            {[profile.role, profile.company]
+                              .filter(Boolean)
+                              .join(" at ") || "No role set"}
                           </p>
                           <button
                             className="text-xs mt-1.5 outline-none border-0 bg-transparent cursor-pointer"
@@ -435,7 +922,7 @@ export default function HirerSettings() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="firstName">First Name</Label>
                           <Input
@@ -444,6 +931,7 @@ export default function HirerSettings() {
                             onChange={(e) =>
                               patchProfile("firstName", e.target.value)
                             }
+                            placeholder="First name"
                           />
                         </div>
                         <div>
@@ -454,6 +942,7 @@ export default function HirerSettings() {
                             onChange={(e) =>
                               patchProfile("lastName", e.target.value)
                             }
+                            placeholder="Last name"
                           />
                         </div>
                         <div>
@@ -465,6 +954,7 @@ export default function HirerSettings() {
                             onChange={(e) =>
                               patchProfile("email", e.target.value)
                             }
+                            placeholder="email@example.com"
                           />
                         </div>
                         <div>
@@ -475,6 +965,7 @@ export default function HirerSettings() {
                             onChange={(e) =>
                               patchProfile("phone", e.target.value)
                             }
+                            placeholder="+91 00000 00000"
                           />
                         </div>
                         <div>
@@ -485,6 +976,7 @@ export default function HirerSettings() {
                             onChange={(e) =>
                               patchProfile("company", e.target.value)
                             }
+                            placeholder="Your company name"
                           />
                         </div>
                         <div>
@@ -495,6 +987,7 @@ export default function HirerSettings() {
                             onChange={(e) =>
                               patchProfile("role", e.target.value)
                             }
+                            placeholder="e.g. Producer, Director"
                           />
                         </div>
                         <div>
@@ -505,6 +998,7 @@ export default function HirerSettings() {
                             onChange={(e) =>
                               patchProfile("location", e.target.value)
                             }
+                            placeholder="City, State"
                           />
                         </div>
                         <div>
@@ -515,9 +1009,10 @@ export default function HirerSettings() {
                             onChange={(e) =>
                               patchProfile("website", e.target.value)
                             }
+                            placeholder="https://yourwebsite.com"
                           />
                         </div>
-                        <div className="md:col-span-2">
+                        <div className="sm:col-span-2">
                           <Label htmlFor="bio">Bio</Label>
                           <textarea
                             id="bio"
@@ -534,6 +1029,7 @@ export default function HirerSettings() {
                               padding: "10px 14px",
                               fontFamily: "'Plus Jakarta Sans', sans-serif",
                             }}
+                            placeholder="Tell artists about yourself and your work…"
                             onFocus={(e) => {
                               e.target.style.borderColor =
                                 "rgba(201,169,97,0.4)";
@@ -546,13 +1042,12 @@ export default function HirerSettings() {
                             className="text-xs mt-1"
                             style={{ color: C.muted }}
                           >
-                            {profile.bio.length}/500 characters
+                            {(profile.bio || "").length}/500 characters
                           </p>
                         </div>
                       </div>
                     </Card>
-
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       {saved && (
                         <span
                           className="flex items-center gap-1.5 text-sm"
@@ -576,7 +1071,6 @@ export default function HirerSettings() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6 settings-panel"
                   >
-                    {/* Email notifications */}
                     <Card>
                       <div className="flex items-center gap-3 mb-5">
                         <div
@@ -589,47 +1083,43 @@ export default function HirerSettings() {
                           Email Notifications
                         </SectionTitle>
                       </div>
-                      <div className="space-y-0">
-                        <Toggle
-                          checked={notif.newApplications}
-                          onChange={(v) => patchNotif("newApplications", v)}
-                          label="New Applications"
-                          description="Get notified when artists apply to your postings"
-                        />
-                        <Toggle
-                          checked={notif.projectUpdates}
-                          onChange={(v) => patchNotif("projectUpdates", v)}
-                          label="Project Updates"
-                          description="Milestone completions and status changes"
-                        />
-                        <Toggle
-                          checked={notif.paymentAlerts}
-                          onChange={(v) => patchNotif("paymentAlerts", v)}
-                          label="Payment Alerts"
-                          description="Escrow releases, invoices, and payment confirmations"
-                        />
-                        <Toggle
-                          checked={notif.artistMessages}
-                          onChange={(v) => patchNotif("artistMessages", v)}
-                          label="Artist Messages"
-                          description="New messages from hired artists"
-                        />
-                        <Toggle
-                          checked={notif.weeklyDigest}
-                          onChange={(v) => patchNotif("weeklyDigest", v)}
-                          label="Weekly Digest"
-                          description="A weekly summary of your activity and top talent"
-                        />
-                        <Toggle
-                          checked={notif.marketingEmails}
-                          onChange={(v) => patchNotif("marketingEmails", v)}
-                          label="Product & Marketing"
-                          description="News, features, and tips from Artlancing"
-                        />
-                      </div>
+                      <Toggle
+                        checked={notif.newApplications}
+                        onChange={(v) => patchNotif("newApplications", v)}
+                        label="New Applications"
+                        description="Get notified when artists apply to your postings"
+                      />
+                      <Toggle
+                        checked={notif.projectUpdates}
+                        onChange={(v) => patchNotif("projectUpdates", v)}
+                        label="Project Updates"
+                        description="Milestone completions and status changes"
+                      />
+                      <Toggle
+                        checked={notif.paymentAlerts}
+                        onChange={(v) => patchNotif("paymentAlerts", v)}
+                        label="Payment Alerts"
+                        description="Escrow releases, invoices, and payment confirmations"
+                      />
+                      <Toggle
+                        checked={notif.artistMessages}
+                        onChange={(v) => patchNotif("artistMessages", v)}
+                        label="Artist Messages"
+                        description="New messages from hired artists"
+                      />
+                      <Toggle
+                        checked={notif.weeklyDigest}
+                        onChange={(v) => patchNotif("weeklyDigest", v)}
+                        label="Weekly Digest"
+                        description="A weekly summary of your activity and top talent"
+                      />
+                      <Toggle
+                        checked={notif.marketingEmails}
+                        onChange={(v) => patchNotif("marketingEmails", v)}
+                        label="Product & Marketing"
+                        description="News, features, and tips from Artlancing"
+                      />
                     </Card>
-
-                    {/* Push & SMS */}
                     <Card>
                       <div className="flex items-center gap-3 mb-5">
                         <div
@@ -655,7 +1145,6 @@ export default function HirerSettings() {
                         description="Critical alerts sent to your phone number"
                       />
                     </Card>
-
                     <div className="flex justify-end">
                       <SaveBtn onClick={handleSave} loading={saving} />
                     </div>
@@ -670,7 +1159,6 @@ export default function HirerSettings() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6 settings-panel"
                   >
-                    {/* Change password */}
                     <Card>
                       <div className="flex items-center gap-3 mb-5">
                         <div
@@ -737,7 +1225,6 @@ export default function HirerSettings() {
                               </button>
                             }
                           />
-                          {/* Password strength bar */}
                           {security.newPassword.length > 0 && (
                             <div className="mt-2 space-y-1">
                               <div className="flex gap-1">
@@ -812,6 +1299,7 @@ export default function HirerSettings() {
                             )}
                         </div>
                         <button
+                          onClick={handleUpdatePassword}
                           className="px-5 py-2.5 rounded-lg text-sm font-semibold outline-none border-0 cursor-pointer transition-all"
                           style={{ background: C.gold, color: "#1a1d24" }}
                           onMouseEnter={(e) => {
@@ -826,7 +1314,6 @@ export default function HirerSettings() {
                       </div>
                     </Card>
 
-                    {/* 2FA & Sessions */}
                     <Card>
                       <div className="flex items-center gap-3 mb-5">
                         <div
@@ -851,12 +1338,11 @@ export default function HirerSettings() {
                         label="Login Alerts"
                         description="Get notified of new sign-ins from unrecognised devices"
                       />
-
                       <div className="mt-4">
                         <Label htmlFor="sessionTimeout">
                           Auto-logout After
                         </Label>
-                        <div className="relative w-48">
+                        <div className="relative w-full sm:w-48">
                           <select
                             id="sessionTimeout"
                             value={security.sessionTimeout}
@@ -897,78 +1383,70 @@ export default function HirerSettings() {
                       </div>
                     </Card>
 
-                    {/* Active sessions */}
                     <Card>
                       <SectionTitle>Active Sessions</SectionTitle>
-                      {[
-                        {
-                          device: "MacBook Pro — Chrome",
-                          location: "Los Angeles, CA",
-                          time: "Now",
-                          current: true,
-                        },
-                        {
-                          device: "iPhone 15 Pro — Safari",
-                          location: "Los Angeles, CA",
-                          time: "2 hours ago",
-                          current: false,
-                        },
-                        {
-                          device: "iPad Pro — Safari",
-                          location: "New York, NY",
-                          time: "Yesterday",
-                          current: false,
-                        },
-                      ].map((s, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between py-3"
-                          style={{
-                            borderBottom:
-                              i < 2 ? `1px solid ${C.borderSubtle}` : "none",
-                          }}
+                      {sessions.length === 0 ? (
+                        <p
+                          className="text-sm py-4 text-center"
+                          style={{ color: C.muted }}
                         >
-                          <div>
-                            <p
-                              className="text-sm font-medium"
-                              style={{ color: C.text }}
-                            >
-                              {s.device}
-                              {s.current && (
-                                <span
-                                  className="ml-2 text-xs px-2 py-0.5 rounded-full"
-                                  style={{
-                                    background: "rgba(74,222,128,0.12)",
-                                    color: C.green,
-                                  }}
-                                >
-                                  Current
-                                </span>
-                              )}
-                            </p>
-                            <p
-                              className="text-xs mt-0.5"
-                              style={{ color: C.muted }}
-                            >
-                              {s.location} · {s.time}
-                            </p>
+                          No active sessions data available
+                        </p>
+                      ) : (
+                        sessions.map((s, i) => (
+                          <div
+                            key={s.id || i}
+                            className="flex items-center justify-between py-3"
+                            style={{
+                              borderBottom:
+                                i < sessions.length - 1
+                                  ? `1px solid ${C.borderSubtle}`
+                                  : "none",
+                            }}
+                          >
+                            <div className="flex-1 min-w-0 pr-3">
+                              <p
+                                className="text-sm font-medium truncate"
+                                style={{ color: C.text }}
+                              >
+                                {s.device}
+                                {s.current && (
+                                  <span
+                                    className="ml-2 text-xs px-2 py-0.5 rounded-full"
+                                    style={{
+                                      background: "rgba(74,222,128,0.12)",
+                                      color: C.green,
+                                    }}
+                                  >
+                                    Current
+                                  </span>
+                                )}
+                              </p>
+                              <p
+                                className="text-xs mt-0.5"
+                                style={{ color: C.muted }}
+                              >
+                                {s.location} · {s.lastActive}
+                              </p>
+                            </div>
+                            {!s.current && (
+                              <button
+                                onClick={() => handleRevokeSession(s.id)}
+                                className="text-xs outline-none border-0 bg-transparent cursor-pointer flex-shrink-0 transition-colors"
+                                style={{ color: C.red }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.opacity = "0.7";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.opacity = "1";
+                                }}
+                              >
+                                Revoke
+                              </button>
+                            )}
                           </div>
-                          {!s.current && (
-                            <button
-                              className="text-xs outline-none border-0 bg-transparent cursor-pointer transition-colors"
-                              style={{ color: C.red }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.opacity = "0.7";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.opacity = "1";
-                              }}
-                            >
-                              Revoke
-                            </button>
-                          )}
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </Card>
                   </motion.div>
                 )}
@@ -981,223 +1459,364 @@ export default function HirerSettings() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6 settings-panel"
                   >
-                    {/* Current plan */}
-                    <Card>
-                      <SectionTitle>Current Plan</SectionTitle>
-                      <div
-                        className="flex items-start justify-between p-4 rounded-xl mb-4"
-                        style={{
-                          background: C.goldDim,
-                          border: `1px solid ${C.border}`,
-                        }}
-                      >
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <p
-                              className="font-bold text-base"
-                              style={{ color: C.gold }}
-                            >
-                              Hirer Pro
-                            </p>
-                            <span
-                              className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                              style={{ background: C.gold, color: "#1a1d24" }}
-                            >
-                              ACTIVE
-                            </span>
-                          </div>
-                          <p className="text-sm" style={{ color: C.muted }}>
-                            Unlimited job postings · Priority support · Advanced
-                            analytics
-                          </p>
-                          <p
-                            className="text-xs mt-2"
-                            style={{ color: C.muted }}
-                          >
-                            Renews on March 18, 2026
-                          </p>
-                        </div>
-                        <p
-                          className="text-xl font-bold"
-                          style={{ color: C.text }}
-                        >
-                          $79
-                          <span
-                            className="text-sm font-normal"
-                            style={{ color: C.muted }}
-                          >
-                            /mo
-                          </span>
-                        </p>
-                      </div>
-                      <div className="flex gap-3">
-                        <button
-                          className="px-4 py-2 rounded-lg text-sm font-medium outline-none border-0 cursor-pointer transition-all"
-                          style={{ background: C.gold, color: "#1a1d24" }}
-                        >
-                          Upgrade Plan
-                        </button>
-                        <button
-                          className="px-4 py-2 rounded-lg text-sm font-medium outline-none border-0 cursor-pointer transition-all"
-                          style={{
-                            background: "transparent",
-                            border: `1px solid ${C.border}`,
-                            color: C.text,
-                          }}
-                        >
-                          View Invoices
-                        </button>
-                      </div>
-                    </Card>
-
-                    {/* Payment method */}
-                    <Card>
-                      <SectionTitle>Payment Method</SectionTitle>
-                      <div
-                        className="flex items-center gap-4 p-4 rounded-xl mb-4"
-                        style={{
-                          background: C.inputBg,
-                          border: `1px solid ${C.inputBorder}`,
-                        }}
-                      >
-                        <div
-                          className="w-12 h-8 rounded-md flex items-center justify-center text-xs font-bold"
-                          style={{ background: "#1a56db", color: "#fff" }}
-                        >
-                          VISA
-                        </div>
-                        <div className="flex-1">
-                          <p
-                            className="text-sm font-medium"
-                            style={{ color: C.text }}
-                          >
-                            •••• •••• •••• 4242
-                          </p>
-                          <p className="text-xs" style={{ color: C.muted }}>
-                            Expires 09/27
-                          </p>
-                        </div>
-                        <span
-                          className="text-xs px-2 py-1 rounded-full"
-                          style={{
-                            background: "rgba(74,222,128,0.1)",
-                            color: C.green,
-                          }}
-                        >
-                          Default
-                        </span>
-                      </div>
-                      <button
-                        className="text-sm font-medium outline-none border-0 bg-transparent cursor-pointer"
-                        style={{ color: C.gold }}
-                      >
-                        + Add payment method
-                      </button>
-                    </Card>
-
-                    {/* Billing history */}
-                    <Card>
-                      <div className="flex items-center justify-between mb-5">
-                        <SectionTitle>Billing History</SectionTitle>
-                        <button
-                          className="flex items-center gap-1.5 text-sm outline-none border-0 bg-transparent cursor-pointer"
+                    {billingLoading ? (
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2
+                          size={28}
+                          className="animate-spin"
                           style={{ color: C.gold }}
-                        >
-                          <Download size={14} /> Export
-                        </button>
+                        />
                       </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr
+                    ) : (
+                      <>
+                        {/* Current Plan */}
+                        <Card>
+                          <SectionTitle>Current Plan</SectionTitle>
+                          {billing.plan ? (
+                            <div
+                              className="flex flex-col sm:flex-row items-start justify-between gap-4 p-4 rounded-xl mb-4"
                               style={{
-                                borderBottom: `1px solid ${C.borderSubtle}`,
+                                background: C.goldDim,
+                                border: `1px solid ${C.border}`,
                               }}
                             >
-                              {["Date", "Description", "Amount", "Status"].map(
-                                (h) => (
-                                  <th
-                                    key={h}
-                                    className="text-left pb-3 pr-4 font-medium"
-                                    style={{ color: C.muted }}
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p
+                                    className="font-bold text-base"
+                                    style={{ color: C.gold }}
                                   >
-                                    {h}
-                                  </th>
-                                ),
-                              )}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[
-                              {
-                                date: "Feb 18, 2026",
-                                desc: "Hirer Pro – Monthly",
-                                amount: "$79.00",
-                                status: "Paid",
-                              },
-                              {
-                                date: "Jan 18, 2026",
-                                desc: "Hirer Pro – Monthly",
-                                amount: "$79.00",
-                                status: "Paid",
-                              },
-                              {
-                                date: "Dec 18, 2025",
-                                desc: "Hirer Pro – Monthly",
-                                amount: "$79.00",
-                                status: "Paid",
-                              },
-                              {
-                                date: "Nov 18, 2025",
-                                desc: "Escrow Fee – Film Proj",
-                                amount: "$24.50",
-                                status: "Paid",
-                              },
-                            ].map((row, i) => (
-                              <tr
-                                key={i}
-                                style={{
-                                  borderBottom:
-                                    i < 3
-                                      ? `1px solid ${C.borderSubtle}`
-                                      : "none",
-                                }}
-                              >
-                                <td
-                                  className="py-3 pr-4"
-                                  style={{ color: C.muted }}
-                                >
-                                  {row.date}
-                                </td>
-                                <td
-                                  className="py-3 pr-4"
-                                  style={{ color: C.text }}
-                                >
-                                  {row.desc}
-                                </td>
-                                <td
-                                  className="py-3 pr-4"
-                                  style={{ color: C.text }}
-                                >
-                                  {row.amount}
-                                </td>
-                                <td className="py-3">
+                                    {billing.plan.name}
+                                  </p>
                                   <span
-                                    className="text-xs px-2 py-0.5 rounded-full"
+                                    className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
                                     style={{
-                                      background: "rgba(74,222,128,0.1)",
-                                      color: C.green,
+                                      background: C.gold,
+                                      color: "#1a1d24",
                                     }}
                                   >
-                                    {row.status}
+                                    ACTIVE
                                   </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </Card>
+                                </div>
+                                <p
+                                  className="text-sm"
+                                  style={{ color: C.muted }}
+                                >
+                                  {billing.plan.description}
+                                </p>
+                                {billing.renewDate && (
+                                  <p
+                                    className="text-xs mt-2"
+                                    style={{ color: C.muted }}
+                                  >
+                                    Renews on{" "}
+                                    {new Date(
+                                      billing.renewDate,
+                                    ).toLocaleDateString("en-IN", {
+                                      day: "numeric",
+                                      month: "long",
+                                      year: "numeric",
+                                    })}
+                                  </p>
+                                )}
+                              </div>
+                              <p
+                                className="text-xl font-bold"
+                                style={{ color: C.text }}
+                              >
+                                ₹{billing.plan.price?.toLocaleString("en-IN")}
+                                <span
+                                  className="text-sm font-normal"
+                                  style={{ color: C.muted }}
+                                >
+                                  /mo
+                                </span>
+                              </p>
+                            </div>
+                          ) : (
+                            <div
+                              className="p-4 rounded-xl mb-4 text-center"
+                              style={{
+                                background: C.inputBg,
+                                border: `1px solid ${C.inputBorder}`,
+                              }}
+                            >
+                              <p className="text-sm" style={{ color: C.muted }}>
+                                No active plan. Choose a plan to get started.
+                              </p>
+                            </div>
+                          )}
+                          <div className="flex flex-wrap gap-3">
+                            <button
+                              onClick={() => setShowUpgradeModal(true)}
+                              className="px-4 py-2 rounded-lg text-sm font-medium outline-none border-0 cursor-pointer transition-all"
+                              style={{ background: C.gold, color: "#1a1d24" }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.filter =
+                                  "brightness(1.08)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.filter = "";
+                              }}
+                            >
+                              {billing.plan ? "Change Plan" : "Choose Plan"}
+                            </button>
+                            <button
+                              onClick={() => setShowInvoicesModal(true)}
+                              className="px-4 py-2 rounded-lg text-sm font-medium outline-none border-0 cursor-pointer transition-all"
+                              style={{
+                                background: "transparent",
+                                border: `1px solid ${C.border}`,
+                                color: C.text,
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor =
+                                  "rgba(201,169,97,0.4)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = C.border;
+                              }}
+                            >
+                              View Invoices
+                            </button>
+                          </div>
+                        </Card>
+
+                        {/* Payment Methods */}
+                        <Card>
+                          <SectionTitle>Payment Methods</SectionTitle>
+                          {billing.paymentMethods.length === 0 ? (
+                            <div
+                              className="py-6 text-center rounded-xl mb-4"
+                              style={{
+                                background: C.inputBg,
+                                border: `1px solid ${C.inputBorder}`,
+                              }}
+                            >
+                              <CreditCard
+                                size={28}
+                                className="mx-auto mb-2"
+                                style={{ color: C.muted }}
+                              />
+                              <p className="text-sm" style={{ color: C.muted }}>
+                                No payment methods added yet
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="space-y-3 mb-4">
+                              {billing.paymentMethods.map((method) => (
+                                <div
+                                  key={method.id}
+                                  className="flex items-center gap-4 p-4 rounded-xl"
+                                  style={{
+                                    background: C.inputBg,
+                                    border: `1px solid ${C.inputBorder}`,
+                                  }}
+                                >
+                                  <div
+                                    className="w-12 h-8 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0"
+                                    style={{
+                                      background:
+                                        method.brand === "visa"
+                                          ? "#1a56db"
+                                          : method.brand === "mastercard"
+                                            ? "#eb001b"
+                                            : "#2d3139",
+                                      color: "#fff",
+                                    }}
+                                  >
+                                    {(method.brand || "CARD")
+                                      .toUpperCase()
+                                      .slice(0, 4)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p
+                                      className="text-sm font-medium"
+                                      style={{ color: C.text }}
+                                    >
+                                      •••• •••• •••• {method.last4}
+                                    </p>
+                                    <p
+                                      className="text-xs"
+                                      style={{ color: C.muted }}
+                                    >
+                                      Expires {method.expiry}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    {method.isDefault ? (
+                                      <span
+                                        className="text-xs px-2 py-1 rounded-full"
+                                        style={{
+                                          background: "rgba(74,222,128,0.1)",
+                                          color: C.green,
+                                        }}
+                                      >
+                                        Default
+                                      </span>
+                                    ) : (
+                                      <button
+                                        onClick={() =>
+                                          handleSetDefault(method.id)
+                                        }
+                                        className="text-xs outline-none border-0 bg-transparent cursor-pointer"
+                                        style={{ color: C.gold }}
+                                      >
+                                        Set default
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() =>
+                                        handleRemovePayment(method.id)
+                                      }
+                                      className="outline-none border-0 bg-transparent cursor-pointer"
+                                      style={{ color: C.red }}
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <button
+                            onClick={() => setShowAddPaymentModal(true)}
+                            className="flex items-center gap-1.5 text-sm font-medium outline-none border-0 bg-transparent cursor-pointer"
+                            style={{ color: C.gold }}
+                          >
+                            <Plus size={15} /> Add payment method
+                          </button>
+                        </Card>
+
+                        {/* Billing History */}
+                        <Card>
+                          <div className="flex items-center justify-between mb-5">
+                            <SectionTitle>Billing History</SectionTitle>
+                            <button
+                              onClick={handleExportInvoices}
+                              className="flex items-center gap-1.5 text-sm outline-none border-0 bg-transparent cursor-pointer transition-opacity"
+                              style={{ color: C.gold }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.opacity = "0.7";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.opacity = "1";
+                              }}
+                            >
+                              <Download size={14} /> Export CSV
+                            </button>
+                          </div>
+                          {billing.invoices.length === 0 ? (
+                            <div
+                              className="py-10 text-center rounded-xl"
+                              style={{
+                                background: C.inputBg,
+                                border: `1px solid ${C.inputBorder}`,
+                              }}
+                            >
+                              <Download
+                                size={28}
+                                className="mx-auto mb-2"
+                                style={{ color: C.muted }}
+                              />
+                              <p className="text-sm" style={{ color: C.muted }}>
+                                No billing history yet
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto -mx-2 px-2">
+                              <table className="w-full text-sm min-w-[400px]">
+                                <thead>
+                                  <tr
+                                    style={{
+                                      borderBottom: `1px solid ${C.borderSubtle}`,
+                                    }}
+                                  >
+                                    {[
+                                      "Date",
+                                      "Description",
+                                      "Amount",
+                                      "Status",
+                                    ].map((h) => (
+                                      <th
+                                        key={h}
+                                        className="text-left pb-3 pr-4 font-medium"
+                                        style={{ color: C.muted }}
+                                      >
+                                        {h}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {billing.invoices.map((row, i) => (
+                                    <tr
+                                      key={row.id || i}
+                                      style={{
+                                        borderBottom:
+                                          i < billing.invoices.length - 1
+                                            ? `1px solid ${C.borderSubtle}`
+                                            : "none",
+                                      }}
+                                    >
+                                      <td
+                                        className="py-3 pr-4 whitespace-nowrap"
+                                        style={{ color: C.muted }}
+                                      >
+                                        {new Date(row.date).toLocaleDateString(
+                                          "en-IN",
+                                          {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "numeric",
+                                          },
+                                        )}
+                                      </td>
+                                      <td
+                                        className="py-3 pr-4"
+                                        style={{ color: C.text }}
+                                      >
+                                        {row.description}
+                                      </td>
+                                      <td
+                                        className="py-3 pr-4 whitespace-nowrap"
+                                        style={{ color: C.text }}
+                                      >
+                                        ₹
+                                        {Number(row.amount).toLocaleString(
+                                          "en-IN",
+                                        )}
+                                      </td>
+                                      <td className="py-3">
+                                        <span
+                                          className="text-xs px-2 py-0.5 rounded-full"
+                                          style={{
+                                            background:
+                                              row.status === "Paid"
+                                                ? "rgba(74,222,128,0.1)"
+                                                : row.status === "Pending"
+                                                  ? "rgba(251,191,36,0.1)"
+                                                  : "rgba(248,113,113,0.1)",
+                                            color:
+                                              row.status === "Paid"
+                                                ? C.green
+                                                : row.status === "Pending"
+                                                  ? "#fbbf24"
+                                                  : C.red,
+                                          }}
+                                        >
+                                          {row.status}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </Card>
+                      </>
+                    )}
                   </motion.div>
                 )}
 
@@ -1259,11 +1878,11 @@ export default function HirerSettings() {
                       />
                     </Card>
 
-                    {/* Data & account */}
                     <Card>
                       <SectionTitle>Data & Account</SectionTitle>
                       <div className="space-y-3">
                         <button
+                          onClick={handleDownloadData}
                           className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all outline-none border-0 cursor-pointer"
                           style={{
                             background: C.inputBg,
@@ -1285,6 +1904,7 @@ export default function HirerSettings() {
                           <ChevronRight size={14} style={{ color: C.muted }} />
                         </button>
                         <button
+                          onClick={() => setShowDeleteModal(true)}
                           className="danger-btn w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all outline-none border-0 cursor-pointer"
                           style={{
                             background: "rgba(248,113,113,0.06)",
@@ -1298,7 +1918,6 @@ export default function HirerSettings() {
                           <ChevronRight size={14} />
                         </button>
                       </div>
-
                       <div
                         className="mt-5 p-4 rounded-xl flex items-start gap-3"
                         style={{
@@ -1332,6 +1951,346 @@ export default function HirerSettings() {
           </div>
         </main>
       </div>
+
+      {/* ── Upgrade Plan Modal ── */}
+      <Modal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title="Choose a Plan"
+      >
+        <div className="space-y-3 mb-5">
+          {PLANS.map((plan) => (
+            <button
+              key={plan.id}
+              onClick={() => setSelectedPlan(plan.id)}
+              className="plan-card w-full text-left p-4 rounded-xl outline-none border-0 cursor-pointer"
+              style={{
+                background: selectedPlan === plan.id ? C.goldDim : C.inputBg,
+                border: `1px solid ${selectedPlan === plan.id ? C.gold : C.inputBorder}`,
+              }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className="font-semibold text-sm"
+                      style={{ color: C.text }}
+                    >
+                      {plan.name}
+                    </span>
+                    {plan.popular && (
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                        style={{ background: C.gold, color: "#1a1d24" }}
+                      >
+                        POPULAR
+                      </span>
+                    )}
+                    {billing.plan?.id === plan.id && (
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                        style={{
+                          background: "rgba(74,222,128,0.2)",
+                          color: C.green,
+                        }}
+                      >
+                        CURRENT
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs" style={{ color: C.muted }}>
+                    {plan.desc}
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p
+                    className="font-bold"
+                    style={{
+                      color: selectedPlan === plan.id ? C.gold : C.text,
+                    }}
+                  >
+                    ₹{plan.price.toLocaleString("en-IN")}
+                  </p>
+                  <p className="text-xs" style={{ color: C.muted }}>
+                    /mo
+                  </p>
+                </div>
+              </div>
+              {selectedPlan === plan.id && (
+                <div
+                  className="mt-2 flex items-center gap-1.5"
+                  style={{ color: C.gold }}
+                >
+                  <Check size={13} />
+                  <span className="text-xs font-medium">Selected</span>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={() => setShowUpgradeModal(false)}
+            className="px-4 py-2 rounded-lg text-sm font-medium outline-none border-0 cursor-pointer"
+            style={{
+              background: C.inputBg,
+              border: `1px solid ${C.inputBorder}`,
+              color: C.muted,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleUpgradePlan}
+            disabled={!selectedPlan || planLoading}
+            className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold outline-none border-0 cursor-pointer transition-all"
+            style={{
+              background: C.gold,
+              color: "#1a1d24",
+              opacity: !selectedPlan || planLoading ? 0.6 : 1,
+            }}
+          >
+            {planLoading && <Loader2 size={14} className="animate-spin" />}
+            {planLoading ? "Upgrading…" : "Confirm Plan"}
+          </button>
+        </div>
+      </Modal>
+
+      {/* ── Add Payment Modal ── */}
+      <Modal
+        open={showAddPaymentModal}
+        onClose={() => setShowAddPaymentModal(false)}
+        title="Add Payment Method"
+      >
+        <div className="space-y-4 mb-5">
+          <div>
+            <Label>Cardholder Name</Label>
+            <Input
+              value={newCard.name}
+              onChange={(e) => patchCard("name", e.target.value)}
+              placeholder="Name on card"
+            />
+          </div>
+          <div>
+            <Label>Card Number</Label>
+            <Input
+              value={newCard.number}
+              onChange={(e) =>
+                patchCard("number", formatCardNumber(e.target.value))
+              }
+              placeholder="0000 0000 0000 0000"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Expiry Date</Label>
+              <Input
+                value={newCard.expiry}
+                onChange={(e) =>
+                  patchCard("expiry", formatExpiry(e.target.value))
+                }
+                placeholder="MM/YY"
+              />
+            </div>
+            <div>
+              <Label>CVV</Label>
+              <Input
+                value={newCard.cvv}
+                onChange={(e) =>
+                  patchCard(
+                    "cvv",
+                    e.target.value.replace(/\D/g, "").slice(0, 4),
+                  )
+                }
+                placeholder="•••"
+                type="password"
+              />
+            </div>
+          </div>
+          <p
+            className="text-xs flex items-center gap-1.5"
+            style={{ color: C.muted }}
+          >
+            <Shield size={12} style={{ color: C.green }} /> Your card details
+            are encrypted and secure
+          </p>
+        </div>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={() => setShowAddPaymentModal(false)}
+            className="px-4 py-2 rounded-lg text-sm font-medium outline-none border-0 cursor-pointer"
+            style={{
+              background: C.inputBg,
+              border: `1px solid ${C.inputBorder}`,
+              color: C.muted,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAddPayment}
+            disabled={addingCard}
+            className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold outline-none border-0 cursor-pointer transition-all"
+            style={{
+              background: C.gold,
+              color: "#1a1d24",
+              opacity: addingCard ? 0.7 : 1,
+            }}
+          >
+            {addingCard && <Loader2 size={14} className="animate-spin" />}
+            {addingCard ? "Adding…" : "Add Card"}
+          </button>
+        </div>
+      </Modal>
+
+      {/* ── Invoices Modal ── */}
+      <Modal
+        open={showInvoicesModal}
+        onClose={() => setShowInvoicesModal(false)}
+        title="All Invoices"
+      >
+        <div className="max-h-80 overflow-y-auto -mx-1 px-1">
+          {billing.invoices.length === 0 ? (
+            <div className="py-10 text-center">
+              <p className="text-sm" style={{ color: C.muted }}>
+                No invoices available
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {billing.invoices.map((inv, i) => (
+                <div
+                  key={inv.id || i}
+                  className="flex items-center justify-between p-3 rounded-xl"
+                  style={{
+                    background: C.inputBg,
+                    border: `1px solid ${C.inputBorder}`,
+                  }}
+                >
+                  <div>
+                    <p
+                      className="text-sm font-medium"
+                      style={{ color: C.text }}
+                    >
+                      {inv.description}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: C.muted }}>
+                      {new Date(inv.date).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p
+                      className="text-sm font-semibold"
+                      style={{ color: C.text }}
+                    >
+                      ₹{Number(inv.amount).toLocaleString("en-IN")}
+                    </p>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full"
+                      style={{
+                        background:
+                          inv.status === "Paid"
+                            ? "rgba(74,222,128,0.1)"
+                            : "rgba(251,191,36,0.1)",
+                        color: inv.status === "Paid" ? C.green : "#fbbf24",
+                      }}
+                    >
+                      {inv.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end mt-5">
+          <button
+            onClick={handleExportInvoices}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium outline-none border-0 cursor-pointer"
+            style={{ background: C.gold, color: "#1a1d24" }}
+          >
+            <Download size={14} /> Export CSV
+          </button>
+        </div>
+      </Modal>
+
+      {/* ── Delete Account Modal ── */}
+      <Modal
+        open={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteConfirmText("");
+        }}
+        title="Delete Account"
+      >
+        <div className="mb-5">
+          <div
+            className="flex items-center gap-3 p-4 rounded-xl mb-4"
+            style={{
+              background: "rgba(248,113,113,0.08)",
+              border: "1px solid rgba(248,113,113,0.2)",
+            }}
+          >
+            <AlertTriangle
+              size={18}
+              className="flex-shrink-0"
+              style={{ color: C.red }}
+            />
+            <p className="text-sm" style={{ color: C.text }}>
+              This action is <strong>permanent and irreversible.</strong> All
+              your data will be deleted.
+            </p>
+          </div>
+          <Label>
+            Type <span style={{ color: C.red, fontWeight: 600 }}>DELETE</span>{" "}
+            to confirm
+          </Label>
+          <Input
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            placeholder="DELETE"
+          />
+        </div>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={() => {
+              setShowDeleteModal(false);
+              setDeleteConfirmText("");
+            }}
+            className="px-4 py-2 rounded-lg text-sm font-medium outline-none border-0 cursor-pointer"
+            style={{
+              background: C.inputBg,
+              border: `1px solid ${C.inputBorder}`,
+              color: C.muted,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDeleteAccount}
+            disabled={deleteConfirmText !== "DELETE"}
+            className="px-5 py-2 rounded-lg text-sm font-semibold outline-none border-0 cursor-pointer transition-all"
+            style={{
+              background: "rgba(248,113,113,0.8)",
+              color: "#fff",
+              opacity: deleteConfirmText !== "DELETE" ? 0.4 : 1,
+            }}
+          >
+            Delete Account
+          </button>
+        </div>
+      </Modal>
+
+      {/* ── Toast ── */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
     </div>
   );
 }

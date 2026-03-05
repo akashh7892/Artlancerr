@@ -16,7 +16,7 @@ import { useNavigate } from "react-router";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// â”€â”€â”€ Design Tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -74,7 +74,7 @@ const mapArtist = (artist) => ({
   projectRate: artist?.rates?.project || "Negotiable",
 });
 
-// â”€â”€â”€ Filter Drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 function FilterDrawer({
   open,
   onClose,
@@ -344,7 +344,7 @@ function FilterSelect({ value, onChange, options }) {
   );
 }
 
-// â”€â”€â”€ Artist Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Artist Card Component
 function ArtistCard({ artist, index, onView, onMessage }) {
   const [imgErr, setImgErr] = useState(false);
 
@@ -619,7 +619,7 @@ function ArtistCard({ artist, index, onView, onMessage }) {
   );
 }
 
-// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//Main Browse Artist Page
 export default function BrowseArtist() {
   const navigate = useNavigate();
   const [artists, setArtists] = useState([]);
@@ -695,7 +695,7 @@ export default function BrowseArtist() {
                 padding: "clamp(20px, 4vw, 40px) clamp(16px, 3vw, 32px)",
               }}
             >
-              {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+              {/*Header */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -785,7 +785,7 @@ export default function BrowseArtist() {
                 </div>
               </motion.div>
 
-              {/* â”€â”€ Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+              
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -829,7 +829,7 @@ export default function BrowseArtist() {
                 />
               </motion.div>
 
-              {/* â”€â”€ Filter Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+              
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -868,7 +868,7 @@ export default function BrowseArtist() {
                 ))}
               </motion.div>
 
-              {/* â”€â”€ Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+              
               {isLoading ? (
                 <motion.div
                   initial={{ opacity: 0 }}

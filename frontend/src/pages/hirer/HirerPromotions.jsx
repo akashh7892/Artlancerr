@@ -3,7 +3,7 @@ import {
   Upload,
   Clock,
   Users,
-  DollarSign,
+  IndianRupee,
   ArrowLeft,
   Instagram,
   CheckCircle,
@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Design tokens Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// ── Design tokens ──────────────────────────────────────────────
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -40,9 +40,7 @@ const C = {
   redDim: "rgba(248,113,113,0.10)",
 };
 
-const RupeeIcon = () => (
-  <span style={{ color: C.gold, fontSize: "18px", fontWeight: 700 }}>₹</span>
-);
+// ── Utility ─────────────────────────────────────────────────────
 function timeLeft(deadline, now) {
   const diff = new Date(deadline).getTime() - now.getTime();
   if (diff <= 0) return "Expired";
@@ -54,7 +52,7 @@ function timeLeft(deadline, now) {
   return `${m}m`;
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Primitives Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// ── Shared sub-components ────────────────────────────────────────
 function Img({ src, alt, className }) {
   const [err, setErr] = useState(false);
   if (err)
@@ -77,7 +75,7 @@ function Img({ src, alt, className }) {
   );
 }
 
-function Badge({ status }) {
+function StatusBadge({ status }) {
   const s = {
     Pending: { bg: C.yellowDim, color: C.yellow },
     Approved: { bg: C.greenDim, color: C.green },
@@ -150,7 +148,6 @@ function FieldInput({ type = "text", value, onChange, placeholder, icon }) {
   );
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Modal shell Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function Modal({ open, onClose, title, subtitle, children, wide }) {
   if (!open) return null;
   return (
@@ -184,7 +181,6 @@ function Modal({ open, onClose, title, subtitle, children, wide }) {
             fontFamily: "'Plus Jakarta Sans', sans-serif",
           }}
         >
-          {/* Modal header */}
           <div
             style={{
               display: "flex",
@@ -237,14 +233,13 @@ function Modal({ open, onClose, title, subtitle, children, wide }) {
               <X size={15} />
             </button>
           </div>
-          {/* Scrollable body */}
           <div
             style={{
               flex: 1,
               overflowY: "auto",
               padding: "20px 24px",
               scrollbarWidth: "thin",
-              scrollbarColor: `rgba(201,169,97,0.2) transparent`,
+              scrollbarColor: "rgba(201,169,97,0.2) transparent",
             }}
           >
             {children}
@@ -255,64 +250,49 @@ function Modal({ open, onClose, title, subtitle, children, wide }) {
   );
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Gold button Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-function GoldBtn({
-  children,
-  onClick,
-  className = "",
-  outline = false,
-  danger = false,
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center justify-center gap-2 text-sm font-semibold outline-none border-0 cursor-pointer transition-all ${className}`}
-      style={{
-        background: outline
-          ? "transparent"
-          : danger
-            ? C.redDim
-            : `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
-        color: outline ? C.text : danger ? C.red : "#1a1d24",
-        border: outline
-          ? `1px solid ${C.border}`
-          : danger
-            ? `1px solid rgba(248,113,113,0.25)`
-            : "none",
-        padding: "10px 18px",
-        borderRadius: 12,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.filter = "brightness(1.08)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.filter = "none";
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+// ── Single default export — everything inlined ───────────────────
 export default function HirerPromotions() {
   const navigate = useNavigate();
+
+  // ── UI state ──
   const [tab, setTab] = useState("all");
   const [now, setNow] = useState(new Date());
-  const [allPromos, setAllPromos] = useState([]);
-  const [myPromos, setMyPromos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [detailPromo, setDetailPromo] = useState(null);
   const [reviewPromo, setReviewPromo] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
 
+  // ── Data state ──
+  const [allPromos, setAllPromos] = useState([]);
+  const [myPromos, setMyPromos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // ── Create-form state (inlined, no separate component) ──
+  const [form, setForm] = useState({
+    projectName: "",
+    description: "",
+    promotionType: "",
+    reward: "",
+    totalSlots: "50",
+    deadline: "",
+  });
+  const setF = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const resetForm = () =>
+    setForm({
+      projectName: "",
+      description: "",
+      promotionType: "",
+      reward: "",
+      totalSlots: "50",
+      deadline: "",
+    });
+
+  // ── Effects ──
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // Keep review modal in sync after approve/reject
   useEffect(() => {
     if (reviewPromo) {
       const fresh = myPromos.find((p) => p.id === reviewPromo.id);
@@ -321,18 +301,15 @@ export default function HirerPromotions() {
   }, [myPromos]);
 
   useEffect(() => {
-    let m = true;
+    let alive = true;
     hirerAPI
       .getPromotions()
       .then((res) => {
-        if (!m) return;
-        const list = Array.isArray(res) ? res : [];
-        const mapped = list.map((p) => ({
+        if (!alive) return;
+        const mapped = (Array.isArray(res) ? res : []).map((p) => ({
           id: p._id,
           projectName: p.title || "Promotion",
-          poster:
-            p.image ||
-            "",
+          poster: p.image || "",
           promotionType: p.type || "Promotion",
           reward: `$${Number(p.price || 0)}`,
           totalSlots: 50,
@@ -353,55 +330,60 @@ export default function HirerPromotions() {
         setMyPromos(mapped);
       })
       .catch((e) => {
-        if (m) setError(e.message || "Failed to load promotions");
+        if (alive) setError(e.message || "Failed to load promotions");
       })
       .finally(() => {
-        if (m) setLoading(false);
+        if (alive) setLoading(false);
       });
     return () => {
-      m = false;
+      alive = false;
     };
   }, []);
 
-  const handleCreatePromotion = async (form) => {
-    const created = await hirerAPI.createPromotion({
-      title: form.projectName,
-      description: form.description,
-      type: "featured",
-      duration: form.deadline
-        ? Math.max(
-            1,
-            Math.ceil(
-              (new Date(form.deadline).getTime() - Date.now()) / 86400000,
-            ),
-          )
-        : 7,
-      price: Number(form.reward || 0),
-    });
-    const mapped = {
-      id: created._id,
-      projectName: created.title || form.projectName,
-      poster:
-        created.image ||
-        "",
-      promotionType: created.type || form.promotionType || "Promotion",
-      reward: `$${Number(created.price || form.reward || 0)}`,
-      totalSlots: Number(form.totalSlots || 50),
-      filledSlots: 0,
-      deadline: created.endDate || form.deadline || new Date().toISOString(),
-      description: created.description || form.description,
-      requirements: [],
-      createdBy: "Artlancerr",
-      acceptedCount: 0,
-      submittedCount: 0,
-      approvedCount: 0,
-      rejectedCount: 0,
-      pendingReview: 0,
-      status: "Active",
-      submissions: [],
-    };
-    setAllPromos((prev) => [mapped, ...prev]);
-    setMyPromos((prev) => [mapped, ...prev]);
+  // ── Handlers ──
+  const handleCreatePromotion = async () => {
+    try {
+      const created = await hirerAPI.createPromotion({
+        title: form.projectName,
+        description: form.description,
+        type: "featured",
+        duration: form.deadline
+          ? Math.max(
+              1,
+              Math.ceil(
+                (new Date(form.deadline).getTime() - Date.now()) / 86400000,
+              ),
+            )
+          : 7,
+        price: Number(form.reward || 0),
+      });
+      const mapped = {
+        id: created._id,
+        projectName: created.title || form.projectName,
+        poster: created.image || "",
+        promotionType: created.type || form.promotionType || "Promotion",
+        reward: `$${Number(created.price || form.reward || 0)}`,
+        totalSlots: Number(form.totalSlots || 50),
+        filledSlots: 0,
+        deadline: created.endDate || form.deadline || new Date().toISOString(),
+        description: created.description || form.description,
+        requirements: [],
+        createdBy: "Artlancerr",
+        acceptedCount: 0,
+        submittedCount: 0,
+        approvedCount: 0,
+        rejectedCount: 0,
+        pendingReview: 0,
+        status: "Active",
+        submissions: [],
+      };
+      setAllPromos((prev) => [mapped, ...prev]);
+      setMyPromos((prev) => [mapped, ...prev]);
+      resetForm();
+      setShowCreate(false);
+    } catch (e) {
+      console.error("Create promotion failed", e);
+    }
   };
 
   const approve = (promoId, subId) =>
@@ -436,6 +418,7 @@ export default function HirerPromotions() {
       ),
     );
 
+  // ── Render ──
   return (
     <div
       className="min-h-screen flex"
@@ -451,19 +434,21 @@ export default function HirerPromotions() {
         .tln { position: relative; }
       `}</style>
 
+      {/* HirerSidebar owns its own mobile hamburger toggle — no duplicate state needed here */}
       <HirerSidebar />
 
-      <div className="flex-1 lg:ml-72 overflow-auto">
-        <div className="p-8 max-w-5xl mx-auto">
-          {/* Header */}
+      {/* Main content — lg:ml-72 clears the fixed sidebar on desktop */}
+      <div className="flex-1 min-w-0 lg:ml-72">
+        <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-5xl mx-auto">
+          {/* ── Page header ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-4 mb-8"
+            className="flex items-center gap-4 mb-8 mt-10 lg:mt-0"
           >
             <button
               onClick={() => navigate("/hirer/dashboard")}
-              className="flex items-center justify-center w-9 h-9 rounded-lg outline-none border-0 cursor-pointer"
+              className="flex items-center justify-center w-9 h-9 rounded-lg outline-none border-0 cursor-pointer flex-shrink-0"
               style={{ background: "rgba(255,255,255,0.05)", color: C.text }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "rgba(255,255,255,0.1)";
@@ -474,24 +459,20 @@ export default function HirerPromotions() {
             >
               <ArrowLeft size={18} />
             </button>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <h1
-                style={{
-                  color: C.text,
-                  fontSize: 30,
-                  fontWeight: 600,
-                  marginBottom: 2,
-                }}
+                className="text-2xl sm:text-3xl font-semibold"
+                style={{ color: C.text, marginBottom: 2 }}
               >
                 Promotions
               </h1>
-              <p style={{ color: C.muted, fontSize: 14 }}>
+              <p className="hidden sm:block text-sm" style={{ color: C.muted }}>
                 Create promotion missions and manage submissions
               </p>
             </div>
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold outline-none border-0 cursor-pointer"
+              className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg text-sm font-semibold outline-none border-0 cursor-pointer flex-shrink-0"
               style={{
                 background: `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
                 color: "#1a1d24",
@@ -503,11 +484,13 @@ export default function HirerPromotions() {
                 e.currentTarget.style.filter = "none";
               }}
             >
-              <Upload size={16} strokeWidth={2.2} /> Create Promotion
+              <Upload size={16} strokeWidth={2.2} />
+              <span className="hidden sm:inline">Create Promotion</span>
+              <span className="sm:hidden">Create</span>
             </button>
           </motion.div>
 
-          {/* Tabs */}
+          {/* ── Tabs ── */}
           <div
             className="flex mb-6"
             style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
@@ -519,7 +502,7 @@ export default function HirerPromotions() {
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className="tln px-6 py-3 text-sm font-medium outline-none border-0 bg-transparent cursor-pointer"
+                className="tln px-4 sm:px-6 py-3 text-sm font-medium outline-none border-0 bg-transparent cursor-pointer"
                 style={{ color: tab === key ? C.gold : C.muted }}
               >
                 {label}
@@ -540,13 +523,14 @@ export default function HirerPromotions() {
             </div>
           )}
           {error && (
-            <p className="text-sm mb-4" style={{ color: "#f87171" }}>
+            <p className="text-sm mb-4" style={{ color: C.red }}>
               {error}
             </p>
           )}
-          {/* Tab content */}
+
+          {/* ── Tab panels ── */}
           <AnimatePresence mode="wait">
-            {/* ALL */}
+            {/* ALL PROMOTIONS */}
             {tab === "all" && (
               <motion.div
                 key="all"
@@ -556,7 +540,7 @@ export default function HirerPromotions() {
                 transition={{ duration: 0.25 }}
                 className="space-y-4"
               >
-                {(allPromos || []).map((p, i) => {
+                {allPromos.map((p, i) => {
                   const rem = p.totalSlots - p.filledSlots;
                   const isFull = rem <= 0;
                   const tl = timeLeft(p.deadline, now);
@@ -574,9 +558,8 @@ export default function HirerPromotions() {
                         opacity: isFull || expired ? 0.6 : 1,
                       }}
                     >
-                      {/* Poster */}
                       <div
-                        className="relative flex-shrink-0 w-44"
+                        className="relative flex-shrink-0 w-28 sm:w-36 md:w-44"
                         style={{ minHeight: 190 }}
                       >
                         <Img
@@ -594,6 +577,7 @@ export default function HirerPromotions() {
                                 color: "#fff",
                                 fontWeight: 700,
                                 letterSpacing: 2,
+                                fontSize: 11,
                               }}
                             >
                               {isFull ? "FULL" : "EXPIRED"}
@@ -601,44 +585,42 @@ export default function HirerPromotions() {
                           </div>
                         )}
                       </div>
-                      {/* Content */}
-                      <div className="flex-1 p-6 flex flex-col justify-between">
+                      <div className="flex-1 p-3 sm:p-5 lg:p-6 flex flex-col justify-between min-w-0">
                         <div>
                           <h3
-                            className="text-lg font-semibold mb-2"
+                            className="text-base sm:text-lg font-semibold mb-2"
                             style={{ color: C.text }}
                           >
                             {p.projectName}
                           </h3>
-                          <div className="flex flex-wrap gap-4 text-sm mb-3">
+                          <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm mb-3">
                             <span
-                              className="flex items-center gap-1.5"
+                              className="flex items-center gap-1"
                               style={{ color: C.muted }}
                             >
-                              <Instagram size={14} /> {p.promotionType}
+                              <Instagram size={13} /> {p.promotionType}
                             </span>
                             <span
-                              className="flex items-center gap-1.5 font-semibold"
+                              className="flex items-center gap-1 font-semibold"
                               style={{ color: C.gold }}
                             >
-                              <DollarSign size={14} /> {p.reward} reward
+                              <IndianRupee size={13} /> {p.reward} reward
                             </span>
                             <span
-                              className="flex items-center gap-1.5"
+                              className="flex items-center gap-1"
                               style={{ color: C.muted }}
                             >
-                              <Users size={14} /> {rem} / {p.totalSlots} slots
-                              left
+                              <Users size={13} /> {rem}/{p.totalSlots} slots
                             </span>
                             <span
-                              className="flex items-center gap-1.5"
+                              className="flex items-center gap-1"
                               style={{ color: expired ? C.red : C.muted }}
                             >
-                              <Clock size={14} /> {tl}
+                              <Clock size={13} /> {tl}
                             </span>
                           </div>
                           <p
-                            className="text-sm leading-relaxed"
+                            className="text-xs sm:text-sm leading-relaxed"
                             style={{
                               color: C.muted,
                               display: "-webkit-box",
@@ -656,7 +638,7 @@ export default function HirerPromotions() {
                           </span>
                           <button
                             onClick={() => setDetailPromo(p)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium outline-none cursor-pointer"
+                            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium outline-none cursor-pointer"
                             style={{
                               background: "transparent",
                               border: `1px solid ${C.border}`,
@@ -671,7 +653,7 @@ export default function HirerPromotions() {
                               e.currentTarget.style.color = C.text;
                             }}
                           >
-                            <Eye size={15} /> View Details
+                            <Eye size={14} /> View Details
                           </button>
                         </div>
                       </div>
@@ -681,7 +663,7 @@ export default function HirerPromotions() {
               </motion.div>
             )}
 
-            {/* MY */}
+            {/* MY PROMOTIONS */}
             {tab === "my" && (
               <motion.div
                 key="my"
@@ -708,9 +690,8 @@ export default function HirerPromotions() {
                         border: `1px solid ${C.border}`,
                       }}
                     >
-                      {/* Poster + badge */}
                       <div
-                        className="relative flex-shrink-0 w-44"
+                        className="relative flex-shrink-0 w-28 sm:w-36 md:w-44"
                         style={{ minHeight: 260 }}
                       >
                         <Img
@@ -719,44 +700,42 @@ export default function HirerPromotions() {
                           className="absolute inset-0 w-full h-full"
                         />
                         <div className="absolute top-3 left-3">
-                          <Badge status={p.status} />
+                          <StatusBadge status={p.status} />
                         </div>
                       </div>
-                      {/* Content */}
-                      <div className="flex-1 p-6 flex flex-col gap-4">
+                      <div className="flex-1 p-3 sm:p-5 lg:p-6 flex flex-col gap-3 sm:gap-4 min-w-0">
                         <div>
                           <h3
-                            className="text-lg font-semibold mb-2"
+                            className="text-base sm:text-lg font-semibold mb-2"
                             style={{ color: C.text }}
                           >
                             {p.projectName}
                           </h3>
-                          <div className="flex flex-wrap gap-4 text-sm">
+                          <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
                             <span
-                              className="flex items-center gap-1.5"
+                              className="flex items-center gap-1"
                               style={{ color: C.muted }}
                             >
-                              <Instagram size={14} /> {p.promotionType}
+                              <Instagram size={13} /> {p.promotionType}
                             </span>
                             <span
-                              className="flex items-center gap-1.5 font-semibold"
+                              className="flex items-center gap-1 font-semibold"
                               style={{ color: C.gold }}
                             >
-                              <DollarSign size={14} /> {p.reward} per artist
+                              <IndianRupee size={13} /> {p.reward} per artist
                             </span>
                             {p.status === "Active" && tl !== "Expired" && (
                               <span
-                                className="flex items-center gap-1.5"
+                                className="flex items-center gap-1"
                                 style={{ color: C.muted }}
                               >
-                                <Clock size={14} /> {tl} left
+                                <Clock size={13} /> {tl} left
                               </span>
                             )}
                           </div>
                         </div>
-                        {/* Progress */}
                         <div>
-                          <div className="flex justify-between text-sm mb-1.5">
+                          <div className="flex justify-between text-xs sm:text-sm mb-1.5">
                             <span style={{ color: C.muted }}>
                               Participation
                             </span>
@@ -769,8 +748,7 @@ export default function HirerPromotions() {
                           </div>
                           <ProgressBar pct={pct} />
                         </div>
-                        {/* Stats 4-grid */}
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {[
                             {
                               label: "Submitted",
@@ -799,13 +777,13 @@ export default function HirerPromotions() {
                           ].map(({ label, val, bg, col }) => (
                             <div
                               key={label}
-                              className="rounded-lg p-3 text-center"
+                              className="rounded-lg p-2 sm:p-3 text-center"
                               style={{ background: bg }}
                             >
                               <p
                                 style={{
                                   color: col,
-                                  fontSize: 24,
+                                  fontSize: 20,
                                   fontWeight: 600,
                                   margin: 0,
                                 }}
@@ -815,7 +793,7 @@ export default function HirerPromotions() {
                               <p
                                 style={{
                                   color: C.muted,
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   marginTop: 2,
                                 }}
                               >
@@ -824,12 +802,11 @@ export default function HirerPromotions() {
                             </div>
                           ))}
                         </div>
-                        {/* Action buttons */}
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           {p.pendingReview > 0 && (
                             <button
                               onClick={() => setReviewPromo(p)}
-                              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold outline-none border-0 cursor-pointer"
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-semibold outline-none border-0 cursor-pointer"
                               style={{
                                 background: `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
                                 color: "#1a1d24",
@@ -842,13 +819,13 @@ export default function HirerPromotions() {
                                 e.currentTarget.style.filter = "none";
                               }}
                             >
-                              <AlertCircle size={15} /> Review Submissions (
+                              <AlertCircle size={14} /> Review Submissions (
                               {p.pendingReview})
                             </button>
                           )}
                           <button
                             onClick={() => setReviewPromo(p)}
-                            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium outline-none cursor-pointer"
+                            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium outline-none cursor-pointer"
                             style={{
                               background: "transparent",
                               border: `1px solid ${C.border}`,
@@ -864,7 +841,7 @@ export default function HirerPromotions() {
                               e.currentTarget.style.color = C.text;
                             }}
                           >
-                            <Eye size={15} /> View All Submissions
+                            <Eye size={14} /> View All Submissions
                           </button>
                         </div>
                       </div>
@@ -877,7 +854,7 @@ export default function HirerPromotions() {
         </div>
       </div>
 
-      {/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Promotion Details Modal Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */}
+      {/* ── Promotion Details Modal ── */}
       <Modal
         open={!!detailPromo}
         onClose={() => setDetailPromo(null)}
@@ -886,8 +863,7 @@ export default function HirerPromotions() {
       >
         {detailPromo && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {/* Poster + meta */}
-            <div style={{ display: "flex", gap: 16 }}>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               <div
                 style={{
                   width: 96,
@@ -903,7 +879,7 @@ export default function HirerPromotions() {
                   className="w-full h-full"
                 />
               </div>
-              <div>
+              <div style={{ flex: 1, minWidth: 160 }}>
                 <p
                   style={{
                     color: C.text,
@@ -921,7 +897,7 @@ export default function HirerPromotions() {
                     color: C.muted,
                   },
                   {
-                    Icon: DollarSign,
+                    Icon: IndianRupee,
                     label: `${detailPromo.reward} fixed reward`,
                     color: C.gold,
                   },
@@ -985,7 +961,6 @@ export default function HirerPromotions() {
                 ))}
               </div>
             )}
-            {/* Wide gold close button */}
             <button
               onClick={() => setDetailPromo(null)}
               style={{
@@ -1013,7 +988,7 @@ export default function HirerPromotions() {
         )}
       </Modal>
 
-      {/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Review Submissions Modal Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */}
+      {/* ── Review Submissions Modal ── */}
       <Modal
         open={!!reviewPromo}
         onClose={() => setReviewPromo(null)}
@@ -1064,6 +1039,8 @@ export default function HirerPromotions() {
                           alignItems: "center",
                           justifyContent: "space-between",
                           marginBottom: 3,
+                          flexWrap: "wrap",
+                          gap: 8,
                         }}
                       >
                         <p
@@ -1071,7 +1048,7 @@ export default function HirerPromotions() {
                         >
                           {sub.artistName}
                         </p>
-                        <Badge status={sub.status} />
+                        <StatusBadge status={sub.status} />
                       </div>
                       <p
                         style={{
@@ -1096,6 +1073,7 @@ export default function HirerPromotions() {
                           fontSize: 13,
                           display: "block",
                           marginBottom: 10,
+                          wordBreak: "break-all",
                         }}
                       >
                         {sub.proofUrl}
@@ -1164,124 +1142,64 @@ export default function HirerPromotions() {
           ))}
       </Modal>
 
-      {/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Create Promotion Modal Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */}
+      {/* ── Create Promotion Modal — form state lives in HirerPromotions ── */}
       <Modal
         open={showCreate}
-        onClose={() => setShowCreate(false)}
+        onClose={() => {
+          setShowCreate(false);
+          resetForm();
+        }}
         title="Create Promotion"
         subtitle="Set up a new promotion mission for artists"
       >
-        <CreateForm
-          onClose={() => setShowCreate(false)}
-          onCreate={handleCreatePromotion}
-        />
-      </Modal>
-    </div>
-  );
-}
-
-// Create Promotion form component
-function CreateForm({ onClose, onCreate }) {
-  const [form, setForm] = useState({
-    projectName: "",
-    description: "",
-    promotionType: "",
-    reward: "",
-    totalSlots: "50",
-    deadline: "",
-  });
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      {/* Project Name */}
-      <div>
-        <label
-          style={{
-            color: C.text,
-            fontSize: 13,
-            fontWeight: 500,
-            display: "block",
-            marginBottom: 6,
-          }}
-        >
-          Project Name
-        </label>
-        <FieldInput
-          value={form.projectName}
-          onChange={(e) => set("projectName", e.target.value)}
-          placeholder="Enter movie/project name"
-        />
-      </div>
-      {/* Description */}
-      <div>
-        <label
-          style={{
-            color: C.text,
-            fontSize: 13,
-            fontWeight: 500,
-            display: "block",
-            marginBottom: 6,
-          }}
-        >
-          Description
-        </label>
-        <textarea
-          value={form.description}
-          onChange={(e) => set("description", e.target.value)}
-          placeholder="Describe what participants need to do..."
-          rows={4}
-          style={{
-            width: "100%",
-            borderRadius: 12,
-            background: C.inputBg,
-            border: `1px solid ${C.inputBorder}`,
-            color: C.text,
-            padding: "10px 14px",
-            fontSize: 14,
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            outline: "none",
-            resize: "none",
-            boxSizing: "border-box",
-          }}
-          onFocus={(e) => {
-            e.target.style.borderColor = "rgba(201,169,97,0.5)";
-          }}
-          onBlur={(e) => {
-            e.target.style.borderColor = C.inputBorder;
-          }}
-        />
-      </div>
-      {/* Type + Reward */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-        <div>
-          <label
-            style={{
-              color: C.text,
-              fontSize: 13,
-              fontWeight: 500,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            Promotion Type
-          </label>
-          <div style={{ position: "relative" }}>
-            <select
-              value={form.promotionType}
-              onChange={(e) => set("promotionType", e.target.value)}
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div>
+            <label
+              style={{
+                color: C.text,
+                fontSize: 13,
+                fontWeight: 500,
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
+              Project Name
+            </label>
+            <FieldInput
+              value={form.projectName}
+              onChange={(e) => setF("projectName", e.target.value)}
+              placeholder="Enter movie/project name"
+            />
+          </div>
+          <div>
+            <label
+              style={{
+                color: C.text,
+                fontSize: 13,
+                fontWeight: 500,
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
+              Description
+            </label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setF("description", e.target.value)}
+              placeholder="Describe what participants need to do..."
+              rows={4}
               style={{
                 width: "100%",
                 borderRadius: 12,
                 background: C.inputBg,
                 border: `1px solid ${C.inputBorder}`,
-                color: form.promotionType ? C.text : C.muted,
-                padding: "10px 36px 10px 14px",
+                color: C.text,
+                padding: "10px 14px",
                 fontSize: 14,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 outline: "none",
-                appearance: "none",
-                cursor: "pointer",
+                resize: "none",
+                boxSizing: "border-box",
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = "rgba(201,169,97,0.5)";
@@ -1289,194 +1207,234 @@ function CreateForm({ onClose, onCreate }) {
               onBlur={(e) => {
                 e.target.style.borderColor = C.inputBorder;
               }}
-            >
-              <option value="" disabled style={{ background: "#22252e" }}>
-                Select type
-              </option>
-              <option value="story" style={{ background: "#22252e" }}>
-                Instagram Story
-              </option>
-              <option value="post" style={{ background: "#22252e" }}>
-                Instagram Post
-              </option>
-              <option value="reel" style={{ background: "#22252e" }}>
-                Instagram Reel
-              </option>
-            </select>
-            <svg
+            />
+          </div>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}
+          >
+            <div>
+              <label
+                style={{
+                  color: C.text,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  display: "block",
+                  marginBottom: 6,
+                }}
+              >
+                Promotion Type
+              </label>
+              <div style={{ position: "relative" }}>
+                <select
+                  value={form.promotionType}
+                  onChange={(e) => setF("promotionType", e.target.value)}
+                  style={{
+                    width: "100%",
+                    borderRadius: 12,
+                    background: C.inputBg,
+                    border: `1px solid ${C.inputBorder}`,
+                    color: form.promotionType ? C.text : C.muted,
+                    padding: "10px 36px 10px 14px",
+                    fontSize: 14,
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    outline: "none",
+                    appearance: "none",
+                    cursor: "pointer",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "rgba(201,169,97,0.5)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = C.inputBorder;
+                  }}
+                >
+                  <option value="" disabled style={{ background: "#22252e" }}>
+                    Select type
+                  </option>
+                  <option value="story" style={{ background: "#22252e" }}>
+                    Instagram Story
+                  </option>
+                  <option value="post" style={{ background: "#22252e" }}>
+                    Instagram Post
+                  </option>
+                  <option value="reel" style={{ background: "#22252e" }}>
+                    Instagram Reel
+                  </option>
+                </select>
+                <svg
+                  style={{
+                    position: "absolute",
+                    right: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    pointerEvents: "none",
+                    color: C.muted,
+                  }}
+                  width="11"
+                  height="11"
+                  viewBox="0 0 12 12"
+                  fill="currentColor"
+                >
+                  <path d="M6 8L1 3h10z" />
+                </svg>
+              </div>
+            </div>
+            <div>
+              <label
+                style={{
+                  color: C.text,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  display: "block",
+                  marginBottom: 6,
+                }}
+              >
+                Fixed Reward (per participant)
+              </label>
+              <FieldInput
+                type="number"
+                value={form.reward}
+                onChange={(e) => setF("reward", e.target.value)}
+                placeholder="25"
+              />
+            </div>
+          </div>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}
+          >
+            <div>
+              <label
+                style={{
+                  color: C.text,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  display: "block",
+                  marginBottom: 6,
+                }}
+              >
+                Total Slots
+              </label>
+              <FieldInput
+                type="number"
+                value={form.totalSlots}
+                onChange={(e) => setF("totalSlots", e.target.value)}
+                placeholder="50"
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  color: C.text,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  display: "block",
+                  marginBottom: 6,
+                }}
+              >
+                Deadline
+              </label>
+              <FieldInput
+                type="datetime-local"
+                value={form.deadline}
+                onChange={(e) => setF("deadline", e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label
               style={{
-                position: "absolute",
-                right: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-                color: C.muted,
+                color: C.text,
+                fontSize: 13,
+                fontWeight: 500,
+                display: "block",
+                marginBottom: 6,
               }}
-              width="11"
-              height="11"
-              viewBox="0 0 12 12"
-              fill="currentColor"
             >
-              <path d="M6 8L1 3h10z" />
-            </svg>
+              Movie Poster
+            </label>
+            <button
+              style={{
+                width: "100%",
+                padding: "32px 0",
+                borderRadius: 12,
+                border: "2px dashed rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.02)",
+                color: C.muted,
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 8,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = C.gold;
+                e.currentTarget.style.color = C.gold;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+                e.currentTarget.style.color = C.muted;
+              }}
+            >
+              <Upload size={28} strokeWidth={1.5} />
+              <span style={{ fontSize: 14, fontWeight: 500 }}>
+                Upload movie poster
+              </span>
+              <span style={{ fontSize: 12, opacity: 0.7 }}>
+                Recommended: 2:3 aspect ratio
+              </span>
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: 12 }}>
+            <button
+              onClick={handleCreatePromotion}
+              style={{
+                flex: 1,
+                padding: "12px 0",
+                borderRadius: 12,
+                border: "none",
+                background: `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
+                color: "#1a1d24",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.filter = "brightness(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.filter = "none";
+              }}
+            >
+              Create Promotion
+            </button>
+            <button
+              onClick={() => {
+                setShowCreate(false);
+                resetForm();
+              }}
+              style={{
+                flex: 1,
+                padding: "12px 0",
+                borderRadius: 12,
+                border: `1px solid ${C.border}`,
+                background: "transparent",
+                color: C.text,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(201,169,97,0.5)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = C.border;
+              }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
-        <div>
-          <label
-            style={{
-              color: C.text,
-              fontSize: 13,
-              fontWeight: 500,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            Fixed Reward (per participant)
-          </label>
-          <FieldInput
-            type="number"
-            value={form.reward}
-            onChange={(e) => set("reward", e.target.value)}
-            placeholder="25"
-            icon={<RupeeIcon />}
-          />
-        </div>
-      </div>
-      {/* Slots + Deadline */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-        <div>
-          <label
-            style={{
-              color: C.text,
-              fontSize: 13,
-              fontWeight: 500,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            Total Slots (Top participants)
-          </label>
-          <FieldInput
-            type="number"
-            value={form.totalSlots}
-            onChange={(e) => set("totalSlots", e.target.value)}
-            placeholder="50"
-          />
-        </div>
-        <div>
-          <label
-            style={{
-              color: C.text,
-              fontSize: 13,
-              fontWeight: 500,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            Deadline
-          </label>
-          <FieldInput
-            type="datetime-local"
-            value={form.deadline}
-            onChange={(e) => set("deadline", e.target.value)}
-          />
-        </div>
-      </div>
-      {/* Upload */}
-      <div>
-        <label
-          style={{
-            color: C.text,
-            fontSize: 13,
-            fontWeight: 500,
-            display: "block",
-            marginBottom: 6,
-          }}
-        >
-          Movie Poster
-        </label>
-        <button
-          style={{
-            width: "100%",
-            padding: "32px 0",
-            borderRadius: 12,
-            border: "2px dashed rgba(255,255,255,0.12)",
-            background: "rgba(255,255,255,0.02)",
-            color: C.muted,
-            cursor: "pointer",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 8,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = C.gold;
-            e.currentTarget.style.color = C.gold;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-            e.currentTarget.style.color = C.muted;
-          }}
-        >
-          <Upload size={28} strokeWidth={1.5} />
-          <span style={{ fontSize: 14, fontWeight: 500 }}>
-            Upload movie poster
-          </span>
-          <span style={{ fontSize: 12, opacity: 0.7 }}>
-            Recommended: 2:3 aspect ratio
-          </span>
-        </button>
-      </div>
-      {/* Buttons */}
-      <div style={{ display: "flex", gap: 12 }}>
-        <button
-          onClick={async () => {
-            await onCreate?.(form);
-            onClose();
-          }}
-          style={{
-            flex: 1,
-            padding: "12px 0",
-            borderRadius: 12,
-            border: "none",
-            background: `linear-gradient(135deg, ${C.gold}, #d4b56e)`,
-            color: "#1a1d24",
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.filter = "brightness(1.08)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.filter = "none";
-          }}
-        >
-          Create Promotion
-        </button>
-        <button
-          onClick={onClose}
-          style={{
-            flex: 1,
-            padding: "12px 0",
-            borderRadius: 12,
-            border: `1px solid ${C.border}`,
-            background: "transparent",
-            color: C.text,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(201,169,97,0.5)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = C.border;
-          }}
-        >
-          Cancel
-        </button>
-      </div>
+      </Modal>
     </div>
   );
 }
