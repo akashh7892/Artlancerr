@@ -29,14 +29,25 @@ export default function Portfolio() {
   const [portfolio, setPortfolio] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredId, setHoveredId] = useState(null);
-  const [dragOver, setDragOver] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [addTitle, setAddTitle] = useState("");
 
   useEffect(() => {
     let mounted = true;
-    artistAPI.getPortfolio().then((list) => { if (mounted) setPortfolio(Array.isArray(list) ? list : []); }).catch(() => { if (mounted) setPortfolio([]); }).finally(() => { if (mounted) setLoading(false); });
-    return () => { mounted = false; };
+    artistAPI
+      .getPortfolio()
+      .then((list) => {
+        if (mounted) setPortfolio(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {
+        if (mounted) setPortfolio([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const detectWorkType = (mimeType = "") => {
@@ -47,15 +58,28 @@ export default function Portfolio() {
   };
 
   const handleUpload = (url, _id, fileMeta) => {
-    artistAPI.addPortfolio({ title: addTitle || "Portfolio item", category: "General", workType: detectWorkType(fileMeta?.type || ""), mediaUrl: url }).then((item) => {
-      setPortfolio((prev) => [item, ...prev]);
-      setShowUpload(false);
-      setAddTitle("");
-    }).catch(console.error);
+    artistAPI
+      .addPortfolio({
+        title: addTitle || "Portfolio item",
+        category: "General",
+        workType: detectWorkType(fileMeta?.type || ""),
+        mediaUrl: url,
+      })
+      .then((item) => {
+        setPortfolio((prev) => [item, ...prev]);
+        setShowUpload(false);
+        setAddTitle("");
+      })
+      .catch(console.error);
   };
 
   const removeItem = (id) => {
-    artistAPI.deletePortfolio(id).then(() => setPortfolio((prev) => prev.filter((item) => item._id !== id))).catch(console.error);
+    artistAPI
+      .deletePortfolio(id)
+      .then(() =>
+        setPortfolio((prev) => prev.filter((item) => item._id !== id)),
+      )
+      .catch(console.error);
   };
 
   return (
@@ -83,14 +107,6 @@ export default function Portfolio() {
         .grid-item:nth-child(4) { animation-delay: 0.36s; }
         .grid-item:nth-child(5) { animation-delay: 0.44s; }
         .grid-item:nth-child(6) { animation-delay: 0.52s; }
-
-        .upload-zone {
-          transition: border-color 0.2s ease, background 0.2s ease;
-        }
-        .upload-zone:hover {
-          border-color: rgba(179,169,97,0.5) !important;
-          background: rgba(179,169,97,0.04) !important;
-        }
 
         .upload-btn {
           transition: filter 0.18s ease, transform 0.18s ease;
@@ -129,6 +145,16 @@ export default function Portfolio() {
         .type-badge {
           transition: opacity 0.2s ease;
         }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+          .port-header h1 {
+            font-size: 22px !important;
+          }
+          .port-header p {
+            font-size: 12px !important;
+          }
+        }
       `}</style>
 
       <Sidebar />
@@ -140,9 +166,9 @@ export default function Portfolio() {
           fontFamily: "'Plus Jakarta Sans', sans-serif",
         }}
       >
-        <div className="px-8 py-8 max-w-[1200px]">
+        <div className="px-4 sm:px-6 md:px-8 py-6 md:py-8 max-w-[1200px] mx-auto">
           {/* ── Header ── */}
-          <div className="port-header flex items-center gap-4 mb-8">
+          <div className="port-header flex items-center gap-3 sm:gap-4 mb-6 md:mb-8">
             <button
               onClick={() => navigate("/artist/profile")}
               className="back-btn flex items-center justify-center w-9 h-9 rounded-xl border-0 outline-none cursor-pointer flex-shrink-0"
@@ -154,9 +180,9 @@ export default function Portfolio() {
               <ArrowLeft size={18} strokeWidth={2} />
             </button>
 
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <h1
-                className="text-[28px] font-bold leading-tight mb-1"
+                className="text-[22px] sm:text-[28px] font-bold leading-tight mb-1"
                 style={{
                   color: C.darkText,
                   fontFamily: "'Playfair Display', serif",
@@ -164,13 +190,16 @@ export default function Portfolio() {
               >
                 Portfolio
               </h1>
-              <p className="text-[13.5px]" style={{ color: C.lightText }}>
+              <p
+                className="text-[12px] sm:text-[13.5px] truncate"
+                style={{ color: C.lightText }}
+              >
                 Showcase your best work to potential hirers
               </p>
             </div>
 
             <button
-              className="upload-btn flex items-center gap-2 px-5 py-[10px] rounded-xl text-[13.5px] font-bold border-0 outline-none cursor-pointer"
+              className="upload-btn flex items-center gap-2 px-4 sm:px-5 py-[10px] rounded-xl text-[13px] sm:text-[13.5px] font-bold border-0 outline-none cursor-pointer flex-shrink-0"
               style={{
                 background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
                 color: "#1a1d24",
@@ -178,21 +207,42 @@ export default function Portfolio() {
               onClick={() => setShowUpload(true)}
             >
               <Upload size={16} strokeWidth={2.2} />
-              Upload
+              <span className="hidden sm:inline">Upload</span>
             </button>
           </div>
 
+          {/* ── Upload Form ── */}
           {showUpload && (
-            <div className="mb-6 p-6 rounded-2xl" style={{ background: C.card, border: `1px solid ${C.border}` }}>
-              <p className="text-sm mb-2" style={{ color: C.lightText }}>Title (optional)</p>
-              <input type="text" value={addTitle} onChange={(e) => setAddTitle(e.target.value)} placeholder="e.g. Music Video Shoot" className="w-full max-w-xs rounded-lg py-2 px-3 mb-4 text-sm bg-transparent border border-[#5f5641] text-[#e2e3e5] outline-none focus:border-[#c9a961]" />
+            <div
+              className="port-upload mb-6 p-4 sm:p-6 rounded-2xl"
+              style={{ background: C.card, border: `1px solid ${C.border}` }}
+            >
+              <p className="text-sm mb-2" style={{ color: C.lightText }}>
+                Title (optional)
+              </p>
+              <input
+                type="text"
+                value={addTitle}
+                onChange={(e) => setAddTitle(e.target.value)}
+                placeholder="e.g. Music Video Shoot"
+                className="w-full max-w-xs rounded-lg py-2 px-3 mb-4 text-sm bg-transparent border border-[#5f5641] text-[#e2e3e5] outline-none focus:border-[#c9a961] transition-colors"
+              />
               <ImageUpload
                 onUpload={handleUpload}
                 accept="*/*"
                 maxSizeMB={20}
                 uploadOptions={{ type: "portfolio", bucket: "portfolios" }}
               />
-              <button type="button" onClick={() => { setShowUpload(false); setAddTitle(""); }} className="mt-3 text-sm text-[#808590] hover:text-[#c9a961]">Cancel</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUpload(false);
+                  setAddTitle("");
+                }}
+                className="mt-3 text-sm text-[#808590] hover:text-[#c9a961] transition-colors"
+              >
+                Cancel
+              </button>
             </div>
           )}
 
@@ -201,191 +251,161 @@ export default function Portfolio() {
               <div className="w-10 h-10 border-2 border-[#b3a961] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
-          <>
-          <div
-            className="port-upload upload-zone mb-8 rounded-2xl p-12 text-center cursor-pointer"
-            style={{
-              border: `2px dashed rgba(255,255,255,0.12)`,
-              background: "rgba(34,37,46,0.4)",
-            }}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragOver(false);
-            }}
-          >
-            <div className="flex justify-center mb-4">
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(179,169,97,0.12)" }}
-              >
-                <Upload size={28} strokeWidth={1.8} style={{ color: C.gold }} />
-              </div>
-            </div>
-            <h3
-              className="text-[16px] font-semibold mb-2"
-              style={{ color: C.darkText }}
-            >
-              Drag &amp; drop files here
-            </h3>
-            <p className="text-[13px] mb-5" style={{ color: C.lightText }}>
-              or click to browse (Images and videos supported)
-            </p>
-            <div className="flex items-center justify-center gap-6">
-              <div
-                className="flex items-center gap-2"
-                style={{ color: C.lightText }}
-              >
-                <ImageIcon size={15} strokeWidth={1.8} />
-                <span className="text-[13px]">Images</span>
-              </div>
-              <div
-                className="flex items-center gap-2"
-                style={{ color: C.lightText }}
-              >
-                <Video size={15} strokeWidth={1.8} />
-                <span className="text-[13px]">Videos</span>
-              </div>
-            </div>
-          </div>
+            <>
+              {/* ── Portfolio Grid ── */}
+              {portfolio.length > 0 && (
+                <div className="port-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                  {portfolio.map((item) => (
+                    <div
+                      key={item._id}
+                      className="grid-item relative rounded-xl overflow-hidden cursor-pointer"
+                      style={{ aspectRatio: "4/3", background: C.card }}
+                      onMouseEnter={() => setHoveredId(item._id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                    >
+                      {/* Media Content */}
+                      {item.workType === "image" ? (
+                        <img
+                          src={item.mediaUrl || item.thumbnailUrl}
+                          alt={item.title}
+                          className="card-img w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-[rgba(255,255,255,0.04)]">
+                          {item.workType === "video" ? (
+                            <Video
+                              size={42}
+                              style={{ color: "rgba(255,255,255,0.35)" }}
+                            />
+                          ) : item.workType === "audio" ? (
+                            <Music
+                              size={42}
+                              style={{ color: "rgba(255,255,255,0.35)" }}
+                            />
+                          ) : (
+                            <FileText
+                              size={42}
+                              style={{ color: "rgba(255,255,255,0.35)" }}
+                            />
+                          )}
+                        </div>
+                      )}
 
-          {/* ── Portfolio Grid ── */}
-          <div className="port-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {portfolio.map((item) => (
-              <div
-                key={item._id}
-                className="grid-item relative rounded-xl overflow-hidden cursor-pointer"
-                style={{ aspectRatio: "4/3", background: C.card }}
-                onMouseEnter={() => setHoveredId(item._id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                {/* Image */}
-                {item.workType === "image" ? (
-                  <img
-                    src={item.mediaUrl || item.thumbnailUrl}
-                    alt={item.title}
-                    className="card-img w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-[rgba(255,255,255,0.04)]">
-                    {item.workType === "video" ? (
-                      <Video size={42} style={{ color: "rgba(255,255,255,0.35)" }} />
-                    ) : item.workType === "audio" ? (
-                      <Music size={42} style={{ color: "rgba(255,255,255,0.35)" }} />
-                    ) : (
-                      <FileText size={42} style={{ color: "rgba(255,255,255,0.35)" }} />
-                    )}
-                  </div>
-                )}
+                      {/* Hover overlay */}
+                      <div
+                        className="card-overlay absolute inset-0"
+                        style={{
+                          background:
+                            "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.38) 50%, transparent 100%)",
+                          opacity: hoveredId === item._id ? 1 : 0,
+                        }}
+                      >
+                        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                          <h4
+                            className="text-[13px] sm:text-[14px] font-semibold mb-2 sm:mb-3 truncate"
+                            style={{ color: "#ffffff" }}
+                          >
+                            {item.title}
+                          </h4>
+                          <div className="flex gap-2">
+                            {/* View */}
+                            <a
+                              className="action-btn w-8 h-8 rounded-lg flex items-center justify-center border-0 outline-none cursor-pointer"
+                              style={{
+                                background: "rgba(255,255,255,0.2)",
+                                backdropFilter: "blur(6px)",
+                              }}
+                              href={item.mediaUrl || item.thumbnailUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ImageIcon
+                                size={15}
+                                color="#fff"
+                                strokeWidth={2}
+                              />
+                            </a>
+                            {/* Remove */}
+                            <button
+                              className="action-btn w-8 h-8 rounded-lg flex items-center justify-center border-0 outline-none cursor-pointer"
+                              style={{
+                                background: "rgba(255,255,255,0.2)",
+                                backdropFilter: "blur(6px)",
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeItem(item._id);
+                              }}
+                            >
+                              <X size={15} color="#fff" strokeWidth={2} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
 
-                {/* Hover overlay */}
+                      {/* Type badge — top right, always visible */}
+                      <div className="type-badge absolute top-3 right-3">
+                        <div
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center"
+                          style={{
+                            background: "rgba(0,0,0,0.5)",
+                            backdropFilter: "blur(6px)",
+                          }}
+                        >
+                          {item.workType === "video" ? (
+                            <Video size={14} color="#fff" strokeWidth={2} />
+                          ) : item.workType === "audio" ? (
+                            <Music size={14} color="#fff" strokeWidth={2} />
+                          ) : item.workType === "document" ? (
+                            <FileText size={14} color="#fff" strokeWidth={2} />
+                          ) : (
+                            <ImageIcon size={14} color="#fff" strokeWidth={2} />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Empty state */}
+              {portfolio.length === 0 && (
                 <div
-                  className="card-overlay absolute inset-0"
+                  className="text-center py-16 sm:py-20 rounded-2xl mt-2 px-4"
                   style={{
-                    background:
-                      "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.38) 50%, transparent 100%)",
-                    opacity: hoveredId === item._id ? 1 : 0,
+                    background: C.card,
+                    border: `1px solid ${C.border}`,
                   }}
                 >
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h4
-                      className="text-[14px] font-semibold mb-3"
-                      style={{ color: "#ffffff" }}
-                    >
-                      {item.title}
-                    </h4>
-                    <div className="flex gap-2">
-                      {/* View */}
-                      <a
-                        className="action-btn w-8 h-8 rounded-lg flex items-center justify-center border-0 outline-none cursor-pointer"
-                        style={{
-                          background: "rgba(255,255,255,0.2)",
-                          backdropFilter: "blur(6px)",
-                        }}
-                        href={item.mediaUrl || item.thumbnailUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ImageIcon size={15} color="#fff" strokeWidth={2} />
-                      </a>
-                      {/* Remove */}
-                      <button
-                        className="action-btn w-8 h-8 rounded-lg flex items-center justify-center border-0 outline-none cursor-pointer"
-                        style={{
-                          background: "rgba(255,255,255,0.2)",
-                          backdropFilter: "blur(6px)",
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeItem(item._id);
-                        }}
-                      >
-                        <X size={15} color="#fff" strokeWidth={2} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Type badge — top right, always visible */}
-                <div className="type-badge absolute top-3 right-3">
                   <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{
-                      background: "rgba(0,0,0,0.5)",
-                      backdropFilter: "blur(6px)",
-                    }}
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                    style={{ background: "rgba(179,169,97,0.08)" }}
                   >
-                    {item.workType === "video" ? (
-                      <Video size={14} color="#fff" strokeWidth={2} />
-                    ) : item.workType === "audio" ? (
-                      <Music size={14} color="#fff" strokeWidth={2} />
-                    ) : item.workType === "document" ? (
-                      <FileText size={14} color="#fff" strokeWidth={2} />
-                    ) : (
-                      <ImageIcon size={14} color="#fff" strokeWidth={2} />
-                    )}
+                    <ImageIcon
+                      size={28}
+                      strokeWidth={1.5}
+                      style={{ color: "rgba(179,169,97,0.4)" }}
+                    />
                   </div>
+                  <p
+                    className="text-[14px] sm:text-[15px] font-semibold mb-1"
+                    style={{ color: C.darkText }}
+                  >
+                    No portfolio items yet
+                  </p>
+                  <p
+                    className="text-[12px] sm:text-[13px] max-w-sm mx-auto"
+                    style={{ color: C.lightText }}
+                  >
+                    Upload your work to start showcasing it to clients
+                  </p>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Empty state */}
-          {portfolio.length === 0 && (
-            <div
-              className="text-center py-20 rounded-2xl mt-2"
-              style={{ background: C.card, border: `1px solid ${C.border}` }}
-            >
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ background: "rgba(179,169,97,0.08)" }}
-              >
-                <ImageIcon
-                  size={28}
-                  strokeWidth={1.5}
-                  style={{ color: "rgba(179,169,97,0.4)" }}
-                />
-              </div>
-              <p
-                className="text-[15px] font-semibold mb-1"
-                style={{ color: C.darkText }}
-              >
-                No portfolio items yet
-              </p>
-              <p className="text-[13px]" style={{ color: C.lightText }}>
-                Upload your work to start showcasing it to clients
-              </p>
-            </div>
-          )}
-          </>
+              )}
+            </>
           )}
         </div>
       </div>
