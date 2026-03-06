@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   User,
@@ -25,7 +25,7 @@ import {
   XCircle,
 } from "lucide-react";
 import HirerSidebar from "./HirerSidebar";
-import { getUser, hirerAPI, setUser } from "../../services/api";
+import { getUser, hirerAPI, setUser, uploadFile } from "../../services/api";
 
 const C = {
   bg: "#1a1d24",
@@ -271,9 +271,11 @@ const PLANS = [
 ];
 
 export default function HirerSettings() {
+  const fileInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState("profile");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [settingsNavOpen, setSettingsNavOpen] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
@@ -322,6 +324,7 @@ export default function HirerSettings() {
     bio: "",
     location: "",
     timezone: "",
+    avatar: "",
   });
 
   const [notif, setNotif] = useState({
@@ -390,6 +393,7 @@ export default function HirerSettings() {
           website: data.companyWebsite || "",
           bio: data.bio || "",
           location: data.location || "",
+          avatar: data.avatar || "",
         }));
         if (data.notifications) {
           setNotif({
@@ -457,6 +461,7 @@ export default function HirerSettings() {
           location: profile.location,
           bio: profile.bio,
           companyWebsite: profile.website,
+          avatar: profile.avatar,
         });
         const localUser = getUser();
         if (localUser)
@@ -464,6 +469,7 @@ export default function HirerSettings() {
             ...localUser,
             name: updated?.name || fullName,
             email: updated?.email || localUser.email,
+            avatar: updated?.avatar || profile.avatar || localUser.avatar,
           });
       }
       if (activeTab === "notifications") {
@@ -702,6 +708,39 @@ export default function HirerSettings() {
   const patchPrivacy = (key, val) => setPrivacy((p) => ({ ...p, [key]: val }));
   const patchCard = (key, val) => setNewCard((c) => ({ ...c, [key]: val }));
 
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!String(file.type || "").startsWith("image/")) {
+      showToast("Please select an image file", "error");
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const uploaded = await uploadFile(file, {
+        bucket: "profile-images",
+        type: "profile",
+        fieldName: "file",
+      });
+      const updated = await hirerAPI.updateProfile({ avatar: uploaded.url });
+      const avatarUrl = updated?.avatar || uploaded.url;
+      setProfile((prev) => ({ ...prev, avatar: avatarUrl }));
+
+      const localUser = getUser();
+      if (localUser) {
+        setUser({ ...localUser, avatar: avatarUrl });
+      }
+      showToast("Profile photo updated");
+    } catch (error) {
+      console.error("Failed to upload hirer avatar", error);
+      showToast("Failed to upload profile photo", "error");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const handleTabChange = (key) => {
     setActiveTab(key);
     setSettingsNavOpen(false);
@@ -889,15 +928,33 @@ export default function HirerSettings() {
                               color: "#1a1d24",
                             }}
                           >
-                            {profile.firstName?.[0]?.toUpperCase() || "?"}
-                            {profile.lastName?.[0]?.toUpperCase() || ""}
+                            {profile.avatar ? (
+                              <img
+                                src={profile.avatar}
+                                alt="Avatar"
+                                className="w-full h-full rounded-2xl object-cover"
+                              />
+                            ) : (
+                              <>
+                                {profile.firstName?.[0]?.toUpperCase() || "?"}
+                                {profile.lastName?.[0]?.toUpperCase() || ""}
+                              </>
+                            )}
                           </div>
                           <button
+                            onClick={() => fileInputRef.current?.click()}
                             className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center border-0 outline-none cursor-pointer"
                             style={{ background: C.gold, color: "#1a1d24" }}
                           >
                             <Camera size={12} strokeWidth={2.5} />
                           </button>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarChange}
+                          />
                         </div>
                         <div>
                           <p
@@ -914,10 +971,11 @@ export default function HirerSettings() {
                               .join(" at ") || "No role set"}
                           </p>
                           <button
+                            onClick={() => fileInputRef.current?.click()}
                             className="text-xs mt-1.5 outline-none border-0 bg-transparent cursor-pointer"
                             style={{ color: C.gold }}
                           >
-                            Change photo
+                            {avatarUploading ? "Uploading..." : "Change photo"}
                           </button>
                         </div>
                       </div>

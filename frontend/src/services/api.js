@@ -309,6 +309,17 @@ export const hirerAPI = {
   getDashboard: async () => {
     return fetchAPI("/dashboard/hirer");
   },
+
+  getApplications: async () => {
+    return fetchAPI("/hirer/applications");
+  },
+
+  updateApplicationStatus: async (id, payload) => {
+    return fetchAPI(`/hirer/application/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
 };
 
 // Opportunities API calls (shared)

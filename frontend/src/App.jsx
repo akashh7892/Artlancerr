@@ -33,6 +33,7 @@ import Booking from "./pages/hirer/Booking";
 import PostRequirement from "./pages/hirer/PostRequirement";
 import BrowseArtist from "./pages/hirer/Browseartist";
 import ArtistProfile from "./pages/hirer/ArtistProfile";
+import HirerApplications from "./pages/hirer/Applications";
 
 function App() {
   return (
@@ -70,6 +71,7 @@ function App() {
       <Route path="/hirer/browse-artists" element={<ProtectedRoute requiredRole="hirer"><BrowseArtist /></ProtectedRoute>} />
       <Route path="/hirer/browse-artists/:id" element={<ProtectedRoute requiredRole="hirer"><ArtistProfile /></ProtectedRoute>} />
       <Route path="/hirer/bookings" element={<ProtectedRoute requiredRole="hirer"><Booking /></ProtectedRoute>} />
+      <Route path="/hirer/applications" element={<ProtectedRoute requiredRole="hirer"><HirerApplications /></ProtectedRoute>} />
       <Route path="/hirer/messages" element={<ProtectedRoute requiredRole="hirer"><HirerMessages /></ProtectedRoute>} />
       <Route path="/hirer/payments" element={<ProtectedRoute requiredRole="hirer"><HirerPayment /></ProtectedRoute>} />
     </Routes>

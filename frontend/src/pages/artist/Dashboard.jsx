@@ -112,6 +112,11 @@ export default function Dashboard() {
       color: "#34d399",
       border: "rgba(52,211,153,0.25)",
     },
+    rejected: {
+      bg: "rgba(248,113,113,0.15)",
+      color: "#f87171",
+      border: "rgba(248,113,113,0.25)",
+    },
   };
   const applicationList = applications.map((app) => {
     const opp = app.opportunity || {};
@@ -295,6 +300,7 @@ export default function Dashboard() {
                 {applicationList.map(
                   ({ _id, title, company, budget, time, status, img }) => {
                     const s = STATUS_STYLES[status] || STATUS_STYLES.pending;
+                    const displayStatus = status === "hired" ? "accepted" : status;
                     return (
                       <div
                         key={_id}
@@ -325,8 +331,8 @@ export default function Dashboard() {
                                 color: s.color,
                                 border: `1px solid ${s.border}`,
                               }}
-                            >
-                              {status}
+                              >
+                              {displayStatus}
                             </span>
                           </div>
                           <p

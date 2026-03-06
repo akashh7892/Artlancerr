@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   Calendar,
+  UserCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
     path: "/hirer/post-requirement",
   },
   { icon: Users, label: "Browse Artists", path: "/hirer/browse-artists" },
+  { icon: UserCheck, label: "Applications", path: "/hirer/applications" },
   { icon: Calendar, label: "Bookings", path: "/hirer/bookings" },
   { icon: MessageSquare, label: "Messages", path: "/hirer/messages" },
   { icon: CreditCard, label: "Payments", path: "/hirer/payments" },

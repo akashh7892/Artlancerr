@@ -5,6 +5,7 @@ const Opportunity = require('../models/Opportunity');
 const Application = require('../models/Application');
 const Task = require('../models/Task');
 const Payment = require('../models/Payment');
+const Message = require('../models/Message');
 const { protect } = require('../middleware/auth');
 const { Types } = require('mongoose');
 
@@ -201,6 +202,11 @@ router.put('/application/:id', protect, async (req, res) => {
     }
 
     const { status, notes, rejectionReason } = req.body;
+    const allowedStatuses = new Set(['pending', 'shortlisted', 'in_review', 'hired', 'rejected']);
+    if (!allowedStatuses.has(String(status || '').toLowerCase())) {
+      return res.status(400).json({ message: 'Invalid application status' });
+    }
+    const nextStatus = String(status).toLowerCase();
 
     // Verify the hirer owns this application
     const application = await Application.findById(req.params.id)
@@ -214,26 +220,51 @@ router.put('/application/:id', protect, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    application.status = status;
+    const previousStatus = application.status;
+    application.status = nextStatus;
     if (notes) application.notes = notes;
     if (rejectionReason) application.rejectionReason = rejectionReason;
     
     application.statusHistory.push({
-      status,
+      status: nextStatus,
       date: Date.now(),
       note: notes || ''
     });
 
     await application.save();
 
-    // Update opportunity application count
-    if (status === 'hired') {
-      await Opportunity.findByIdAndUpdate(application.opportunity._id, {
-        $inc: { applicationCount: 1, availableSlots: -1 }
-      });
+    // Keep available slots in sync when changing hired state
+    if (previousStatus !== 'hired' && nextStatus === 'hired') {
+      await Opportunity.findByIdAndUpdate(application.opportunity._id, { $inc: { availableSlots: -1 } });
+    } else if (previousStatus === 'hired' && nextStatus !== 'hired') {
+      await Opportunity.findByIdAndUpdate(application.opportunity._id, { $inc: { availableSlots: 1 } });
     }
 
-    res.json(application);
+    // Notify artist via chat thread so status updates are visible immediately
+    if (previousStatus !== nextStatus) {
+      const statusLabel = nextStatus === 'hired' ? 'accepted' : nextStatus;
+      const infoMessage = await Message.create({
+        sender: req.user._id,
+        senderModel: 'Hirer',
+        receiver: application.artist,
+        receiverModel: 'Artist',
+        opportunity: application.opportunity._id,
+        content: `Your application for "${application.opportunity.title}" was ${statusLabel}.`,
+      });
+
+      const populatedMessage = await Message.findById(infoMessage._id)
+        .populate('sender', 'name avatar username')
+        .populate('receiver', 'name avatar username');
+
+      const io = req.app.get('io');
+      io.to(`user:${req.user._id.toString()}`).to(`user:${application.artist.toString()}`).emit('new_message', populatedMessage);
+    }
+
+    const populatedApplication = await Application.findById(application._id)
+      .populate('artist', 'name username avatar location artCategory')
+      .populate('opportunity');
+
+    res.json(populatedApplication);
   } catch (error) {
     console.error('Update application error:', error);
     res.status(500).json({ message: 'Server error' });
