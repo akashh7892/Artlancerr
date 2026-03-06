@@ -9,18 +9,18 @@ const Landing = () => {
           {/* Logo and Title */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-5">
             <img
-              src="/logo.png"
+              src="/logo.jpeg"
               alt="Logo"
               className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16"
             />
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal text-[#e8e9eb] tracking-tight text-center">
-              Szylo
+              Flip
             </h1>
           </div>
 
           {/* Tagline */}
           <span className="block text-lg sm:text-xl md:text-2xl text-[#808590] font-light tracking-wide px-4">
-            Where talent meets the film industry.
+            Where talent meets opportunities
           </span>
         </div>
 

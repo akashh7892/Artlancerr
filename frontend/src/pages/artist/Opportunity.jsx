@@ -12,6 +12,16 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Building2,
+  Briefcase,
+  Users,
+  Tag,
+  CheckCircle2,
+  AlertCircle,
+  Send,
+  ExternalLink,
+  Star,
+  Layers,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 
@@ -27,10 +37,8 @@ const C = {
   inputBg: "#1a1d24",
   inputBorder: "rgba(255,255,255,0.08)",
   panelBg: "#1e2129",
+  panelBg2: "#191c23",
 };
-const RupeeIcon = () => (
-  <span style={{ color: C.gold, fontSize: "18px", fontWeight: 700 }}>₹</span>
-);
 
 // 21 Categories
 const FILTERS = [
@@ -60,15 +68,41 @@ const FILTERS = [
 
 const LOCATIONS = [
   "All locations",
-  "Los Angeles, CA",
-  "New York, NY",
-  "San Francisco, CA",
-  "Atlanta, GA",
   "Remote",
-  "Austin, TX",
-  "Chicago, IL",
-  "Miami, FL",
-  "Seattle, WA",
+  "Mumbai, Maharashtra",
+  "Delhi, NCR",
+  "Bengaluru, Karnataka",
+  "Hyderabad, Telangana",
+  "Chennai, Tamil Nadu",
+  "Kolkata, West Bengal",
+  "Pune, Maharashtra",
+  "Ahmedabad, Gujarat",
+  "Jaipur, Rajasthan",
+  "Lucknow, Uttar Pradesh",
+  "Chandigarh, Punjab",
+  "Kochi, Kerala",
+  "Bhopal, Madhya Pradesh",
+  "Indore, Madhya Pradesh",
+  "Nagpur, Maharashtra",
+  "Visakhapatnam, Andhra Pradesh",
+  "Surat, Gujarat",
+  "Vadodara, Gujarat",
+  "Coimbatore, Tamil Nadu",
+  "Guwahati, Assam",
+  "Patna, Bihar",
+  "Bhubaneswar, Odisha",
+  "Thiruvananthapuram, Kerala",
+  "Dehradun, Uttarakhand",
+  "Ranchi, Jharkhand",
+  "Amritsar, Punjab",
+  "Mysuru, Karnataka",
+  "Mangaluru, Karnataka",
+  "Noida, Uttar Pradesh",
+  "Gurugram, Haryana",
+  "Faridabad, Haryana",
+  "Ghaziabad, Uttar Pradesh",
+  "Agra, Uttar Pradesh",
+  "Varanasi, Uttar Pradesh",
 ];
 const DURATIONS = [
   "Any duration",
@@ -116,7 +150,7 @@ function StyledSelect({ value, onChange, options }) {
   );
 }
 
-// FilterTabs   THIS IS THE MISSING COMPONENT THAT CAUSED THE ERROR
+// FilterTabs
 function FilterTabs({ filters, selected, onSelect }) {
   const scrollRef = useRef(null);
   const [canLeft, setCanLeft] = useState(false);
@@ -145,7 +179,6 @@ function FilterTabs({ filters, selected, onSelect }) {
 
   return (
     <div className="flex items-center gap-2 mb-7">
-      {/* Left arrow */}
       <button
         onClick={() => scroll(-1)}
         className="flex items-center justify-center w-8 h-8 rounded-xl border-0 outline-none"
@@ -153,18 +186,13 @@ function FilterTabs({ filters, selected, onSelect }) {
       >
         <ChevronLeft size={16} strokeWidth={2} />
       </button>
-
-      {/* Scrollable strip */}
       <div
         ref={scrollRef}
         onScroll={updateArrows}
         className="flex items-center gap-2 overflow-x-auto flex-1"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {/* Hide webkit scrollbar via inline style tag */}
-        <style>{`
-          .ft-no-scroll::-webkit-scrollbar { display: none; }
-        `}</style>
+        <style>{`.ft-no-scroll::-webkit-scrollbar { display: none; }`}</style>
         <div className="ft-no-scroll flex items-center gap-2 w-max">
           {filters.map((f) => {
             const active = selected === f;
@@ -190,8 +218,6 @@ function FilterTabs({ filters, selected, onSelect }) {
           })}
         </div>
       </div>
-
-      {/* Right arrow */}
       <button
         onClick={() => scroll(1)}
         className="flex items-center justify-center w-8 h-8 rounded-xl border-0 outline-none"
@@ -203,8 +229,559 @@ function FilterTabs({ filters, selected, onSelect }) {
   );
 }
 
-// Helpers
+// ─── DETAIL PANEL ────────────────────────────────────────────────────────────
+function DetailPanel({ opp, onClose, onApply, applyingId }) {
+  const [tab, setTab] = useState("overview");
+  if (!opp) return null;
 
+  const posted = getPostedLabel(opp.createdAt);
+
+  const requirements = opp.requirements || opp.skills || [];
+  const responsibilities = opp.responsibilities || [];
+  const perks = opp.perks || [];
+
+  // Only show tabs that have actual content
+  const tabs = ["overview"];
+  if (requirements.length > 0 || opp.experienceLevel || opp.applicationNote)
+    tabs.push("requirements");
+  if (
+    opp.companyDescription ||
+    opp.companySize ||
+    opp.industry ||
+    opp.founded ||
+    opp.totalJobs ||
+    opp.website
+  )
+    tabs.push("about");
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className="detail-overlay fixed inset-0 z-[1700] bg-black/50"
+        onClick={onClose}
+        style={{ backdropFilter: "blur(2px)" }}
+      />
+
+      {/* Panel */}
+      <div
+        className="detail-panel fixed top-0 right-0 h-screen z-[1800] flex flex-col"
+        style={{
+          width: "clamp(360px, 42vw, 560px)",
+          background: C.panelBg2,
+          borderLeft: `1px solid ${C.border}`,
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          boxShadow: "-12px 0 60px rgba(0,0,0,0.55)",
+        }}
+      >
+        {/* Gradient accent bar */}
+        <div
+          style={{
+            height: 3,
+            background: `linear-gradient(90deg, ${C.gold}, #cfc060, transparent)`,
+          }}
+        />
+
+        {/* Header */}
+        <div className="px-7 pt-6 pb-0 flex-shrink-0">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="flex-1 min-w-0">
+              {/* Category badge */}
+              <span
+                className="inline-block text-[11px] font-semibold px-3 py-1 rounded-full mb-3"
+                style={{
+                  background: C.goldDim,
+                  color: C.gold,
+                  border: `1px solid rgba(179,169,97,0.2)`,
+                }}
+              >
+                {opp.type}
+              </span>
+              <h2
+                className="text-[22px] font-bold leading-snug mb-1"
+                style={{
+                  color: C.darkText,
+                  fontFamily: "'Playfair Display', serif",
+                }}
+              >
+                {opp.title}
+              </h2>
+              <p className="text-[13px]" style={{ color: C.lightText }}>
+                {opp.company}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="adv-btn-close flex items-center justify-center w-8 h-8 rounded-full border-0 outline-none cursor-pointer flex-shrink-0 mt-1"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                color: C.lightText,
+              }}
+            >
+              <X size={15} strokeWidth={2.2} />
+            </button>
+          </div>
+
+          {/* Key stats row */}
+          {[
+            opp.location && {
+              Icon: MapPin,
+              label: "Location",
+              val: opp.location,
+            },
+            opp.budget && {
+              Icon: IndianRupee,
+              label: "Budget",
+              val: opp.budget,
+            },
+            opp.duration && {
+              Icon: Clock,
+              label: "Duration",
+              val: opp.duration,
+            },
+            opp.createdAt && { Icon: Calendar, label: "Posted", val: posted },
+          ].filter(Boolean).length > 0 && (
+            <div
+              className="grid grid-cols-2 gap-3 p-4 rounded-2xl mb-5"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: `1px solid ${C.inputBorder}`,
+              }}
+            >
+              {[
+                opp.location && {
+                  Icon: MapPin,
+                  label: "Location",
+                  val: opp.location,
+                },
+                opp.budget && {
+                  Icon: IndianRupee,
+                  label: "Budget",
+                  val: opp.budget,
+                },
+                opp.duration && {
+                  Icon: Clock,
+                  label: "Duration",
+                  val: opp.duration,
+                },
+                opp.createdAt && {
+                  Icon: Calendar,
+                  label: "Posted",
+                  val: posted,
+                },
+              ]
+                .filter(Boolean)
+                .map(({ Icon, label, val }) => (
+                  <div key={label} className="flex items-start gap-2.5">
+                    <div
+                      className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 mt-0.5"
+                      style={{ background: C.goldDim }}
+                    >
+                      <Icon
+                        size={13}
+                        strokeWidth={1.8}
+                        style={{ color: C.gold }}
+                      />
+                    </div>
+                    <div>
+                      <p
+                        className="text-[10.5px] font-semibold uppercase tracking-wide mb-0.5"
+                        style={{ color: C.lightText }}
+                      >
+                        {label}
+                      </p>
+                      <p
+                        className="text-[13px] font-semibold"
+                        style={{ color: C.darkText }}
+                      >
+                        {val}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {/* Tabs */}
+          <div
+            className="flex gap-1 p-1 rounded-xl mb-0"
+            style={{ background: "rgba(255,255,255,0.04)" }}
+          >
+            {tabs.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className="flex-1 py-2 rounded-lg text-[12.5px] font-semibold capitalize outline-none border-0 cursor-pointer transition-all"
+                style={{
+                  background: tab === t ? C.card : "transparent",
+                  color: tab === t ? C.darkText : C.lightText,
+                  boxShadow: tab === t ? "0 1px 6px rgba(0,0,0,0.3)" : "none",
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Scrollable body */}
+        <div
+          className="flex-1 overflow-y-auto px-7 py-5"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: `${C.border} transparent`,
+          }}
+        >
+          {tab === "overview" && (
+            <div className="flex flex-col gap-5">
+              {/* Description */}
+              {opp.description && (
+                <div>
+                  <SectionTitle
+                    icon={<Layers size={14} />}
+                    title="Project Overview"
+                  />
+                  <p
+                    className="text-[13.5px] leading-relaxed"
+                    style={{ color: C.lightText }}
+                  >
+                    {opp.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Responsibilities */}
+              {responsibilities.length > 0 && (
+                <div>
+                  <SectionTitle
+                    icon={<Briefcase size={14} />}
+                    title="Key Responsibilities"
+                  />
+                  <ul className="flex flex-col gap-2">
+                    {responsibilities.map((r, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <CheckCircle2
+                          size={14}
+                          strokeWidth={2}
+                          className="flex-shrink-0 mt-0.5"
+                          style={{ color: C.gold }}
+                        />
+                        <span
+                          className="text-[13px]"
+                          style={{ color: C.lightText }}
+                        >
+                          {r}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Perks */}
+              {perks.length > 0 && (
+                <div>
+                  <SectionTitle
+                    icon={<Star size={14} />}
+                    title="What You Get"
+                  />
+                  <ul className="flex flex-col gap-2">
+                    {perks.map((p, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <div
+                          className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
+                          style={{ background: C.gold }}
+                        />
+                        <span
+                          className="text-[13px]"
+                          style={{ color: C.lightText }}
+                        >
+                          {p}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Tags */}
+              {opp.tags?.length > 0 && (
+                <div>
+                  <SectionTitle icon={<Tag size={14} />} title="Tags" />
+                  <div className="flex flex-wrap gap-2">
+                    {opp.tags.map((tag, i) => (
+                      <span
+                        key={i}
+                        className="text-[11.5px] font-medium px-3 py-1 rounded-full"
+                        style={{
+                          background: "rgba(255,255,255,0.05)",
+                          color: C.lightText,
+                          border: `1px solid ${C.inputBorder}`,
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!opp.description &&
+                responsibilities.length === 0 &&
+                perks.length === 0 &&
+                !opp.tags?.length && (
+                  <p
+                    className="text-[13px] py-4 text-center"
+                    style={{ color: "rgba(139,163,144,0.4)" }}
+                  >
+                    No additional details provided for this opportunity.
+                  </p>
+                )}
+            </div>
+          )}
+
+          {tab === "requirements" && (
+            <div className="flex flex-col gap-5">
+              <div>
+                <SectionTitle
+                  icon={<CheckCircle2 size={14} />}
+                  title="Requirements"
+                />
+                <ul className="flex flex-col gap-3">
+                  {requirements.map((r, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-3 p-3 rounded-xl"
+                      style={{
+                        background: "rgba(255,255,255,0.025)",
+                        border: `1px solid ${C.inputBorder}`,
+                      }}
+                    >
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{
+                          background: C.goldDim,
+                          border: `1px solid rgba(179,169,97,0.2)`,
+                        }}
+                      >
+                        <span
+                          className="text-[10px] font-bold"
+                          style={{ color: C.gold }}
+                        >
+                          {i + 1}
+                        </span>
+                      </div>
+                      <span
+                        className="text-[13px]"
+                        style={{ color: C.lightText }}
+                      >
+                        {r}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Experience level */}
+              {opp.experienceLevel && (
+                <div>
+                  <SectionTitle
+                    icon={<Users size={14} />}
+                    title="Experience Level"
+                  />
+                  <div className="flex gap-2 flex-wrap">
+                    <span
+                      className="text-[12.5px] font-semibold px-4 py-2 rounded-xl"
+                      style={{
+                        background: C.goldDim,
+                        color: C.gold,
+                        border: `1px solid rgba(179,169,97,0.2)`,
+                      }}
+                    >
+                      {opp.experienceLevel}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Application note */}
+              {opp.applicationNote && (
+                <div
+                  className="flex items-start gap-3 p-4 rounded-xl"
+                  style={{
+                    background: "rgba(179,169,97,0.06)",
+                    border: `1px solid rgba(179,169,97,0.15)`,
+                  }}
+                >
+                  <AlertCircle
+                    size={16}
+                    className="flex-shrink-0 mt-0.5"
+                    style={{ color: C.gold }}
+                  />
+                  <p
+                    className="text-[12.5px] leading-relaxed"
+                    style={{ color: C.lightText }}
+                  >
+                    {opp.applicationNote}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === "about" && (
+            <div className="flex flex-col gap-5">
+              {opp.companyDescription && (
+                <div>
+                  <SectionTitle
+                    icon={<Building2 size={14} />}
+                    title="About the Company"
+                  />
+                  <p
+                    className="text-[13.5px] leading-relaxed"
+                    style={{ color: C.lightText }}
+                  >
+                    {opp.companyDescription}
+                  </p>
+                </div>
+              )}
+
+              {/* Company stats */}
+              {[
+                opp.companySize && {
+                  label: "Company Size",
+                  val: opp.companySize,
+                },
+                opp.industry && { label: "Industry", val: opp.industry },
+                opp.founded && { label: "Founded", val: opp.founded },
+                opp.totalJobs && {
+                  label: "Total Jobs Posted",
+                  val: opp.totalJobs,
+                },
+              ].filter(Boolean).length > 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    opp.companySize && {
+                      label: "Company Size",
+                      val: opp.companySize,
+                    },
+                    opp.industry && { label: "Industry", val: opp.industry },
+                    opp.founded && { label: "Founded", val: opp.founded },
+                    opp.totalJobs && {
+                      label: "Total Jobs Posted",
+                      val: opp.totalJobs,
+                    },
+                  ]
+                    .filter(Boolean)
+                    .map(({ label, val }) => (
+                      <div
+                        key={label}
+                        className="p-3 rounded-xl"
+                        style={{
+                          background: "rgba(255,255,255,0.025)",
+                          border: `1px solid ${C.inputBorder}`,
+                        }}
+                      >
+                        <p
+                          className="text-[10.5px] uppercase tracking-wide font-semibold mb-1"
+                          style={{ color: C.lightText }}
+                        >
+                          {label}
+                        </p>
+                        <p
+                          className="text-[13px] font-semibold"
+                          style={{ color: C.darkText }}
+                        >
+                          {val}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {/* Website */}
+              {opp.website && (
+                <a
+                  href={opp.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-[13px] font-semibold"
+                  style={{ color: C.gold }}
+                >
+                  <ExternalLink size={14} />
+                  {opp.website}
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer CTA */}
+        <div
+          className="px-7 pb-7 pt-4 flex-shrink-0"
+          style={{ borderTop: `1px solid ${C.inputBorder}` }}
+        >
+          {opp.hasApplied ? (
+            <div
+              className="flex items-center justify-center gap-2 py-3 rounded-xl"
+              style={{
+                background: "rgba(179,169,97,0.1)",
+                border: `1px solid rgba(179,169,97,0.2)`,
+              }}
+            >
+              <CheckCircle2 size={16} style={{ color: C.gold }} />
+              <span className="text-[14px] font-bold" style={{ color: C.gold }}>
+                Application Submitted
+              </span>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                onApply(opp._id);
+              }}
+              disabled={!opp._id || applyingId === opp._id}
+              className="apply-btn w-full py-[13px] rounded-xl text-[14px] font-bold border-0 outline-none cursor-pointer flex items-center justify-center gap-2"
+              style={{
+                background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
+                color: "#1a1d24",
+                opacity: !opp._id ? 0.65 : 1,
+              }}
+            >
+              <Send size={15} strokeWidth={2.2} />
+              {applyingId === opp._id
+                ? "Submitting Application..."
+                : "Apply for this Project"}
+            </button>
+          )}
+          <p
+            className="text-center text-[11.5px] mt-2.5"
+            style={{ color: "rgba(139,163,144,0.5)" }}
+          >
+            Your profile will be shared with the poster
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Small section title helper
+function SectionTitle({ icon, title }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span style={{ color: C.gold }}>{icon}</span>
+      <h4
+        className="text-[13px] font-bold uppercase tracking-wider"
+        style={{ color: C.darkText }}
+      >
+        {title}
+      </h4>
+    </div>
+  );
+}
+
+// Helpers
 function getPostedLabel(createdAt) {
   if (!createdAt) return "Recently posted";
   const d = new Date(createdAt);
@@ -239,11 +816,10 @@ function matchesPosted(createdAt, filter) {
   return true;
 }
 
-// Main page component
+// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function Opportunities() {
   const navigate = useNavigate();
 
-  // Use local state populated by API
   const [opportunities, setOpportunities] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -256,6 +832,7 @@ export default function Opportunities() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [applyingId, setApplyingId] = useState(null);
+  const [detailOpp, setDetailOpp] = useState(null); // ← NEW: selected opp for detail panel
 
   const rawApiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").replace(
     /\/+$/,
@@ -267,7 +844,6 @@ export default function Opportunities() {
       : `${rawApiBaseUrl}/api`
     : "/api";
 
-  // Load opportunities from API
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
@@ -278,14 +854,11 @@ export default function Opportunities() {
         if (locationFilter !== "All locations")
           params.set("location", locationFilter);
         if (searchQuery.trim()) params.set("search", searchQuery.trim());
-        // Avoid filtering out higher-budget opportunities by default.
-        // Only send budget filters when user changes the default range.
         const budgetFilterChanged = budgetMin > 0 || budgetMax < 30000;
         if (budgetFilterChanged) {
           params.set("minBudget", String(budgetMin));
           params.set("maxBudget", String(budgetMax));
         }
-
         const res = await fetch(
           `${apiRoot}/opportunities${params.toString() ? `?${params}` : ""}`,
           { signal: controller.signal },
@@ -301,7 +874,6 @@ export default function Opportunities() {
         );
       } catch (err) {
         if (err.name === "AbortError") return;
-        // API unavailable keep showing mock data, no error banner
         setOpportunities([]);
       } finally {
         setIsLoading(false);
@@ -340,6 +912,10 @@ export default function Opportunities() {
           o._id === opportunityId ? { ...o, hasApplied: true } : o,
         ),
       );
+      // Update detail panel state too
+      setDetailOpp((prev) =>
+        prev?._id === opportunityId ? { ...prev, hasApplied: true } : prev,
+      );
     } catch (err) {
       setError(err.message || "Could not submit application");
     } finally {
@@ -347,7 +923,6 @@ export default function Opportunities() {
     }
   };
 
-  // Local filter over API data
   const filtered = opportunities.filter((o) => {
     const q = searchQuery.toLowerCase();
     return (
@@ -395,10 +970,11 @@ export default function Opportunities() {
         .apply-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
         .apply-btn:active { transform: scale(0.97); }
 
-        .detail-btn { transition: border-color 0.18s, color 0.18s; }
+        .detail-btn { transition: border-color 0.18s, color 0.18s, background 0.18s; }
         .detail-btn:hover {
           border-color: rgba(179,169,97,0.5) !important;
           color: #b3a961 !important;
+          background: rgba(179,169,97,0.06) !important;
         }
 
         .filter-tab {
@@ -408,6 +984,8 @@ export default function Opportunities() {
 
         .sheet-panel   { animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) both; }
         .sheet-overlay { animation: fadeInBg 0.25s ease both; }
+        .detail-panel  { animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) both; }
+        .detail-overlay{ animation: fadeInBg 0.25s ease both; }
 
         .adv-btn-close { transition: background 0.15s, transform 0.2s; }
         .adv-btn-close:hover {
@@ -450,11 +1028,13 @@ export default function Opportunities() {
           background: rgba(255,255,255,0.07) !important;
           color: #b3a961 !important;
         }
+
+        .detail-tab-btn { transition: background 0.18s, color 0.18s; }
       `}</style>
 
       <Sidebar />
 
-      {/* Advanced Filters Sheet */}
+      {/* ── Advanced Filters Sheet ── */}
       {sheetOpen && (
         <>
           <div
@@ -470,7 +1050,6 @@ export default function Opportunities() {
               boxShadow: "-8px 0 40px rgba(0,0,0,0.4)",
             }}
           >
-            {/* Sheet header */}
             <div
               className="flex items-start justify-between px-6 pt-6 pb-4"
               style={{ borderBottom: `1px solid ${C.inputBorder}` }}
@@ -497,8 +1076,6 @@ export default function Opportunities() {
                 <X size={15} strokeWidth={2.2} />
               </button>
             </div>
-
-            {/* Sheet body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <label
@@ -604,8 +1181,6 @@ export default function Opportunities() {
                 />
               </div>
             </div>
-
-            {/* Sheet footer */}
             <div
               className="px-6 pb-6 pt-4"
               style={{ borderTop: `1px solid ${C.inputBorder}` }}
@@ -625,7 +1200,15 @@ export default function Opportunities() {
         </>
       )}
 
-      {/* Main Content*/}
+      {/* ── Detail Panel ── */}
+      <DetailPanel
+        opp={detailOpp}
+        onClose={() => setDetailOpp(null)}
+        onApply={handleApply}
+        applyingId={applyingId}
+      />
+
+      {/* ── Main Content ── */}
       <div
         className="min-h-screen lg:ml-[248px]"
         style={{
@@ -706,7 +1289,7 @@ export default function Opportunities() {
             />
           </div>
 
-          {/*Filter Tabs (scrollable with arrows) */}
+          {/* Filter Tabs */}
           <FilterTabs
             filters={FILTERS}
             selected={selectedFilter}
@@ -753,7 +1336,7 @@ export default function Opportunities() {
             </div>
           )}
 
-          {/* Opportunity Cards */}
+          {/* Cards */}
           <div className="flex flex-col gap-4">
             {filtered.map((opp, i) => (
               <div
@@ -765,7 +1348,6 @@ export default function Opportunities() {
                   animationDelay: `${0.05 + i * 0.04}s`,
                 }}
               >
-                {/* Top row */}
                 <div className="flex items-start justify-between mb-3 gap-3">
                   <div className="flex items-center gap-3 flex-wrap">
                     <h3
@@ -797,7 +1379,6 @@ export default function Opportunities() {
                   {opp.company}
                 </p>
 
-                {/* Meta grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
                   {[
                     { Icon: MapPin, val: opp.location },
@@ -821,7 +1402,6 @@ export default function Opportunities() {
                   ))}
                 </div>
 
-                {/* Action buttons */}
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleApply(opp._id)}
@@ -841,7 +1421,9 @@ export default function Opportunities() {
                         ? "Applying..."
                         : "Apply Now"}
                   </button>
+                  {/* ← "View Details" now opens detail panel */}
                   <button
+                    onClick={() => setDetailOpp(opp)}
                     className="detail-btn px-5 py-[9px] rounded-xl text-[13px] font-semibold border-0 outline-none cursor-pointer"
                     style={{
                       background: "transparent",
