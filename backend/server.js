@@ -8,6 +8,7 @@ const { Server } = require("socket.io");
 const connectDB = require("./config/db");
 const Artist = require("./models/Artist");
 const Hirer = require("./models/Hirer");
+const { sendOTPEmail, sendNotificationEmail } = require("./config/mailer");
 
 // Routes
 const authRoutes = require("./routes/auth");

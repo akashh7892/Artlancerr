@@ -1,8 +1,8 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST || 'smtp-relay.brevo.com',
-  port: Number(process.env.MAIL_PORT) || 587,
+  host: process.env.MAIL_HOST,
+  port: Number(process.env.MAIL_PORT),
   secure: false,
   auth: {
     user: process.env.MAIL_USERNAME,
@@ -10,38 +10,43 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Verify SMTP connection
+transporter.verify((error, success) => {
+  if (error) {
+    console.log("SMTP connection error:", error);
+  } else {
+    console.log("SMTP server is ready to send emails");
+  }
+});
+
 const from = process.env.MAIL_FROM_NAME
   ? `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM}>`
   : process.env.MAIL_FROM;
 
 /**
- * Send OTP email for password reset
- * @param {string} to - Recipient email
- * @param {string} otp - 6-digit OTP
+ * Send OTP email
  */
 async function sendOTPEmail(to, otp) {
   const html = `
-    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-      <h2 style="color: #1a1d24;">Password reset</h2>
+  <div style="font-family:sans-serif;max-width:480px;margin:auto">
+      <h2>Password Reset</h2>
       <p>Your verification code is:</p>
-      <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #c9a961;">${otp}</p>
-      <p style="color: #666;">This code expires in 10 minutes. If you didn't request this, you can ignore this email.</p>
-      <p style="color: #666; font-size: 12px;">— Artlancerr</p>
-    </div>
+      <h1 style="letter-spacing:4px;color:#c9a961">${otp}</h1>
+      <p>This code expires in 10 minutes.</p>
+      <p style="font-size:12px;color:#666">— Artlancerr</p>
+  </div>
   `;
+
   return transporter.sendMail({
     from,
     to,
-    subject: 'Your password reset code - Artlancerr',
+    subject: "Your Password Reset Code - Artlancerr",
     html,
   });
 }
 
 /**
- * Send a generic notification email
- * @param {string} to - Recipient email
- * @param {string} subject - Email subject
- * @param {string} html - HTML body
+ * Send notification email
  */
 async function sendNotificationEmail(to, subject, html) {
   return transporter.sendMail({
