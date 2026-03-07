@@ -20,14 +20,19 @@ import {
   ChevronLeft as PrevIcon,
   ChevronRight as NextIcon,
   CalendarDays,
-  Award,
+  Instagram,
+  Youtube,
+  Globe,
+  Twitter,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// Design Tokens and Constants
+// ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -47,34 +52,18 @@ const C = {
   dangerBorder: "rgba(239,68,68,0.2)",
 };
 
-// Full DATA MAPPING AND TRANSFORMATION LOGIC FOR ARTIST PROFILE
-const FALLBACK_ARTIST = {
-  id: "",
-  name: "",
-  role: "",
-  location: "",
-  experience: "",
-  rating: null,
-  reviewCount: 0,
-  profileViews: 0,
-  photo: "",
-  coverPhoto: "",
-  skills: [],
-  category: "",
-  available: false,
-  bio: "",
-  projects: 0,
-  responseTime: "",
-  dailyRate: "",
-  weeklyRate: "",
-  projectRate: "",
-  topRated: false,
-  bookedDates: [],
-  equipment: [],
-  portfolio: [],
-  reviews_list: [],
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Strips any leading currency symbol and re-prefixes with ₹ */
+const asMoney = (value) => {
+  if (value === null || value === undefined) return null;
+  const s = String(value).trim();
+  if (!s) return null;
+  const clean = s.replace(/^[₹$£€]/, "");
+  return clean ? `₹${clean}` : null;
 };
 
+/** Returns day-of-month integers from ISO date strings */
 const parseBookedDays = (blockedDates = []) => {
   if (!Array.isArray(blockedDates)) return [];
   const days = blockedDates
@@ -86,96 +75,102 @@ const parseBookedDays = (blockedDates = []) => {
   return [...new Set(days)];
 };
 
-// Always uses ₹ symbol
-const asMoney = (value, fallback) => {
-  if (value === null || value === undefined) return fallback;
-  const s = String(value).trim();
-  if (!s) return fallback;
-  // Remove any existing $ prefix and replace with ₹
-  const clean = s.startsWith("₹")
-    ? s.slice(1)
-    : s.startsWith("₹")
-      ? s.slice(1)
-      : s;
-  return `₹${clean}`;
-};
+/** Maps a raw API artist object to the shape this UI needs.
+ *  Returns ONLY real data – no invented placeholders. */
+const mapArtistProfile = (api) => {
+  if (!api) return null;
 
-const mapPortfolioItem = (item) => ({
-  title: item?.title || item?.projectName || "Portfolio Work",
-  type: item?.category || item?.workType || "Project",
-  thumb: item?.thumbnailUrl || item?.mediaUrl || null,
-});
-
-const mapEquipmentItem = (item, idx) => ({
-  id: item?._id || item?.id || `eq-${idx}`,
-  name: item?.name || "Equipment",
-  model: item?.model || "",
-  category: item?.category || "Other",
-  rental: item?.rental || "",
-  available: item?.rentalOn !== false,
-  img: item?.img || null,
-});
-
-const mapArtistProfile = (apiArtist, fallback = FALLBACK_ARTIST) => {
-  const blockedDates = apiArtist?.availability?.blockedDates || [];
-  const freeDates = apiArtist?.availability?.freeDates || [];
-  const profileViews = Number(apiArtist?.profileViews || 0);
-  const backendReviews = Array.isArray(apiArtist?.reviews)
-    ? apiArtist.reviews
-    : [];
-  const reviewCount = backendReviews.length;
+  const reviews = Array.isArray(api.reviews) ? api.reviews : [];
+  const reviewCount = reviews.length;
   const avgRating =
     reviewCount > 0
       ? Number(
           (
-            backendReviews.reduce((sum, r) => sum + Number(r?.rating || 0), 0) /
+            reviews.reduce((s, r) => s + Number(r?.rating || 0), 0) /
             reviewCount
           ).toFixed(1),
         )
       : null;
-  const dailyRate = asMoney(apiArtist?.rates?.daily, fallback.dailyRate || "");
-  const weeklyRate = asMoney(
-    apiArtist?.rates?.weekly,
-    fallback.weeklyRate || "",
-  );
+
+  const blockedDates = api?.availability?.blockedDates || [];
+  const freeDates = api?.availability?.freeDates || [];
+
+  // Skills: use artCategory + any explicit skills array
+  const skills = [
+    ...(api.artCategory ? [api.artCategory] : []),
+    ...(Array.isArray(api.skills) ? api.skills : []),
+  ].filter((v, i, a) => v && a.indexOf(v) === i); // unique non-empty
+
+  // Social links
+  const socials = {
+    instagram: api.instagram || api.instagramUrl || null,
+    youtube: api.youtube || api.youtubeUrl || null,
+    website: api.website || api.websiteUrl || null,
+    twitter: api.twitter || api.twitterUrl || null,
+  };
 
   return {
-    ...fallback,
-    id: apiArtist?._id || fallback.id,
-    _id: apiArtist?._id || fallback._id,
-    name: apiArtist?.name || fallback.name,
-    role: apiArtist?.artCategory || fallback.role,
-    location: apiArtist?.location || fallback.location,
-    experience: apiArtist?.experience || fallback.experience,
-    photo: apiArtist?.avatar || fallback.photo,
-    bio: apiArtist?.bio || fallback.bio,
-    skills: [apiArtist?.artCategory || fallback.role].filter(Boolean),
+    _id: api._id || null,
+    name: api.name || null,
+    role: api.artCategory || api.role || null,
+    location: api.location || null,
+    experience: api.experience || null,
+    photo: api.avatar || api.profileImage || api.photo || null,
+    coverPhoto: api.coverPhoto || api.coverImage || null,
+    bio: api.bio || api.about || null,
+    skills,
     rating: avgRating,
     reviewCount,
-    profileViews,
-    projects: Math.max(1, Math.floor(profileViews / 10)),
-    available: Array.isArray(freeDates)
-      ? freeDates.length > 0
-      : fallback.available,
-    dailyRate,
-    weeklyRate,
-    projectRate:
-      apiArtist?.rates?.project || fallback.projectRate || "Negotiable",
+    profileViews: Number(api.profileViews || 0),
+    available: Array.isArray(freeDates) ? freeDates.length > 0 : false,
+    dailyRate: asMoney(api?.rates?.daily),
+    weeklyRate: asMoney(api?.rates?.weekly),
+    projectRate: api?.rates?.project || null,
+    responseTime: api.responseTime || null,
+    topRated: Number(api.profileViews || 0) > 100,
     bookedDates: parseBookedDays(blockedDates),
-    equipment: Array.isArray(apiArtist?.equipment)
-      ? apiArtist.equipment.map(mapEquipmentItem)
-      : fallback.equipment,
-    portfolio: Array.isArray(apiArtist?.portfolio)
-      ? apiArtist.portfolio.map(mapPortfolioItem)
-      : fallback.portfolio,
-    reviews_list: backendReviews,
-    topRated: (apiArtist?.profileViews || 0) > 100 || fallback.topRated,
-    website: apiArtist?.website || fallback.website,
-    instagram: apiArtist?.instagram || fallback.instagram,
-    twitter: apiArtist?.twitter || fallback.twitter,
-    youtube: apiArtist?.youtube || fallback.youtube,
+    equipment: Array.isArray(api.equipment)
+      ? api.equipment.map((item, idx) => ({
+          id: item?._id || item?.id || `eq-${idx}`,
+          name: item?.name || null,
+          model: item?.model || null,
+          category: item?.category || "Other",
+          rental: item?.rental || item?.rentalRate || null,
+          available: item?.rentalOn !== false,
+          img: item?.img || item?.imageUrl || null,
+        }))
+      : [],
+    portfolio: Array.isArray(api.portfolio)
+      ? api.portfolio.map((item) => ({
+          title: item?.title || item?.projectName || null,
+          type: item?.category || item?.workType || null,
+          thumb: item?.thumbnailUrl || item?.mediaUrl || item?.imageUrl || null,
+          link: item?.link || item?.url || null,
+        }))
+      : [],
+    reviews_list: reviews,
+    email: api.email || null,
+    phone: api.phone || null,
+    ...socials,
   };
 };
+
+// ─── Calendar constants ───────────────────────────────────────────────────────
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const CAT_ICONS = {
   Camera,
@@ -194,22 +189,7 @@ const CAT_COLORS = {
   Other: C.gold,
 };
 
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
+// ─── Reusable UI primitives ───────────────────────────────────────────────────
 function SectionCard({ children, delay = 0 }) {
   return (
     <motion.div
@@ -257,6 +237,7 @@ function SectionTitle({ icon: Icon, children, subtitle }) {
 }
 
 function StatPill({ icon: Icon, label, value }) {
+  if (!value) return null;
   return (
     <div
       style={{
@@ -318,6 +299,7 @@ function RateTab({ label, active, onClick }) {
   );
 }
 
+// ─── Portfolio card ───────────────────────────────────────────────────────────
 function PortfolioCard({ item }) {
   const [imgErr, setImgErr] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -335,7 +317,7 @@ function PortfolioCard({ item }) {
         border: `1px solid ${C.border}`,
       }}
     >
-      {imgErr ? (
+      {imgErr || !item.thumb ? (
         <div
           style={{
             width: "100%",
@@ -351,7 +333,7 @@ function PortfolioCard({ item }) {
       ) : (
         <img
           src={item.thumb}
-          alt={item.title}
+          alt={item.title || "Portfolio"}
           onError={() => setImgErr(true)}
           style={{
             width: "100%",
@@ -373,23 +355,30 @@ function PortfolioCard({ item }) {
           padding: "12px",
         }}
       >
-        <span
-          style={{
-            fontSize: "9px",
-            fontWeight: "700",
-            color: C.gold,
-            letterSpacing: "0.09em",
-            textTransform: "uppercase",
-            marginBottom: "3px",
-          }}
-        >
-          {item.type}
-        </span>
-        <span style={{ fontSize: "12px", fontWeight: "600", color: "#fff" }}>
-          {item.title}
-        </span>
-        {hovered && (
-          <motion.div
+        {item.type && (
+          <span
+            style={{
+              fontSize: "9px",
+              fontWeight: "700",
+              color: C.gold,
+              letterSpacing: "0.09em",
+              textTransform: "uppercase",
+              marginBottom: "3px",
+            }}
+          >
+            {item.type}
+          </span>
+        )}
+        {item.title && (
+          <span style={{ fontSize: "12px", fontWeight: "600", color: "#fff" }}>
+            {item.title}
+          </span>
+        )}
+        {hovered && item.link && (
+          <motion.a
+            href={item.link}
+            target="_blank"
+            rel="noopener noreferrer"
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             style={{
@@ -399,18 +388,34 @@ function PortfolioCard({ item }) {
               gap: "4px",
               color: C.gold,
               fontSize: "11px",
+              textDecoration: "none",
             }}
           >
             <ExternalLink size={11} /> View Project
-          </motion.div>
+          </motion.a>
         )}
       </div>
     </motion.div>
   );
 }
 
+// ─── Review card ──────────────────────────────────────────────────────────────
 function ReviewCard({ review }) {
   const [imgErr, setImgErr] = useState(false);
+  const name =
+    review.name || review.reviewerName || review.hirer?.name || "Anonymous";
+  const photo = review.photo || review.avatar || review.hirer?.avatar || null;
+  const date =
+    review.date || review.createdAt
+      ? new Date(review.date || review.createdAt).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "";
+  const text = review.text || review.comment || review.message || "";
+  const rating = Number(review.rating || 0);
+
   return (
     <div
       style={{
@@ -428,7 +433,19 @@ function ReviewCard({ review }) {
           marginBottom: "10px",
         }}
       >
-        {imgErr ? (
+        {photo && !imgErr ? (
+          <img
+            src={photo}
+            alt={name}
+            onError={() => setImgErr(true)}
+            style={{
+              width: "38px",
+              height: "38px",
+              borderRadius: "50%",
+              objectFit: "cover",
+            }}
+          />
+        ) : (
           <div
             style={{
               width: "38px",
@@ -442,52 +459,49 @@ function ReviewCard({ review }) {
           >
             <Users size={16} color={C.muted} />
           </div>
-        ) : (
-          <img
-            src={review.photo}
-            alt={review.name}
-            onError={() => setImgErr(true)}
-            style={{
-              width: "38px",
-              height: "38px",
-              borderRadius: "50%",
-              objectFit: "cover",
-            }}
-          />
         )}
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: "13px", fontWeight: "600", color: C.text }}>
-            {review.name}
+            {name}
           </div>
-          <div style={{ fontSize: "11px", color: C.muted }}>{review.date}</div>
+          {date && (
+            <div style={{ fontSize: "11px", color: C.muted }}>{date}</div>
+          )}
         </div>
         <div style={{ display: "flex", gap: "2px" }}>
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
               size={12}
-              fill={i < review.rating ? C.gold : "transparent"}
-              color={i < review.rating ? C.gold : C.muted}
+              fill={i < rating ? C.gold : "transparent"}
+              color={i < rating ? C.gold : C.muted}
             />
           ))}
         </div>
       </div>
-      <p
-        style={{
-          margin: 0,
-          fontSize: "13px",
-          color: C.muted,
-          lineHeight: "1.6",
-        }}
-      >
-        {review.text}
-      </p>
+      {text && (
+        <p
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            color: C.muted,
+            lineHeight: "1.6",
+          }}
+        >
+          {text}
+        </p>
+      )}
     </div>
   );
 }
 
+// ─── Availability calendar ────────────────────────────────────────────────────
 function AvailabilityCalendar({ bookedDates = [] }) {
-  const [current, setCurrent] = useState({ year: 2026, month: 1 });
+  const now = new Date();
+  const [current, setCurrent] = useState({
+    year: now.getFullYear(),
+    month: now.getMonth(),
+  });
   const bookedSet = new Set(bookedDates);
 
   const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
@@ -513,15 +527,10 @@ function AvailabilityCalendar({ bookedDates = [] }) {
   );
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const isToday = (d) => {
-    const now = new Date();
-    return (
-      current.year === now.getFullYear() &&
-      current.month === now.getMonth() &&
-      d === now.getDate()
-    );
-  };
-
+  const isToday = (d) =>
+    current.year === now.getFullYear() &&
+    current.month === now.getMonth() &&
+    d === now.getDate();
   const availableCount = totalDays - bookedSet.size;
 
   return (
@@ -533,7 +542,6 @@ function AvailabilityCalendar({ bookedDates = [] }) {
         Availability Calendar
       </SectionTitle>
 
-      {/* Summary chips */}
       <div
         style={{
           display: "flex",
@@ -542,59 +550,49 @@ function AvailabilityCalendar({ bookedDates = [] }) {
           flexWrap: "wrap",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "6px 14px",
-            background: C.successBg,
-            border: `1px solid ${C.successBorder}`,
-            borderRadius: "20px",
-          }}
-        >
+        {[
+          {
+            label: `${availableCount} days available`,
+            bg: C.successBg,
+            border: C.successBorder,
+            dot: C.success,
+            color: C.success,
+          },
+          {
+            label: `${bookedSet.size} days booked`,
+            bg: C.dangerBg,
+            border: C.dangerBorder,
+            dot: C.danger,
+            color: C.danger,
+          },
+        ].map(({ label, bg, border, dot, color }) => (
           <div
+            key={label}
             style={{
-              width: "7px",
-              height: "7px",
-              borderRadius: "50%",
-              background: C.success,
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 14px",
+              background: bg,
+              border: `1px solid ${border}`,
+              borderRadius: "20px",
             }}
-          />
-          <span
-            style={{ fontSize: "12px", fontWeight: "600", color: C.success }}
           >
-            {availableCount} days available
-          </span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "6px 14px",
-            background: C.dangerBg,
-            border: `1px solid ${C.dangerBorder}`,
-            borderRadius: "20px",
-          }}
-        >
-          <div
-            style={{
-              width: "7px",
-              height: "7px",
-              borderRadius: "50%",
-              background: C.danger,
-            }}
-          />
-          <span
-            style={{ fontSize: "12px", fontWeight: "600", color: C.danger }}
-          >
-            {bookedSet.size} days booked
-          </span>
-        </div>
+            <div
+              style={{
+                width: "7px",
+                height: "7px",
+                borderRadius: "50%",
+                background: dot,
+              }}
+            />
+            <span style={{ fontSize: "12px", fontWeight: "600", color }}>
+              {label}
+            </span>
+          </div>
+        ))}
       </div>
 
-      {/* Nav */}
       <div
         style={{
           display: "flex",
@@ -603,54 +601,39 @@ function AvailabilityCalendar({ bookedDates = [] }) {
           marginBottom: "16px",
         }}
       >
-        <button
-          onClick={prevMonth}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-            padding: "6px 12px",
-            borderRadius: "8px",
-            background: "rgba(255,255,255,0.04)",
-            border: `1px solid ${C.border}`,
-            color: C.text,
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: "600",
-            transition: "border-color 0.2s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = C.gold)}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.border)}
-        >
-          <PrevIcon size={13} /> Prev
-        </button>
-        <span style={{ fontSize: "14px", fontWeight: "700", color: C.text }}>
-          {MONTHS[current.month]} {current.year}
-        </span>
-        <button
-          onClick={nextMonth}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-            padding: "6px 12px",
-            borderRadius: "8px",
-            background: "rgba(255,255,255,0.04)",
-            border: `1px solid ${C.border}`,
-            color: C.text,
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: "600",
-            transition: "border-color 0.2s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = C.gold)}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.border)}
-        >
-          Next <NextIcon size={13} />
-        </button>
+        {[
+          { label: "← Prev", onClick: prevMonth },
+          { label: `${MONTHS[current.month]} ${current.year}`, isTitle: true },
+          { label: "Next →", onClick: nextMonth },
+        ].map(({ label, onClick, isTitle }) =>
+          isTitle ? (
+            <span
+              key={label}
+              style={{ fontSize: "14px", fontWeight: "700", color: C.text }}
+            >
+              {label}
+            </span>
+          ) : (
+            <button
+              key={label}
+              onClick={onClick}
+              style={{
+                padding: "6px 12px",
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.04)",
+                border: `1px solid ${C.border}`,
+                color: C.text,
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: "600",
+              }}
+            >
+              {label}
+            </button>
+          ),
+        )}
       </div>
 
-      {/* Day headers */}
       <div
         style={{
           display: "grid",
@@ -674,7 +657,6 @@ function AvailabilityCalendar({ bookedDates = [] }) {
         ))}
       </div>
 
-      {/* Calendar grid */}
       <div
         style={{
           display: "grid",
@@ -713,7 +695,6 @@ function AvailabilityCalendar({ bookedDates = [] }) {
         })}
       </div>
 
-      {/* Legend */}
       <div
         style={{
           display: "flex",
@@ -763,10 +744,9 @@ function AvailabilityCalendar({ bookedDates = [] }) {
   );
 }
 
-// Equipment Section (with rental availability)
+// ─── Equipment section ────────────────────────────────────────────────────────
 function EquipmentSection({ equipment = [] }) {
   const [selectedEquip, setSelectedEquip] = useState(null);
-
   if (!equipment.length) return null;
 
   const availableItems = equipment.filter((e) => e.available);
@@ -777,10 +757,9 @@ function EquipmentSection({ equipment = [] }) {
         icon={Package}
         subtitle="Equipment available for rent alongside this artist's services"
       >
-        Equipment & Gear
+        Equipment &amp; Gear
       </SectionTitle>
 
-      {/* Available count */}
       <div
         style={{
           display: "inline-flex",
@@ -814,11 +793,7 @@ function EquipmentSection({ equipment = [] }) {
           return (
             <motion.div
               key={item.id}
-              whileHover={
-                item.available
-                  ? { y: -3, boxShadow: `0 8px 24px rgba(0,0,0,0.3)` }
-                  : {}
-              }
+              whileHover={item.available ? { y: -3 } : {}}
               style={{
                 borderRadius: "12px",
                 overflow: "hidden",
@@ -826,10 +801,9 @@ function EquipmentSection({ equipment = [] }) {
                 border: `1px solid ${isSelected ? C.gold : item.available ? C.border : "rgba(255,255,255,0.04)"}`,
                 opacity: item.available ? 1 : 0.45,
                 filter: item.available ? "none" : "grayscale(0.5)",
-                transition: "border-color 0.2s, box-shadow 0.2s",
+                transition: "border-color 0.2s",
               }}
             >
-              {/* Image / Icon */}
               <div
                 style={{
                   height: "130px",
@@ -854,16 +828,10 @@ function EquipmentSection({ equipment = [] }) {
                   <CatIcon
                     size={42}
                     strokeWidth={1.2}
-                    style={{
-                      color: item.available
-                        ? "rgba(255,255,255,0.12)"
-                        : "rgba(255,255,255,0.06)",
-                    }}
+                    style={{ color: "rgba(255,255,255,0.12)" }}
                   />
                 )}
               </div>
-
-              {/* Info */}
               <div style={{ padding: "12px" }}>
                 <div
                   style={{
@@ -874,29 +842,31 @@ function EquipmentSection({ equipment = [] }) {
                   }}
                 >
                   <div>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: "13px",
-                        fontWeight: "700",
-                        color: item.available
-                          ? C.text
-                          : "rgba(255,255,255,0.4)",
-                      }}
-                    >
-                      {item.name}
-                    </p>
-                    <p
-                      style={{
-                        margin: "2px 0 0",
-                        fontSize: "11px",
-                        color: item.available
-                          ? C.muted
-                          : "rgba(139,163,175,0.4)",
-                      }}
-                    >
-                      {item.model}
-                    </p>
+                    {item.name && (
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "13px",
+                          fontWeight: "700",
+                          color: item.available
+                            ? C.text
+                            : "rgba(255,255,255,0.4)",
+                        }}
+                      >
+                        {item.name}
+                      </p>
+                    )}
+                    {item.model && (
+                      <p
+                        style={{
+                          margin: "2px 0 0",
+                          fontSize: "11px",
+                          color: C.muted,
+                        }}
+                      >
+                        {item.model}
+                      </p>
+                    )}
                   </div>
                   <span
                     style={{
@@ -904,13 +874,9 @@ function EquipmentSection({ equipment = [] }) {
                       fontWeight: "700",
                       padding: "2px 8px",
                       borderRadius: "20px",
-                      background: item.available
-                        ? `${catColor}18`
-                        : "rgba(255,255,255,0.04)",
-                      color: item.available
-                        ? catColor
-                        : "rgba(255,255,255,0.2)",
-                      border: `1px solid ${item.available ? `${catColor}30` : "rgba(255,255,255,0.06)"}`,
+                      background: `${catColor}18`,
+                      color: catColor,
+                      border: `1px solid ${catColor}30`,
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -974,7 +940,6 @@ function EquipmentSection({ equipment = [] }) {
                   </div>
                 </div>
 
-                {/* Add to booking toggle */}
                 {item.available && (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -1004,7 +969,6 @@ function EquipmentSection({ equipment = [] }) {
         })}
       </div>
 
-      {/* Booking note */}
       <div
         style={{
           marginTop: "16px",
@@ -1031,65 +995,134 @@ function EquipmentSection({ equipment = [] }) {
   );
 }
 
-// Main page
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
+function LoadingSkeleton() {
+  const pulse = { animation: "pulse 1.8s ease-in-out infinite" };
+  const shimmer = { background: "rgba(255,255,255,0.06)", borderRadius: "8px" };
+  return (
+    <div style={{ padding: "clamp(14px,3vw,30px)" }}>
+      <div
+        style={{
+          ...shimmer,
+          height: "280px",
+          marginBottom: "22px",
+          borderRadius: "14px",
+          ...pulse,
+        }}
+      />
+      <div
+        style={{
+          ...shimmer,
+          height: "120px",
+          marginBottom: "22px",
+          borderRadius: "14px",
+          ...pulse,
+        }}
+      />
+      <div
+        style={{
+          ...shimmer,
+          height: "300px",
+          marginBottom: "22px",
+          borderRadius: "14px",
+          ...pulse,
+        }}
+      />
+      <style>{`@keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:.8} }`}</style>
+    </div>
+  );
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+function EmptyField({ message = "Not provided" }) {
+  return (
+    <span style={{ color: C.muted, fontStyle: "italic", fontSize: "13px" }}>
+      {message}
+    </span>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function ArtistProfile() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { state } = useLocation();
 
-  const initialArtist = useMemo(
-    () => ({ ...FALLBACK_ARTIST, ...(state?.artist || {}) }),
-    [state],
-  );
-  const [artist, setArtist] = useState(initialArtist);
-  const [loadingProfile, setLoadingProfile] = useState(Boolean(id));
-  const [profileError, setProfileError] = useState("");
-
+  const [artist, setArtist] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [activeRate, setActiveRate] = useState("Daily Rate");
   const [saved, setSaved] = useState(false);
   const [coverErr, setCoverErr] = useState(false);
   const [photoErr, setPhotoErr] = useState(false);
 
+  // If navigated with state, use it immediately while API loads
   useEffect(() => {
+    if (state?.artist) {
+      setArtist(mapArtistProfile(state.artist));
+    }
+  }, [state]);
+
+  // Always fetch fresh data from API
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     let mounted = true;
-
-    const loadProfile = async () => {
-      if (!id) {
-        setLoadingProfile(false);
-        return;
-      }
-      try {
-        setLoadingProfile(true);
-        setProfileError("");
-        const data = await hirerAPI.getArtistProfile(id);
-        if (mounted) {
-          setArtist(mapArtistProfile(data, initialArtist));
-        }
-      } catch (error) {
-        if (mounted) {
-          setProfileError(error.message || "Could not load artist profile");
-        }
-      } finally {
-        if (mounted) setLoadingProfile(false);
-      }
-    };
-
-    loadProfile();
+    setLoading(true);
+    setError("");
+    hirerAPI
+      .getArtistProfile(id)
+      .then((data) => {
+        if (mounted) setArtist(mapArtistProfile(data));
+      })
+      .catch((err) => {
+        if (mounted) setError(err?.message || "Could not load artist profile.");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
     return () => {
       mounted = false;
     };
-  }, [id, initialArtist]);
+  }, [id]);
 
   useEffect(() => {
     setCoverErr(false);
     setPhotoErr(false);
-  }, [artist.photo, artist.coverPhoto]);
+  }, [artist?.photo, artist?.coverPhoto]);
 
-  const rateValue = {
-    "Daily Rate": artist.dailyRate || "—",
-    "Weekly Rate": artist.weeklyRate || "—",
-    "Project Rate": artist.projectRate || "Negotiable",
-  }[activeRate];
+  // Rate display – only show tabs that have actual data
+  const rateOptions = useMemo(() => {
+    if (!artist) return [];
+    return [
+      artist.dailyRate
+        ? { label: "Daily Rate", value: artist.dailyRate }
+        : null,
+      artist.weeklyRate
+        ? { label: "Weekly Rate", value: artist.weeklyRate }
+        : null,
+      artist.projectRate
+        ? { label: "Project Rate", value: artist.projectRate }
+        : null,
+    ].filter(Boolean);
+  }, [artist]);
+
+  const activeRateValue =
+    rateOptions.find((r) => r.label === activeRate)?.value ??
+    rateOptions[0]?.value ??
+    null;
+
+  // Auto-select first available rate tab
+  useEffect(() => {
+    if (
+      rateOptions.length > 0 &&
+      !rateOptions.find((r) => r.label === activeRate)
+    ) {
+      setActiveRate(rateOptions[0].label);
+    }
+  }, [rateOptions]);
 
   return (
     <div
@@ -1112,7 +1145,7 @@ export default function ArtistProfile() {
                 overflow: "hidden",
               }}
             >
-              {coverErr || !artist.coverPhoto ? (
+              {coverErr || !artist?.coverPhoto ? (
                 <div
                   style={{
                     width: "100%",
@@ -1137,11 +1170,11 @@ export default function ArtistProfile() {
                 }}
               />
 
-              {/* Back button */}
+              {/* Back */}
               <motion.button
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => navigate("/hirer/browse-artists")}
+                onClick={() => navigate(-1)}
                 style={{
                   position: "absolute",
                   top: "14px",
@@ -1160,7 +1193,7 @@ export default function ArtistProfile() {
                 <ArrowLeft size={17} />
               </motion.button>
 
-              {/* Top-right actions */}
+              {/* Actions */}
               <div
                 style={{
                   position: "absolute",
@@ -1206,493 +1239,615 @@ export default function ArtistProfile() {
               </div>
             </div>
 
-            <div
-              style={{
-                maxWidth: "960px",
-                margin: "0 auto",
-                padding: "0 clamp(14px, 3vw, 30px) 48px",
-              }}
-            >
-              {loadingProfile && (
+            {/* Main content */}
+            {loading ? (
+              <LoadingSkeleton />
+            ) : error ? (
+              <div
+                style={{
+                  maxWidth: "960px",
+                  margin: "0 auto",
+                  padding: "clamp(14px,3vw,30px)",
+                }}
+              >
                 <div
                   style={{
-                    marginTop: "14px",
-                    marginBottom: "12px",
-                    color: C.muted,
-                    fontSize: "13px",
-                  }}
-                >
-                  Loading latest artist profile...
-                </div>
-              )}
-              {profileError && (
-                <div
-                  style={{
-                    marginTop: "14px",
-                    marginBottom: "12px",
-                    padding: "10px 12px",
-                    borderRadius: "10px",
+                    padding: "16px 20px",
+                    borderRadius: "12px",
                     border: "1px solid rgba(239,68,68,0.25)",
                     background: "rgba(239,68,68,0.08)",
                     color: "#fca5a5",
-                    fontSize: "13px",
+                    fontSize: "14px",
                   }}
                 >
-                  {profileError}
+                  {error}
                 </div>
-              )}
-
-              {/* Hero card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.04 }}
+              </div>
+            ) : !artist ? (
+              <div
                 style={{
-                  background: C.card,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: "16px",
-                  padding: "clamp(18px, 3vw, 28px)",
-                  marginTop: "-56px",
-                  position: "relative",
-                  marginBottom: "22px",
+                  maxWidth: "960px",
+                  margin: "0 auto",
+                  padding: "clamp(14px,3vw,30px)",
+                  color: C.muted,
+                  fontSize: "14px",
                 }}
               >
-                {/* Avatar + name */}
-                <div
+                Artist not found.
+              </div>
+            ) : (
+              <div
+                style={{
+                  maxWidth: "960px",
+                  margin: "0 auto",
+                  padding: "0 clamp(14px, 3vw, 30px) 48px",
+                }}
+              >
+                {/* ── Hero card ── */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.04 }}
                   style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "16px",
-                    flexWrap: "wrap",
-                    marginBottom: "16px",
+                    background: C.card,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: "16px",
+                    padding: "clamp(18px,3vw,28px)",
+                    marginTop: "-56px",
+                    position: "relative",
+                    marginBottom: "22px",
                   }}
                 >
-                  <div style={{ position: "relative", flexShrink: 0 }}>
-                    {photoErr ? (
+                  {/* Avatar + name row */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "16px",
+                      flexWrap: "wrap",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    <div style={{ position: "relative", flexShrink: 0 }}>
+                      {photoErr || !artist.photo ? (
+                        <div
+                          style={{
+                            width: "76px",
+                            height: "76px",
+                            borderRadius: "50%",
+                            background: C.input,
+                            border: `3px solid ${C.card}`,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Users size={30} color={C.muted} />
+                        </div>
+                      ) : (
+                        <img
+                          src={artist.photo}
+                          alt={artist.name || "Artist"}
+                          onError={() => setPhotoErr(true)}
+                          style={{
+                            width: "76px",
+                            height: "76px",
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                            border: `3px solid ${C.card}`,
+                          }}
+                        />
+                      )}
+                      {artist.available && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: "2px",
+                            right: "2px",
+                            width: "15px",
+                            height: "15px",
+                            background: C.success,
+                            borderRadius: "50%",
+                            border: `2px solid ${C.card}`,
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: "140px" }}>
                       <div
                         style={{
-                          width: "76px",
-                          height: "76px",
-                          borderRadius: "50%",
-                          background: C.input,
-                          border: `3px solid ${C.card}`,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
+                          gap: "8px",
+                          flexWrap: "wrap",
                         }}
                       >
-                        <Users size={30} color={C.muted} />
+                        <h1
+                          style={{
+                            margin: 0,
+                            fontSize: "clamp(18px,3vw,24px)",
+                            fontWeight: "700",
+                            color: C.text,
+                            letterSpacing: "-0.02em",
+                          }}
+                        >
+                          {artist.name || (
+                            <EmptyField message="Name not provided" />
+                          )}
+                        </h1>
+                        {artist.topRated && (
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "3px 9px",
+                              background: C.goldBg,
+                              border: `1px solid ${C.border}`,
+                              borderRadius: "20px",
+                              fontSize: "10px",
+                              fontWeight: "700",
+                              color: C.gold,
+                            }}
+                          >
+                            <CheckCircle size={10} /> Top Rated
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <img
-                        src={artist.photo}
-                        alt={artist.name}
-                        onError={() => setPhotoErr(true)}
-                        style={{
-                          width: "76px",
-                          height: "76px",
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          border: `3px solid ${C.card}`,
-                        }}
-                      />
-                    )}
-                    {artist.available && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: "2px",
-                          right: "2px",
-                          width: "15px",
-                          height: "15px",
-                          background: C.success,
-                          borderRadius: "50%",
-                          border: `2px solid ${C.card}`,
-                        }}
-                      />
-                    )}
+                      {artist.role && (
+                        <div
+                          style={{
+                            color: C.gold,
+                            fontSize: "14px",
+                            fontWeight: "600",
+                            margin: "3px 0 5px",
+                          }}
+                        >
+                          {artist.role}
+                        </div>
+                      )}
+                      {artist.bio ? (
+                        <p
+                          style={{
+                            margin: 0,
+                            color: C.muted,
+                            fontSize: "13px",
+                            lineHeight: "1.5",
+                            maxWidth: "500px",
+                          }}
+                        >
+                          {artist.bio}
+                        </p>
+                      ) : (
+                        <p
+                          style={{
+                            margin: 0,
+                            color: "rgba(156,163,175,0.4)",
+                            fontSize: "13px",
+                            fontStyle: "italic",
+                          }}
+                        >
+                          No bio provided.
+                        </p>
+                      )}
+                    </div>
+
+                    <span
+                      style={{
+                        padding: "7px 16px",
+                        background: artist.available
+                          ? C.successBg
+                          : "rgba(156,163,175,0.1)",
+                        color: artist.available ? C.success : C.muted,
+                        border: `1px solid ${artist.available ? C.successBorder : "rgba(156,163,175,0.2)"}`,
+                        borderRadius: "20px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        alignSelf: "flex-start",
+                      }}
+                    >
+                      {artist.available ? "Available now" : "Currently Busy"}
+                    </span>
                   </div>
 
-                  <div style={{ flex: 1, minWidth: "140px" }}>
+                  {/* Skills */}
+                  {artist.skills.length > 0 && (
                     <div
                       style={{
                         display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
                         flexWrap: "wrap",
+                        gap: "7px",
+                        marginBottom: "16px",
                       }}
                     >
-                      <h1
+                      {artist.skills.map((s, i) => (
+                        <span
+                          key={i}
+                          style={{
+                            padding: "4px 12px",
+                            background: C.input,
+                            border: `1px solid ${C.border}`,
+                            borderRadius: "7px",
+                            color: C.text,
+                            fontSize: "12px",
+                            fontWeight: "500",
+                          }}
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Meta chips */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "12px",
+                      marginBottom: "18px",
+                    }}
+                  >
+                    {artist.rating !== null && (
+                      <div
                         style={{
-                          margin: 0,
-                          fontSize: "clamp(18px, 3vw, 24px)",
-                          fontWeight: "700",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          fontSize: "13px",
                           color: C.text,
-                          letterSpacing: "-0.02em",
+                          fontWeight: "600",
                         }}
                       >
-                        {artist.name}
-                      </h1>
-                      {artist.topRated && (
-                        <span
+                        <Star size={13} color={C.gold} fill={C.gold} />
+                        {artist.rating} ({artist.reviewCount}{" "}
+                        {artist.reviewCount === 1 ? "review" : "reviews"})
+                      </div>
+                    )}
+                    {artist.experience && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          fontSize: "13px",
+                          color: C.muted,
+                        }}
+                      >
+                        <Briefcase size={13} color={C.muted} />{" "}
+                        {artist.experience}
+                      </div>
+                    )}
+                    {artist.responseTime && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          fontSize: "13px",
+                          color: C.muted,
+                        }}
+                      >
+                        <Clock size={13} color={C.muted} />{" "}
+                        {artist.responseTime}
+                      </div>
+                    )}
+                    {artist.location && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          fontSize: "13px",
+                          color: C.muted,
+                        }}
+                      >
+                        <MapPin size={13} color={C.muted} /> {artist.location}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contact & social links */}
+                  {(artist.email ||
+                    artist.phone ||
+                    artist.instagram ||
+                    artist.youtube ||
+                    artist.website ||
+                    artist.twitter) && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "8px",
+                        marginBottom: "18px",
+                      }}
+                    >
+                      {artist.email && (
+                        <a
+                          href={`mailto:${artist.email}`}
                           style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: "4px",
-                            padding: "3px 9px",
-                            background: C.goldBg,
+                            gap: "5px",
+                            padding: "5px 12px",
+                            background: C.input,
                             border: `1px solid ${C.border}`,
-                            borderRadius: "20px",
-                            fontSize: "10px",
-                            fontWeight: "700",
-                            color: C.gold,
+                            borderRadius: "8px",
+                            color: C.muted,
+                            fontSize: "12px",
+                            textDecoration: "none",
                           }}
                         >
-                          <CheckCircle size={10} /> Top Rated
-                        </span>
+                          <Mail size={12} color={C.gold} /> {artist.email}
+                        </a>
+                      )}
+                      {artist.phone && (
+                        <a
+                          href={`tel:${artist.phone}`}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "5px 12px",
+                            background: C.input,
+                            border: `1px solid ${C.border}`,
+                            borderRadius: "8px",
+                            color: C.muted,
+                            fontSize: "12px",
+                            textDecoration: "none",
+                          }}
+                        >
+                          <Phone size={12} color={C.gold} /> {artist.phone}
+                        </a>
+                      )}
+                      {artist.instagram && (
+                        <a
+                          href={artist.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "5px 12px",
+                            background: C.input,
+                            border: `1px solid ${C.border}`,
+                            borderRadius: "8px",
+                            color: "#e1306c",
+                            fontSize: "12px",
+                            textDecoration: "none",
+                          }}
+                        >
+                          <Instagram size={12} /> Instagram
+                        </a>
+                      )}
+                      {artist.youtube && (
+                        <a
+                          href={artist.youtube}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "5px 12px",
+                            background: C.input,
+                            border: `1px solid ${C.border}`,
+                            borderRadius: "8px",
+                            color: "#ff0000",
+                            fontSize: "12px",
+                            textDecoration: "none",
+                          }}
+                        >
+                          <Youtube size={12} /> YouTube
+                        </a>
+                      )}
+                      {artist.twitter && (
+                        <a
+                          href={artist.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "5px 12px",
+                            background: C.input,
+                            border: `1px solid ${C.border}`,
+                            borderRadius: "8px",
+                            color: "#1da1f2",
+                            fontSize: "12px",
+                            textDecoration: "none",
+                          }}
+                        >
+                          <Twitter size={12} /> Twitter
+                        </a>
+                      )}
+                      {artist.website && (
+                        <a
+                          href={artist.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "5px 12px",
+                            background: C.input,
+                            border: `1px solid ${C.border}`,
+                            borderRadius: "8px",
+                            color: C.gold,
+                            fontSize: "12px",
+                            textDecoration: "none",
+                          }}
+                        >
+                          <Globe size={12} /> Website
+                        </a>
                       )}
                     </div>
+                  )}
+
+                  {/* Rates + CTAs */}
+                  {rateOptions.length > 0 && (
                     <div
-                      style={{
-                        color: C.gold,
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        margin: "3px 0 5px",
-                      }}
-                    >
-                      {artist.role}
-                    </div>
-                    <p
-                      style={{
-                        margin: 0,
-                        color: C.muted,
-                        fontSize: "13px",
-                        lineHeight: "1.5",
-                        maxWidth: "500px",
-                      }}
-                    >
-                      {artist.bio}
-                    </p>
-                  </div>
-
-                  <span
-                    style={{
-                      padding: "7px 16px",
-                      background: artist.available
-                        ? C.successBg
-                        : "rgba(156,163,175,0.1)",
-                      color: artist.available ? C.success : C.muted,
-                      border: `1px solid ${artist.available ? C.successBorder : "rgba(156,163,175,0.2)"}`,
-                      borderRadius: "20px",
-                      fontSize: "12px",
-                      fontWeight: "700",
-                      alignSelf: "flex-start",
-                    }}
-                  >
-                    {artist.available ? "Available now" : "Currently Busy"}
-                  </span>
-                </div>
-
-                {/* Skills */}
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "7px",
-                    marginBottom: "16px",
-                  }}
-                >
-                  {artist.skills.map((s, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        padding: "4px 12px",
-                        background: C.input,
-                        border: `1px solid ${C.border}`,
-                        borderRadius: "7px",
-                        color: C.text,
-                        fontSize: "12px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Stats row */}
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "12px",
-                    marginBottom: "18px",
-                  }}
-                >
-                  {[
-                    {
-                      icon: Star,
-                      text: artist.rating
-                        ? `${artist.rating} (${artist.reviewCount} reviews)`
-                        : `${artist.profileViews} profile views`,
-                      gold: true,
-                    },
-                    { icon: Briefcase, text: `${artist.projects} projects` },
-                    { icon: Clock, text: artist.responseTime },
-                    { icon: MapPin, text: artist.location },
-                  ].map(({ icon: Icon, text, gold }, i) => (
-                    <div
-                      key={i}
                       style={{
                         display: "flex",
+                        flexWrap: "wrap",
                         alignItems: "center",
-                        gap: "5px",
-                        fontSize: "13px",
-                        color: C.muted,
+                        gap: "12px",
+                        paddingTop: "16px",
+                        borderTop: `1px solid ${C.border}`,
                       }}
                     >
-                      <Icon
-                        size={13}
-                        color={gold ? C.gold : C.muted}
-                        fill={gold ? C.gold : "transparent"}
-                      />
-                      <span
-                        style={gold ? { color: C.text, fontWeight: "600" } : {}}
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "7px",
+                          flexWrap: "wrap",
+                        }}
                       >
-                        {text}
-                      </span>
+                        {rateOptions.map((r) => (
+                          <RateTab
+                            key={r.label}
+                            label={r.label}
+                            active={activeRate === r.label}
+                            onClick={() => setActiveRate(r.label)}
+                          />
+                        ))}
+                      </div>
+                      <div
+                        style={{
+                          marginLeft: "auto",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {activeRateValue && (
+                          <span
+                            style={{
+                              fontSize: "18px",
+                              fontWeight: "800",
+                              color: C.gold,
+                            }}
+                          >
+                            {activeRateValue}
+                          </span>
+                        )}
+                        <motion.button
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() =>
+                            navigate("/hirer/messages", { state: { artist } })
+                          }
+                          style={{
+                            padding: "9px 16px",
+                            background: "transparent",
+                            border: `1px solid ${C.border}`,
+                            borderRadius: "9px",
+                            color: C.text,
+                            cursor: "pointer",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            transition: "border-color 0.2s",
+                          }}
+                        >
+                          <MessageSquare size={14} /> Message
+                        </motion.button>
+                        <motion.button
+                          whileHover={{
+                            scale: 1.03,
+                            boxShadow: `0 4px 20px rgba(201,169,97,0.28)`,
+                          }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => navigate("/hirer/bookings")}
+                          style={{
+                            padding: "9px 20px",
+                            background: `linear-gradient(135deg, ${C.gold}, #a8863d)`,
+                            border: "none",
+                            borderRadius: "9px",
+                            color: "#1a1d24",
+                            cursor: "pointer",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <Calendar size={14} /> Book Now
+                        </motion.button>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </motion.div>
 
-                {/* Rates + CTAs */}
-                <div
+                {/* ── Stat pills ── */}
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
                   style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                    gap: "12px",
-                    paddingTop: "16px",
-                    borderTop: `1px solid ${C.border}`,
-                  }}
-                >
-                  <div
-                    style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}
-                  >
-                    {["Daily Rate", "Weekly Rate", "Project Rate"].map((r) => (
-                      <RateTab
-                        key={r}
-                        label={r}
-                        active={activeRate === r}
-                        onClick={() => setActiveRate(r)}
-                      />
-                    ))}
-                  </div>
-                  <div
-                    style={{
-                      marginLeft: "auto",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "18px",
-                        fontWeight: "800",
-                        color: C.gold,
-                      }}
-                    >
-                      {rateValue}
-                    </span>
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() =>
-                        navigate("/hirer/messages", { state: { artist } })
-                      }
-                      style={{
-                        padding: "9px 16px",
-                        background: "transparent",
-                        border: `1px solid ${C.border}`,
-                        borderRadius: "9px",
-                        color: C.text,
-                        cursor: "pointer",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        transition: "border-color 0.2s",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.borderColor = C.gold)
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.borderColor = C.border)
-                      }
-                    >
-                      <MessageSquare size={14} /> Message
-                    </motion.button>
-                    <motion.button
-                      whileHover={{
-                        scale: 1.03,
-                        boxShadow: `0 4px 20px rgba(201,169,97,0.28)`,
-                      }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => navigate("/hirer/bookings")}
-                      style={{
-                        padding: "9px 20px",
-                        background: `linear-gradient(135deg, ${C.gold}, #a8863d)`,
-                        border: "none",
-                        borderRadius: "9px",
-                        color: "#1a1d24",
-                        cursor: "pointer",
-                        fontSize: "12px",
-                        fontWeight: "700",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      <Calendar size={14} /> Book Now
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Stat pills */}
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-                  gap: "10px",
-                  marginBottom: "22px",
-                }}
-              >
-                <StatPill
-                  icon={Star}
-                  label="Rating"
-                  value={artist.rating ? `${artist.rating} / 5.0` : "N/A"}
-                />
-                <StatPill
-                  icon={Briefcase}
-                  label="Projects Done"
-                  value={`${artist.projects}+`}
-                />
-                <StatPill
-                  icon={Users}
-                  label="Experience"
-                  value={artist.experience || "—"}
-                />
-                <StatPill
-                  icon={Clock}
-                  label="Response Time"
-                  value={artist.responseTime || "—"}
-                />
-                <StatPill
-                  icon={IndianRupee}
-                  label="Daily Rate"
-                  value={artist.dailyRate || "—"}
-                />
-              </motion.div>
-
-              {/* Portfolio */}
-              <SectionCard delay={0.14}>
-                <SectionTitle>Portfolio</SectionTitle>
-                {(artist.portfolio || []).length > 0 ? (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fill, minmax(180px, 1fr))",
-                      gap: "12px",
-                    }}
-                  >
-                    {(artist.portfolio || []).map((item, i) => (
-                      <PortfolioCard key={i} item={item} />
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      padding: "14px",
-                      borderRadius: "10px",
-                      border: `1px solid ${C.border}`,
-                      color: C.muted,
-                      fontSize: "13px",
-                      background: C.input,
-                    }}
-                  >
-                    No portfolio items published yet.
-                  </div>
-                )}
-              </SectionCard>
-
-              <AvailabilityCalendar bookedDates={artist.bookedDates || []} />
-              <EquipmentSection equipment={artist.equipment || []} />
-
-              {/* Reviews */}
-              <SectionCard delay={0.3}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
                     gap: "10px",
-                    marginBottom: "16px",
+                    marginBottom: "22px",
                   }}
                 >
-                  <h2
-                    style={{
-                      margin: 0,
-                      fontSize: "16px",
-                      fontWeight: "700",
-                      color: C.text,
-                    }}
-                  >
-                    Reviews
-                  </h2>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      padding: "3px 10px",
-                      background: C.goldBg,
-                      border: `1px solid ${C.border}`,
-                      borderRadius: "20px",
-                    }}
-                  >
-                    <Star size={11} fill={C.gold} color={C.gold} />
-                    <span
+                  <StatPill
+                    icon={Star}
+                    label="Rating"
+                    value={
+                      artist.rating !== null ? `${artist.rating} / 5.0` : null
+                    }
+                  />
+                  <StatPill
+                    icon={Users}
+                    label="Reviews"
+                    value={
+                      artist.reviewCount > 0
+                        ? `${artist.reviewCount} review${artist.reviewCount !== 1 ? "s" : ""}`
+                        : null
+                    }
+                  />
+                  <StatPill
+                    icon={Briefcase}
+                    label="Experience"
+                    value={artist.experience}
+                  />
+                  <StatPill
+                    icon={Clock}
+                    label="Response Time"
+                    value={artist.responseTime}
+                  />
+                  <StatPill
+                    icon={IndianRupee}
+                    label="Daily Rate"
+                    value={artist.dailyRate}
+                  />
+                </motion.div>
+
+                {/* ── Portfolio ── */}
+                <SectionCard delay={0.14}>
+                  <SectionTitle>Portfolio</SectionTitle>
+                  {artist.portfolio.length > 0 ? (
+                    <div
                       style={{
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        color: C.gold,
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(180px, 1fr))",
+                        gap: "12px",
                       }}
                     >
-                      {artist.rating ?? "N/A"}
-                    </span>
-                    <span style={{ fontSize: "11px", color: C.muted }}>
-                      {artist.reviewCount} reviews
-                    </span>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                  }}
-                >
-                  {(artist.reviews_list || []).length > 0 ? (
-                    (artist.reviews_list || []).map((r, i) => (
-                      <ReviewCard key={i} review={r} />
-                    ))
+                      {artist.portfolio.map((item, i) => (
+                        <PortfolioCard key={i} item={item} />
+                      ))}
+                    </div>
                   ) : (
                     <div
                       style={{
@@ -1704,109 +1859,187 @@ export default function ArtistProfile() {
                         background: C.input,
                       }}
                     >
-                      No verified reviews available yet.
+                      No portfolio items published yet.
                     </div>
                   )}
-                </div>
-              </SectionCard>
+                </SectionCard>
 
-              {/* Sticky bottom bar */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.38 }}
-                style={{
-                  position: "sticky",
-                  bottom: "16px",
-                  background: C.card,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: "14px",
-                  padding: "16px 22px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "12px",
-                  backdropFilter: "blur(12px)",
-                  boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
-                }}
-              >
-                <div>
-                  <p
+                <AvailabilityCalendar bookedDates={artist.bookedDates} />
+                <EquipmentSection equipment={artist.equipment} />
+
+                {/* ── Reviews ── */}
+                <SectionCard delay={0.3}>
+                  <div
                     style={{
-                      margin: 0,
-                      fontSize: "15px",
-                      fontWeight: "700",
-                      color: C.text,
-                    }}
-                  >
-                    {artist.name}
-                  </p>
-                  <p
-                    style={{
-                      margin: "2px 0 0",
-                      fontSize: "12px",
-                      color: C.muted,
-                    }}
-                  >
-                    {artist.available
-                      ? "Available for projects"
-                      : "Currently unavailable"}
-                    {artist.dailyRate
-                      ? ` · ₹${artist.dailyRate.toString().replace("$", "")}/day`
-                      : ""}
-                  </p>
-                </div>
-                <div style={{ display: "flex", gap: "10px" }}>
-                  <motion.button
-                    whileHover={{ borderColor: C.gold, color: C.gold }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() =>
-                      navigate("/hirer/messages", { state: { artist } })
-                    }
-                    style={{
-                      padding: "10px 18px",
-                      background: "transparent",
-                      border: `1px solid ${C.border}`,
-                      borderRadius: "9px",
-                      color: C.text,
-                      cursor: "pointer",
-                      fontSize: "13px",
-                      fontWeight: "600",
                       display: "flex",
                       alignItems: "center",
-                      gap: "6px",
-                      transition: "border-color 0.2s, color 0.2s",
+                      gap: "10px",
+                      marginBottom: "16px",
                     }}
                   >
-                    <MessageSquare size={14} /> Message
-                  </motion.button>
-                  <motion.button
-                    whileHover={{
-                      scale: 1.02,
-                      boxShadow: `0 4px 20px rgba(201,169,97,0.3)`,
-                    }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => navigate("/hirer/bookings")}
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontSize: "16px",
+                        fontWeight: "700",
+                        color: C.text,
+                      }}
+                    >
+                      Reviews
+                    </h2>
+                    {artist.rating !== null && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "3px 10px",
+                          background: C.goldBg,
+                          border: `1px solid ${C.border}`,
+                          borderRadius: "20px",
+                        }}
+                      >
+                        <Star size={11} fill={C.gold} color={C.gold} />
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            fontWeight: "700",
+                            color: C.gold,
+                          }}
+                        >
+                          {artist.rating}
+                        </span>
+                        <span style={{ fontSize: "11px", color: C.muted }}>
+                          {artist.reviewCount}{" "}
+                          {artist.reviewCount === 1 ? "review" : "reviews"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div
                     style={{
-                      padding: "10px 22px",
-                      background: `linear-gradient(135deg, ${C.gold}, #a8863d)`,
-                      border: "none",
-                      borderRadius: "9px",
-                      color: "#1a1d24",
-                      cursor: "pointer",
-                      fontSize: "13px",
-                      fontWeight: "700",
                       display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
+                      flexDirection: "column",
+                      gap: "12px",
                     }}
                   >
-                    <Calendar size={14} /> Book Now
-                  </motion.button>
-                </div>
-              </motion.div>
-            </div>
+                    {artist.reviews_list.length > 0 ? (
+                      artist.reviews_list.map((r, i) => (
+                        <ReviewCard key={r._id || i} review={r} />
+                      ))
+                    ) : (
+                      <div
+                        style={{
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: `1px solid ${C.border}`,
+                          color: C.muted,
+                          fontSize: "13px",
+                          background: C.input,
+                        }}
+                      >
+                        No verified reviews available yet.
+                      </div>
+                    )}
+                  </div>
+                </SectionCard>
+
+                {/* ── Sticky bottom bar ── */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.38 }}
+                  style={{
+                    position: "sticky",
+                    bottom: "16px",
+                    background: C.card,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: "14px",
+                    padding: "16px 22px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "12px",
+                    backdropFilter: "blur(12px)",
+                    boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <div>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: "15px",
+                        fontWeight: "700",
+                        color: C.text,
+                      }}
+                    >
+                      {artist.name || "Artist"}
+                    </p>
+                    <p
+                      style={{
+                        margin: "2px 0 0",
+                        fontSize: "12px",
+                        color: C.muted,
+                      }}
+                    >
+                      {artist.available
+                        ? "Available for projects"
+                        : "Currently unavailable"}
+                      {artist.dailyRate ? ` · ${artist.dailyRate}/day` : ""}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <motion.button
+                      whileHover={{ borderColor: C.gold, color: C.gold }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() =>
+                        navigate("/hirer/messages", { state: { artist } })
+                      }
+                      style={{
+                        padding: "10px 18px",
+                        background: "transparent",
+                        border: `1px solid ${C.border}`,
+                        borderRadius: "9px",
+                        color: C.text,
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        transition: "border-color 0.2s, color 0.2s",
+                      }}
+                    >
+                      <MessageSquare size={14} /> Message
+                    </motion.button>
+                    <motion.button
+                      whileHover={{
+                        scale: 1.02,
+                        boxShadow: `0 4px 20px rgba(201,169,97,0.3)`,
+                      }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => navigate("/hirer/bookings")}
+                      style={{
+                        padding: "10px 22px",
+                        background: `linear-gradient(135deg, ${C.gold}, #a8863d)`,
+                        border: "none",
+                        borderRadius: "9px",
+                        color: "#1a1d24",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <Calendar size={14} /> Book Now
+                    </motion.button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
           </div>
         </main>
       </div>
