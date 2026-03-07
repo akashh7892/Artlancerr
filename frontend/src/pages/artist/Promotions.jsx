@@ -348,7 +348,7 @@ export default function ArtistPromotions() {
           deadline: p.endDate || p.createdAt,
           description: p.description || "",
           requirements: [],
-          createdBy: "Artlancerr",
+          createdBy: "Flip",
           status: p.status === "active" ? "Pending" : "Submitted",
           submittedAt: p.createdAt,
           proofUrl: p.link || "",
@@ -472,7 +472,7 @@ export default function ArtistPromotions() {
         created.endDate || formData.deadline || new Date().toISOString(),
       description: created.description || formData.description,
       requirements: [],
-      createdBy: "Artlancerr",
+      createdBy: "Flip",
       status: "Pending",
       acceptedAt: new Date().toISOString(),
     };

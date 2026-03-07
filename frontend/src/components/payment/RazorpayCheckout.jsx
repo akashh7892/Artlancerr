@@ -51,7 +51,7 @@ export default function RazorpayCheckout({
           amount: orderData.amount,
           currency: orderData.currency || "INR",
           order_id: orderData.orderId,
-          name: "Artlancerr",
+          name: "Flip",
           description: description || "Payment",
           handler: async (res) => {
             try {
@@ -70,10 +70,13 @@ export default function RazorpayCheckout({
         const rzp = new Razorpay(options);
         rzp.open();
       } catch (err) {
-        if (!cancelled) onSuccess?.({ error: err.message || "Failed to create order" });
+        if (!cancelled)
+          onSuccess?.({ error: err.message || "Failed to create order" });
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return null;

@@ -33,14 +33,14 @@ async function sendOTPEmail(to, otp) {
       <p>Your verification code is:</p>
       <h1 style="letter-spacing:4px;color:#c9a961">${otp}</h1>
       <p>This code expires in 10 minutes.</p>
-      <p style="font-size:12px;color:#666">— Artlancerr</p>
+      <p style="font-size:12px;color:#666">— Flip</p>
   </div>
   `;
 
   return transporter.sendMail({
     from,
     to,
-    subject: "Your Password Reset Code - Artlancerr",
+    subject: "Your Password Reset Code - Flip",
     html,
   });
 }
