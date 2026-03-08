@@ -362,8 +362,14 @@ img { display:block; max-width:100%; }
 .hd-logo { display:flex; align-items:center; gap:7px; flex-shrink:0; }
 .hd-logo-icon {
   width:28px; height:28px; border-radius:7px; flex-shrink:0;
-  background:linear-gradient(135deg,#c9a961,#a8863d);
+  background:transparent;
   display:flex; align-items:center; justify-content:center;
+}
+  .hd-logo-img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  border-radius:inherit;
 }
 .hd-logo-text {
   font-size:15px; font-weight:800; color:#e8e9eb;
@@ -1348,7 +1354,9 @@ export default function HomeDummy() {
             <div className="hd-logo-icon">
               <img src="/logo.jpeg" alt="Flip Logo" className="hd-logo-img" />
             </div>
-            <span className="hd-logo-text">Flip</span>
+            <span className="hd-logo-text">
+              
+            </span>
           </div>
 
           {/* Role toggle */}
