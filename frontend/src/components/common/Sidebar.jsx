@@ -289,7 +289,7 @@ export default function Sidebar() {
           >
             <img
               src="/logo.jpeg"
-              alt="Artlancing"
+              alt="flip logo"
               className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
               style={{ border: "1.5px solid rgba(201,169,97,0.3)" }}
             />
