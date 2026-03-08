@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   Clock3,
@@ -20,42 +20,397 @@ import {
   Globe,
   Star,
   Calendar,
-  MessageSquare,
-  Award,
-  Layers,
+  Package,
   Play,
   Twitter,
-  Link2,
+  IndianRupee,
+  UserCircle,
+  Film,
+  Lightbulb,
+  Camera,
 } from "lucide-react";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// ─── Status config ─────────────────────────────────────────────────────────────
-const STATUS_STYLE = {
-  pending: { bg: "rgba(251,191,36,0.15)", color: "#fbbf24" },
-  hired: { bg: "rgba(74,222,128,0.15)", color: "#4ade80" },
-  accepted: { bg: "rgba(74,222,128,0.15)", color: "#4ade80" },
-  rejected: { bg: "rgba(248,113,113,0.15)", color: "#f87171" },
-  shortlisted: { bg: "rgba(147,197,253,0.15)", color: "#93c5fd" },
-  in_review: { bg: "rgba(196,181,253,0.15)", color: "#c4b5fd" },
+// ─── Design tokens ─────────────────────────────────────────────────────────
+const C = {
+  bg: "#1a1d24",
+  card: "#2d3139",
+  cardDeep: "#22252e",
+  input: "#1a1d24",
+  border: "rgba(201,169,97,0.15)",
+  gold: "#c9a961",
+  goldGlow: "rgba(201,169,97,0.18)",
+  goldBg: "rgba(201,169,97,0.12)",
+  goldDim: "rgba(201,169,97,0.07)",
+  text: "#ffffff",
+  muted: "#9ca3af",
+  dim: "#6b7280",
+  success: "#4ade80",
+  successBg: "rgba(74,222,128,0.12)",
+  successBdr: "rgba(74,222,128,0.25)",
+  danger: "#f87171",
+  dangerBg: "rgba(248,113,113,0.12)",
+  dangerBdr: "rgba(248,113,113,0.25)",
+  warn: "#fbbf24",
+  warnBg: "rgba(251,191,36,0.12)",
+  info: "#93c5fd",
+  infoBg: "rgba(147,197,253,0.12)",
 };
 
-const labelForStatus = (s) =>
-  s === "hired" || s === "accepted"
-    ? "Accepted"
-    : String(s || "pending").replace("_", " ");
+// ─── Equipment category colours (mirrors ArtistProfile.jsx) ────────────────
+const CAT_COLORS = {
+  Camera: "#60a5fa",
+  Lens: "#a78bfa",
+  Lighting: "#fbbf24",
+  Audio: "#34d399",
+  Grip: "#f97316",
+  Other: C.gold,
+};
+const CAT_ICONS = {
+  Camera,
+  Lens: Package,
+  Lighting: Lightbulb,
+  Audio: Package,
+  Grip: Package,
+  Other: Package,
+};
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+// ─── Status config ──────────────────────────────────────────────────────────
+const STATUS_CFG = {
+  pending: { bg: C.warnBg, color: C.warn, label: "Pending" },
+  hired: { bg: C.successBg, color: C.success, label: "Accepted" },
+  accepted: { bg: C.successBg, color: C.success, label: "Accepted" },
+  rejected: { bg: C.dangerBg, color: C.danger, label: "Rejected" },
+  shortlisted: { bg: C.infoBg, color: C.info, label: "Shortlisted" },
+  in_review: {
+    bg: "rgba(196,181,253,0.12)",
+    color: "#c4b5fd",
+    label: "In Review",
+  },
+};
+const sCfg = (s) =>
+  STATUS_CFG[String(s || "pending").toLowerCase()] || STATUS_CFG.pending;
+const labelForStatus = (s) => sCfg(s).label;
+
+// ─── Tiny helpers ───────────────────────────────────────────────────────────
 const fmt = (v) => (v && String(v).trim() ? String(v).trim() : null);
+const money = (v) => {
+  if (!v) return null;
+  const s = String(v).trim();
+  return s.startsWith("₹") || s.startsWith("$") ? s : `₹${s}`;
+};
+const dateIN = (iso) =>
+  iso
+    ? new Date(iso).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
+const dateSh = (iso) =>
+  iso
+    ? new Date(iso).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
 
-// ─── Portfolio thumbnail ───────────────────────────────────────────────────────
+// ─── Section heading ────────────────────────────────────────────────────────
+const SLabel = ({ children, noGap }) => (
+  <p
+    style={{
+      margin: noGap ? "0" : "0 0 9px",
+      fontSize: "10.5px",
+      fontWeight: "700",
+      color: C.muted,
+      textTransform: "uppercase",
+      letterSpacing: "0.06em",
+    }}
+  >
+    {children}
+  </p>
+);
+
+// ─── Structured info row ────────────────────────────────────────────────────
+function InfoRow({ icon: Icon, label, value, gold, href }) {
+  if (!value) return null;
+  const inner = (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 10,
+        padding: "10px 0",
+        borderBottom: `1px solid ${C.border}`,
+      }}
+    >
+      <div
+        style={{
+          width: 30,
+          height: 30,
+          borderRadius: 8,
+          background: C.goldDim,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <Icon size={14} style={{ color: C.gold }} />
+      </div>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <p
+          style={{
+            margin: "0 0 2px",
+            fontSize: 11,
+            color: C.muted,
+            fontWeight: "600",
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+          }}
+        >
+          {label}
+        </p>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 13.5,
+            wordBreak: "break-word",
+            color: gold ? C.gold : C.text,
+            fontWeight: gold ? "600" : "400",
+          }}
+        >
+          {value}
+        </p>
+      </div>
+      {href && (
+        <ExternalLink
+          size={12}
+          style={{ color: C.muted, flexShrink: 0, marginTop: 2 }}
+        />
+      )}
+    </div>
+  );
+  if (href)
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ textDecoration: "none", display: "block" }}
+      >
+        {inner}
+      </a>
+    );
+  return inner;
+}
+
+// ─── Rate tile ──────────────────────────────────────────────────────────────
+function RateTile({ label, value }) {
+  const d = money(value) || value;
+  if (!d) return null;
+  return (
+    <div
+      style={{
+        flex: "1 1 100px",
+        padding: "10px 14px",
+        background: C.input,
+        border: `1px solid ${C.border}`,
+        borderRadius: 10,
+        textAlign: "center",
+      }}
+    >
+      <p
+        style={{
+          margin: "0 0 3px",
+          fontSize: 10,
+          color: C.muted,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          fontWeight: "600",
+        }}
+      >
+        {label}
+      </p>
+      <p style={{ margin: 0, fontSize: 14, fontWeight: "700", color: C.gold }}>
+        {d}
+      </p>
+    </div>
+  );
+}
+
+// ─── Social link row ────────────────────────────────────────────────────────
+function SocialLink({ icon: Icon, color, href, label }) {
+  if (!href) return null;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "9px 12px",
+        background: "rgba(255,255,255,0.03)",
+        borderRadius: 8,
+        border: `1px solid ${C.border}`,
+        color: C.text,
+        textDecoration: "none",
+        fontSize: 13,
+      }}
+    >
+      <Icon size={13} style={{ color: color || C.gold, flexShrink: 0 }} />
+      {label}
+    </a>
+  );
+}
+
+// ─── Mini availability calendar (mirrors ArtistProfile.jsx exactly) ─────────
+function MiniCalendar({ blockedDates = [], freeDates = [] }) {
+  const today = new Date();
+  const year = today.getFullYear(),
+    month = today.getMonth();
+  const total = new Date(year, month + 1, 0).getDate();
+  const start = new Date(year, month, 1).getDay();
+  const bSet = new Set(blockedDates);
+  const fSet = new Set(freeDates);
+  const DLBL = ["S", "M", "T", "W", "T", "F", "S"];
+  const MLBL = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const key = (d) =>
+    `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const cells = Array.from({ length: start + total }, (_, i) =>
+    i < start ? null : i - start + 1,
+  );
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return (
+    <div>
+      <p
+        style={{
+          margin: "0 0 10px",
+          fontSize: 13,
+          fontWeight: "600",
+          color: C.text,
+        }}
+      >
+        {MLBL[month]} {year}
+      </p>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7,1fr)",
+          gap: 3,
+          marginBottom: 6,
+        }}
+      >
+        {DLBL.map((d, i) => (
+          <div
+            key={i}
+            style={{
+              textAlign: "center",
+              fontSize: 10,
+              fontWeight: "700",
+              color: C.muted,
+            }}
+          >
+            {d}
+          </div>
+        ))}
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7,1fr)",
+          gap: 3,
+        }}
+      >
+        {cells.map((d, i) => {
+          if (!d) return <div key={i} />;
+          const k = key(d),
+            bl = bSet.has(k),
+            fr = fSet.has(k),
+            td = d === today.getDate();
+          return (
+            <div
+              key={i}
+              style={{
+                aspectRatio: "1",
+                borderRadius: 5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 11,
+                fontWeight: td ? "700" : "400",
+                background: bl
+                  ? "rgba(248,113,113,0.18)"
+                  : fr
+                    ? "rgba(74,222,128,0.12)"
+                    : "rgba(255,255,255,0.04)",
+                color: bl ? C.danger : fr ? C.success : C.muted,
+                border: td ? `2px solid ${C.gold}` : "1px solid transparent",
+              }}
+            >
+              {d}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", gap: 14, marginTop: 10 }}>
+        {[
+          { bg: "rgba(74,222,128,0.25)", bdr: "", lbl: "Free" },
+          { bg: "rgba(248,113,113,0.25)", bdr: "", lbl: "Blocked" },
+          { bg: "transparent", bdr: `1px solid ${C.gold}`, lbl: "Today" },
+        ].map(({ bg, bdr, lbl }) => (
+          <span
+            key={lbl}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              fontSize: 11,
+              color: C.muted,
+            }}
+          >
+            <div
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 3,
+                background: bg,
+                border: bdr || "none",
+              }}
+            />
+            {lbl}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Portfolio thumbnail ─────────────────────────────────────────────────────
 function PortfolioThumb({ item }) {
   const [err, setErr] = useState(false);
   const thumb = item?.thumbnailUrl || item?.mediaUrl || item?.imageUrl || null;
   const title = item?.title || item?.projectName || "Work";
   const type = item?.category || item?.workType || null;
   const link = item?.link || item?.url || null;
-
   return (
     <a
       href={link || undefined}
@@ -65,12 +420,12 @@ function PortfolioThumb({ item }) {
     >
       <div
         style={{
-          borderRadius: 10,
+          borderRadius: 9,
           overflow: "hidden",
           position: "relative",
           aspectRatio: "16/10",
-          border: "1px solid rgba(201,169,97,0.15)",
-          background: "#1a1d24",
+          border: `1px solid ${C.border}`,
+          background: C.input,
           cursor: link ? "pointer" : "default",
         }}
       >
@@ -91,7 +446,7 @@ function PortfolioThumb({ item }) {
               justifyContent: "center",
             }}
           >
-            <Play size={20} style={{ color: "rgba(156,163,175,0.4)" }} />
+            <Play size={18} style={{ color: "rgba(156,163,175,0.35)" }} />
           </div>
         )}
         <div
@@ -99,11 +454,11 @@ function PortfolioThumb({ item }) {
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 55%)",
+              "linear-gradient(to top,rgba(0,0,0,0.72) 0%,transparent 55%)",
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-end",
-            padding: "8px 10px",
+            padding: "7px 9px",
           }}
         >
           {type && (
@@ -111,10 +466,10 @@ function PortfolioThumb({ item }) {
               style={{
                 fontSize: 9,
                 fontWeight: 700,
-                color: "#c9a961",
+                color: C.gold,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                marginBottom: 2,
+                marginBottom: 1,
               }}
             >
               {type}
@@ -136,14 +491,15 @@ function PortfolioThumb({ item }) {
             <span
               style={{
                 fontSize: 10,
-                color: "#c9a961",
+                color: C.gold,
                 display: "flex",
                 alignItems: "center",
                 gap: 3,
                 marginTop: 2,
               }}
             >
-              <ExternalLink size={9} /> View
+              <ExternalLink size={9} />
+              View
             </span>
           )}
         </div>
@@ -152,17 +508,39 @@ function PortfolioThumb({ item }) {
   );
 }
 
-// ─── Full Artist Detail Panel ──────────────────────────────────────────────────
-function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
+// ═══════════════════════════════════════════════════════════════════════════
+// ARTIST DETAIL PANEL
+// Mirrors every section in ArtistProfile.jsx across 6 tabs.
+// All hooks are declared unconditionally at the top.
+// ═══════════════════════════════════════════════════════════════════════════
+function ArtistDetailPanel({
+  app,
+  onClose,
+  onUpdateStatus,
+  busyId,
+  onNavigateToProfile,
+}) {
+  // ── ALL hooks first — no early returns before this block ─────────────────
+  const [activeTab, setActiveTab] = useState("overview");
+  const [avatarErr, setAvatarErr] = useState(false);
+  const [coverErr, setCoverErr] = useState(false);
+
+  useEffect(() => {
+    setActiveTab("overview");
+    setAvatarErr(false);
+    setCoverErr(false);
+  }, [app?._id]);
+  // ─────────────────────────────────────────────────────────────────────────
+
   if (!app) return null;
 
   const artist = app.artist || app.applicant || {};
   const opp = app.opportunity || {};
   const status = String(app.status || "pending").toLowerCase();
   const isBusy = busyId === app._id;
-  const sStyle = STATUS_STYLE[status] || STATUS_STYLE.pending;
+  const cfg = sCfg(status);
 
-  // ── All artist fields ──
+  // Extract every field from the artist object
   const name =
     fmt(artist.name || artist.fullName || artist.username) || "Artist";
   const email = fmt(artist.email || app.email);
@@ -174,34 +552,47 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
   const avatar = fmt(artist.profileImage || artist.avatar || artist.photo);
   const coverPhoto = fmt(artist.coverPhoto || artist.coverImage);
   const responseTime = fmt(artist.responseTime);
-  const note = fmt(app.coverLetter || app.note || app.message);
+  const coverNote = fmt(app.coverLetter || app.note || app.message);
 
   // Rates
-  const dailyRate = fmt(artist?.rates?.daily || app?.rates?.daily);
-  const weeklyRate = fmt(artist?.rates?.weekly || app?.rates?.weekly);
+  const dailyRate = money(artist?.rates?.daily || app?.rates?.daily);
+  const weeklyRate = money(artist?.rates?.weekly || app?.rates?.weekly);
   const projectRate = fmt(artist?.rates?.project || app?.rates?.project);
 
-  // Social / links
-  const portfolio = fmt(
-    artist.portfolio || artist.portfolioUrl || app.portfolio,
+  // Social
+  const portfolioStr =
+    typeof artist.portfolio === "string" ? artist.portfolio : null;
+  const portfolioUrl = fmt(
+    portfolioStr || artist.portfolioUrl || app.portfolio || null,
   );
   const instagram = fmt(artist.instagram || artist.instagramUrl);
   const youtube = fmt(artist.youtube || artist.youtubeUrl);
   const website = fmt(artist.website || artist.websiteUrl);
   const twitter = fmt(artist.twitter || artist.twitterUrl);
 
-  // Skills array
+  // Skills (unique, non-empty)
   const skills = [
     ...(role ? [role] : []),
     ...(Array.isArray(artist.skills) ? artist.skills : []),
   ].filter((v, i, a) => v && a.indexOf(v) === i);
 
-  // Portfolio items array
+  // Portfolio items
   const portfolioItems = Array.isArray(artist.portfolio)
     ? artist.portfolio
     : Array.isArray(app.portfolio)
       ? app.portfolio
       : [];
+
+  // Availability
+  const blockedDates = Array.isArray(artist?.availability?.blockedDates)
+    ? artist.availability.blockedDates
+    : [];
+  const freeDates = Array.isArray(artist?.availability?.freeDates)
+    ? artist.availability.freeDates
+    : [];
+
+  // Equipment
+  const equipment = Array.isArray(artist.equipment) ? artist.equipment : [];
 
   // Reviews
   const reviews = Array.isArray(artist.reviews) ? artist.reviews : [];
@@ -216,21 +607,16 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
         )
       : null;
 
-  // Equipment
-  const equipment = Array.isArray(artist.equipment) ? artist.equipment : [];
+  const appliedLong = dateIN(app.createdAt);
 
-  // Applied date
-  const appliedAt = app.createdAt
-    ? new Date(app.createdAt).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : null;
-
-  // Avatar fallback
-  const [avatarErr, setAvatarErr] = useState(false);
-  const [coverErr, setCoverErr] = useState(false);
+  const TABS = [
+    { key: "overview", label: "Overview" },
+    { key: "rates", label: "Rates" },
+    { key: "availability", label: "Availability" },
+    { key: "portfolio", label: "Portfolio" },
+    { key: "equipment", label: "Equipment" },
+    { key: "reviews", label: "Reviews" },
+  ];
 
   return (
     <>
@@ -240,67 +626,25 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
         style={{
           position: "fixed",
           inset: 0,
-          zIndex: 200,
-          background: "rgba(0,0,0,0.65)",
+          zIndex: 1000,
+          background: "rgba(0,0,0,0.72)",
           backdropFilter: "blur(4px)",
         }}
       />
 
       {/* Panel */}
-      <div
-        style={{
-          position: "fixed",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: "92vh",
-          zIndex: 300,
-          background: "#22252e",
-          border: "1px solid rgba(201,169,97,0.18)",
-          borderRadius: "16px 16px 0 0",
-          boxShadow: "0 -8px 56px rgba(0,0,0,0.6)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          animation: "slideUp 0.28s cubic-bezier(0.4,0,0.2,1)",
-          // Desktop: right sidebar
-          ...(window.innerWidth >= 768
-            ? {
-                left: "auto",
-                top: 0,
-                right: 0,
-                bottom: 0,
-                width: "clamp(360px, 44vw, 540px)",
-                height: "100vh",
-                borderRadius: 0,
-                borderLeft: "1px solid rgba(201,169,97,0.18)",
-                borderTop: "none",
-                borderBottom: "none",
-                borderRight: "none",
-                animation: "slideInRight 0.28s cubic-bezier(0.4,0,0.2,1)",
-              }
-            : {}),
-        }}
-      >
+      <div className="adp-panel">
         {/* Gold accent bar */}
         <div
           style={{
             height: 3,
-            background: "linear-gradient(90deg, #c9a961, #a8863d, transparent)",
+            background: `linear-gradient(90deg,${C.gold},#a8863d,transparent)`,
             flexShrink: 0,
           }}
         />
 
-        {/* Drag handle – mobile */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            padding: "8px 0 2px",
-            flexShrink: 0,
-          }}
-          className="mobile-handle"
-        >
+        {/* Drag handle (mobile) */}
+        <div className="adp-handle">
           <div
             style={{
               width: 36,
@@ -311,11 +655,11 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
           />
         </div>
 
-        {/* ── Cover photo strip ── */}
+        {/* ── Cover strip ── */}
         <div
           style={{
             position: "relative",
-            height: 110,
+            height: 108,
             flexShrink: 0,
             overflow: "hidden",
           }}
@@ -332,7 +676,7 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
               style={{
                 width: "100%",
                 height: "100%",
-                background: "linear-gradient(135deg, #1a1d24, #2d3139)",
+                background: `linear-gradient(135deg,${C.bg},${C.card})`,
               }}
             />
           )}
@@ -341,28 +685,28 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
               position: "absolute",
               inset: 0,
               background:
-                "linear-gradient(to bottom, transparent 30%, #22252e 100%)",
+                "linear-gradient(to bottom,transparent 25%,#22252e 100%)",
             }}
           />
-
-          {/* Close button */}
+          {/* Close */}
           <button
             onClick={onClose}
             style={{
               position: "absolute",
               top: 10,
               right: 12,
-              background: "rgba(26,29,36,0.8)",
+              background: "rgba(26,29,36,0.88)",
               backdropFilter: "blur(6px)",
-              border: "1px solid rgba(201,169,97,0.2)",
+              border: `1px solid ${C.border}`,
               borderRadius: 9,
-              color: "#9ca3af",
+              color: C.muted,
               width: 32,
               height: 32,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
+              touchAction: "manipulation",
             }}
           >
             <X size={15} />
@@ -375,7 +719,7 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
             padding: "0 20px 14px",
             marginTop: -44,
             flexShrink: 0,
-            borderBottom: "1px solid rgba(201,169,97,0.12)",
+            borderBottom: `1px solid ${C.border}`,
           }}
         >
           <div
@@ -386,7 +730,17 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
               gap: 10,
             }}
           >
-            <div style={{ position: "relative" }}>
+            {/* AVATAR — click → full ArtistProfile page */}
+            <div
+              onClick={onNavigateToProfile}
+              title="Open full artist profile"
+              style={{
+                position: "relative",
+                flexShrink: 0,
+                cursor: "pointer",
+                paddingBottom: 18,
+              }}
+            >
               {avatar && !avatarErr ? (
                 <img
                   src={avatar}
@@ -397,7 +751,16 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
                     height: 72,
                     borderRadius: "50%",
                     objectFit: "cover",
-                    border: "3px solid #22252e",
+                    border: `3px solid ${C.gold}`,
+                    display: "block",
+                    boxShadow: `0 0 0 4px ${C.goldGlow}`,
+                    transition: "transform .2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.07)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
                   }}
                 />
               ) : (
@@ -406,29 +769,49 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
                     width: 72,
                     height: 72,
                     borderRadius: "50%",
-                    background: "linear-gradient(135deg,#c9a961,#a8863d)",
+                    background: `linear-gradient(135deg,${C.gold},#a8863d)`,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    border: "3px solid #22252e",
+                    border: `3px solid ${C.gold}`,
                   }}
                 >
                   <User size={28} style={{ color: "#1a1d24" }} />
                 </div>
               )}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  fontSize: 9,
+                  fontWeight: 700,
+                  color: C.gold,
+                  whiteSpace: "nowrap",
+                  pointerEvents: "none",
+                  background: "rgba(26,29,36,0.85)",
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  letterSpacing: "0.03em",
+                }}
+              >
+                VIEW PROFILE
+              </div>
             </div>
 
-            {/* Status badge */}
+            {/* Status */}
             <span
               style={{
                 padding: "5px 13px",
                 borderRadius: 20,
-                background: sStyle.bg,
-                color: sStyle.color,
+                background: cfg.bg,
+                color: cfg.color,
                 fontSize: 12,
                 fontWeight: 700,
                 alignSelf: "flex-start",
-                marginTop: 48,
+                marginTop: 46,
+                flexShrink: 0,
               }}
             >
               {labelForStatus(status)}
@@ -437,18 +820,17 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
 
           <h2
             style={{
-              margin: "10px 0 2px",
-              fontSize: 20,
+              margin: "18px 0 3px",
+              fontSize: "clamp(17px,3vw,21px)",
               fontWeight: 700,
-              color: "#fff",
+              color: C.text,
             }}
           >
             {name}
           </h2>
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px" }}>
             {role && (
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#c9a961" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.gold }}>
                 {role}
               </span>
             )}
@@ -459,15 +841,15 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
                   alignItems: "center",
                   gap: 4,
                   fontSize: 12,
-                  color: "#9ca3af",
+                  color: C.muted,
                 }}
               >
-                <MapPin size={11} style={{ color: "#c9a961" }} />
+                <MapPin size={11} style={{ color: C.gold }} />
                 {location}
               </span>
             )}
             {experience && (
-              <span style={{ fontSize: 12, color: "#9ca3af" }}>
+              <span style={{ fontSize: 12, color: C.muted }}>
                 {experience} exp
               </span>
             )}
@@ -478,24 +860,24 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
                   alignItems: "center",
                   gap: 3,
                   fontSize: 12,
-                  color: "#fff",
+                  color: C.text,
                   fontWeight: 600,
                 }}
               >
-                <Star size={11} fill="#c9a961" color="#c9a961" />
+                <Star size={11} fill={C.gold} color={C.gold} />
                 {avgRating} ({reviewCount})
               </span>
             )}
           </div>
         </div>
 
-        {/* ── Applied-for strip ── */}
+        {/* Applied-for strip */}
         <div
           style={{
-            padding: "10px 20px",
+            padding: "9px 20px",
             flexShrink: 0,
-            background: "rgba(201,169,97,0.07)",
-            borderBottom: "1px solid rgba(201,169,97,0.12)",
+            background: C.goldDim,
+            borderBottom: `1px solid ${C.border}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -509,7 +891,7 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
                 margin: 0,
                 fontSize: 10,
                 fontWeight: 600,
-                color: "#9ca3af",
+                color: C.muted,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
               }}
@@ -521,7 +903,7 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
                 margin: "2px 0 0",
                 fontSize: 13,
                 fontWeight: 600,
-                color: "#fff",
+                color: C.text,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -530,14 +912,27 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
               {opp.title || app.opportunityTitle || "—"}
             </p>
           </div>
-          {appliedAt && (
-            <span style={{ fontSize: 11.5, color: "#9ca3af", flexShrink: 0 }}>
-              {appliedAt}
+          {appliedLong && (
+            <span style={{ fontSize: 11.5, color: C.muted, flexShrink: 0 }}>
+              {appliedLong}
             </span>
           )}
         </div>
 
-        {/* ── Scrollable body ── */}
+        {/* ── Tab strip ── */}
+        <div className="adp-tabs">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={`adp-tab${activeTab === t.key ? " adp-tab-active" : ""}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ══ Scrollable body ══ */}
         <div
           style={{
             flex: 1,
@@ -546,683 +941,1298 @@ function ApplicantPanel({ app, onClose, onUpdateStatus, busyId }) {
             WebkitOverflowScrolling: "touch",
           }}
         >
-          {/* Rates */}
-          {(dailyRate || weeklyRate || projectRate) && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Rates</p>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))",
-                  gap: 8,
-                }}
-              >
-                {dailyRate && <RateChip label="Daily" value={dailyRate} />}
-                {weeklyRate && <RateChip label="Weekly" value={weeklyRate} />}
-                {projectRate && (
-                  <RateChip label="Project" value={projectRate} />
-                )}
-              </div>
-            </section>
-          )}
+          {/* ─── OVERVIEW ─── */}
+          {activeTab === "overview" && (
+            <div>
+              {/* Quick rate row */}
+              {(dailyRate || weeklyRate || projectRate) && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    marginBottom: 20,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <RateTile label="Daily" value={dailyRate} />
+                  <RateTile label="Weekly" value={weeklyRate} />
+                  <RateTile label="Project" value={projectRate} />
+                </div>
+              )}
 
-          {/* Bio */}
-          {bio && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>About</p>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 13.5,
-                  color: "#9ca3af",
-                  lineHeight: 1.65,
-                }}
-              >
-                {bio}
-              </p>
-            </section>
-          )}
-
-          {/* Skills */}
-          {skills.length > 0 && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Skills &amp; Category</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {skills.map((sk, i) => (
-                  <span
-                    key={i}
+              {/* Bio */}
+              {bio && (
+                <div style={{ marginBottom: 18 }}>
+                  <SLabel>About</SLabel>
+                  <p
                     style={{
-                      padding: "4px 12px",
-                      background: "rgba(201,169,97,0.1)",
-                      border: "1px solid rgba(201,169,97,0.15)",
-                      borderRadius: 20,
-                      fontSize: 12.5,
-                      color: "#c9a961",
-                      fontWeight: 500,
+                      margin: 0,
+                      fontSize: 13.5,
+                      color: C.text,
+                      lineHeight: 1.65,
+                      background: "rgba(255,255,255,0.03)",
+                      padding: "12px 14px",
+                      borderRadius: 10,
+                      border: `1px solid ${C.border}`,
+                      borderLeft: `3px solid ${C.gold}`,
                     }}
                   >
-                    {sk}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
+                    {bio}
+                  </p>
+                </div>
+              )}
 
-          {/* Contact */}
-          {(email || phone) && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Contact</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                {email && (
-                  <a href={`mailto:${email}`} style={linkRow}>
-                    <Mail
-                      size={13}
-                      style={{ color: "#c9a961", flexShrink: 0 }}
-                    />
-                    {email}
-                  </a>
-                )}
-                {phone && (
-                  <a href={`tel:${phone}`} style={linkRow}>
-                    <Phone
-                      size={13}
-                      style={{ color: "#c9a961", flexShrink: 0 }}
-                    />
-                    {phone}
-                  </a>
-                )}
-              </div>
-            </section>
-          )}
+              {/* Skills */}
+              {skills.length > 0 && (
+                <div style={{ marginBottom: 18 }}>
+                  <SLabel>Skills &amp; Category</SLabel>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {skills.map((sk, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          padding: "4px 12px",
+                          background: C.goldBg,
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 20,
+                          fontSize: 12.5,
+                          color: C.gold,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {sk}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {/* Social & Links */}
-          {(portfolio || instagram || youtube || website || twitter) && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Links &amp; Social</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                {portfolio && (
-                  <a
-                    href={portfolio}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ ...linkRow, color: "#c9a961" }}
-                  >
-                    <ExternalLink size={13} style={{ flexShrink: 0 }} />
-                    View Portfolio
-                  </a>
-                )}
-                {instagram && (
-                  <a
-                    href={instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={linkRow}
-                  >
-                    <Instagram
-                      size={13}
-                      style={{ color: "#e1306c", flexShrink: 0 }}
-                    />
-                    Instagram
-                  </a>
-                )}
-                {youtube && (
-                  <a
-                    href={youtube}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={linkRow}
-                  >
-                    <Youtube
-                      size={13}
-                      style={{ color: "#ff0000", flexShrink: 0 }}
-                    />
-                    YouTube
-                  </a>
-                )}
-                {twitter && (
-                  <a
-                    href={twitter}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={linkRow}
-                  >
-                    <Twitter
-                      size={13}
-                      style={{ color: "#1da1f2", flexShrink: 0 }}
-                    />
-                    Twitter / X
-                  </a>
-                )}
-                {website && (
-                  <a
-                    href={website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={linkRow}
-                  >
-                    <Globe
-                      size={13}
-                      style={{ color: "#c9a961", flexShrink: 0 }}
-                    />
-                    Website
-                  </a>
-                )}
+              {/* Info rows */}
+              <div style={{ marginBottom: 18 }}>
+                <InfoRow icon={UserCircle} label="Full Name" value={name} />
+                <InfoRow icon={Film} label="Primary Role" value={role} gold />
+                <InfoRow
+                  icon={Briefcase}
+                  label="Experience"
+                  value={experience}
+                />
+                <InfoRow icon={MapPin} label="Location" value={location} />
               </div>
-            </section>
-          )}
 
-          {/* Portfolio items grid */}
-          {portfolioItems.length > 0 && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Portfolio Work</p>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))",
-                  gap: 8,
-                }}
-              >
-                {portfolioItems.map((item, i) => (
-                  <PortfolioThumb key={i} item={item} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Availability */}
-          {(artist?.availability?.freeDates?.length > 0 ||
-            artist?.availability?.blockedDates?.length > 0) && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Availability</p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {artist.availability.freeDates?.length > 0 && (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                      padding: "5px 12px",
-                      background: "rgba(74,222,128,0.08)",
-                      border: "1px solid rgba(74,222,128,0.2)",
-                      borderRadius: 20,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "#4ade80",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: "#4ade80",
-                      }}
-                    />
-                    {artist.availability.freeDates.length} free dates
-                  </span>
-                )}
-                {artist.availability.blockedDates?.length > 0 && (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                      padding: "5px 12px",
-                      background: "rgba(248,113,113,0.08)",
-                      border: "1px solid rgba(248,113,113,0.2)",
-                      borderRadius: 20,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "#f87171",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: "#f87171",
-                      }}
-                    />
-                    {artist.availability.blockedDates.length} booked dates
-                  </span>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* Response time */}
-          {responseTime && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Response Time</p>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "9px 13px",
-                  background: "#1a1d24",
-                  border: "1px solid rgba(201,169,97,0.15)",
-                  borderRadius: 9,
-                  fontSize: 13,
-                  color: "#fff",
-                }}
-              >
-                <Clock3 size={13} style={{ color: "#c9a961" }} />
-                {responseTime}
-              </div>
-            </section>
-          )}
-
-          {/* Equipment */}
-          {equipment.length > 0 && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Equipment &amp; Gear</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                {equipment.map((eq, i) => (
+              {/* Contact */}
+              {(email || phone) && (
+                <div style={{ marginBottom: 18 }}>
+                  <SLabel>Contact</SLabel>
                   <div
-                    key={eq._id || i}
+                    style={{ display: "flex", flexDirection: "column", gap: 7 }}
+                  >
+                    {email && (
+                      <a
+                        href={`mailto:${email}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "9px 12px",
+                          background: "rgba(255,255,255,0.03)",
+                          borderRadius: 8,
+                          border: `1px solid ${C.border}`,
+                          color: C.text,
+                          textDecoration: "none",
+                          fontSize: 13,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        <Mail
+                          size={13}
+                          style={{ color: C.gold, flexShrink: 0 }}
+                        />
+                        {email}
+                      </a>
+                    )}
+                    {phone && (
+                      <a
+                        href={`tel:${phone}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "9px 12px",
+                          background: "rgba(255,255,255,0.03)",
+                          borderRadius: 8,
+                          border: `1px solid ${C.border}`,
+                          color: C.text,
+                          textDecoration: "none",
+                          fontSize: 13,
+                        }}
+                      >
+                        <Phone
+                          size={13}
+                          style={{ color: C.gold, flexShrink: 0 }}
+                        />
+                        {phone}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Social & links */}
+              {(portfolioUrl || instagram || youtube || twitter || website) && (
+                <div style={{ marginBottom: 18 }}>
+                  <SLabel>Links &amp; Social</SLabel>
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 6 }}
+                  >
+                    <SocialLink
+                      icon={ExternalLink}
+                      color={C.gold}
+                      href={portfolioUrl}
+                      label="View Portfolio"
+                    />
+                    <SocialLink
+                      icon={Instagram}
+                      color="#e1306c"
+                      href={instagram}
+                      label="Instagram"
+                    />
+                    <SocialLink
+                      icon={Youtube}
+                      color="#ff0000"
+                      href={youtube}
+                      label="YouTube"
+                    />
+                    <SocialLink
+                      icon={Twitter}
+                      color="#1da1f2"
+                      href={twitter}
+                      label="Twitter / X"
+                    />
+                    <SocialLink
+                      icon={Globe}
+                      color={C.gold}
+                      href={website}
+                      label="Website"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Response time */}
+              {responseTime && (
+                <div style={{ marginBottom: 18 }}>
+                  <SLabel>Response Time</SLabel>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "9px 13px",
+                      background: C.input,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 9,
+                      fontSize: 13,
+                      color: C.text,
+                    }}
+                  >
+                    <Clock3 size={13} style={{ color: C.gold }} />
+                    {responseTime}
+                  </div>
+                </div>
+              )}
+
+              {/* Cover note */}
+              {coverNote && (
+                <div style={{ marginBottom: 18 }}>
+                  <SLabel>Cover Note</SLabel>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 13.5,
+                      color: C.muted,
+                      lineHeight: 1.65,
+                      background: "rgba(255,255,255,0.03)",
+                      borderRadius: 10,
+                      padding: "12px 14px",
+                      borderLeft: `3px solid ${C.gold}`,
+                    }}
+                  >
+                    {coverNote}
+                  </p>
+                </div>
+              )}
+
+              {/* Empty */}
+              {!bio &&
+                !coverNote &&
+                skills.length === 0 &&
+                !email &&
+                !phone &&
+                !portfolioUrl &&
+                portfolioItems.length === 0 && (
+                  <p
+                    style={{
+                      color: C.muted,
+                      fontSize: 13,
+                      textAlign: "center",
+                      padding: "28px 0",
+                    }}
+                  >
+                    No additional details available for this applicant.
+                  </p>
+                )}
+            </div>
+          )}
+
+          {/* ─── RATES ─── */}
+          {activeTab === "rates" && (
+            <div>
+              <SLabel>Pricing</SLabel>
+              {[
+                { label: "Daily Rate", value: dailyRate },
+                { label: "Weekly Rate", value: weeklyRate },
+                { label: "Project Rate", value: projectRate },
+              ].map(({ label, value }) =>
+                value ? (
+                  <div
+                    key={label}
                     style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      padding: "9px 13px",
-                      background: "#1a1d24",
-                      border: "1px solid rgba(201,169,97,0.12)",
-                      borderRadius: 9,
+                      padding: "14px 16px",
+                      background: "rgba(255,255,255,0.03)",
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 10,
+                      marginBottom: 8,
                     }}
                   >
-                    <div>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: "#fff",
-                        }}
-                      >
-                        {eq.name || "Equipment"}
-                      </p>
-                      {eq.model && (
-                        <p
-                          style={{
-                            margin: "1px 0 0",
-                            fontSize: 11,
-                            color: "#9ca3af",
-                          }}
-                        >
-                          {eq.model}
-                        </p>
-                      )}
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      {eq.rental && (
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            color: "#c9a961",
-                          }}
-                        >
-                          ₹{eq.rental}/day
-                        </p>
-                      )}
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 600,
-                          color: eq.rentalOn !== false ? "#4ade80" : "#f87171",
-                        }}
-                      >
-                        {eq.rentalOn !== false ? "Available" : "Booked"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Reviews */}
-          {reviews.length > 0 && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Reviews ({reviewCount})</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {reviews.slice(0, 3).map((r, i) => {
-                  const rName =
-                    r.name || r.reviewerName || r.hirer?.name || "Anonymous";
-                  const rText = r.text || r.comment || r.message || "";
-                  const rRating = Number(r.rating || 0);
-                  const rDate = r.createdAt
-                    ? new Date(r.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "";
-                  return (
                     <div
-                      key={r._id || i}
-                      style={{
-                        padding: "11px 13px",
-                        background: "#1a1d24",
-                        border: "1px solid rgba(201,169,97,0.12)",
-                        borderRadius: 9,
-                      }}
+                      style={{ display: "flex", alignItems: "center", gap: 10 }}
                     >
                       <div
                         style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 9,
+                          background: C.goldDim,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "space-between",
-                          marginBottom: 6,
+                          justifyContent: "center",
                         }}
                       >
-                        <span
-                          style={{
-                            fontSize: 12.5,
-                            fontWeight: 600,
-                            color: "#fff",
-                          }}
-                        >
-                          {rName}
-                        </span>
-                        <div style={{ display: "flex", gap: 2 }}>
-                          {Array.from({ length: 5 }).map((_, j) => (
-                            <Star
-                              key={j}
-                              size={10}
-                              fill={j < rRating ? "#c9a961" : "transparent"}
-                              color={j < rRating ? "#c9a961" : "#6b7280"}
-                            />
-                          ))}
-                        </div>
+                        <IndianRupee size={15} style={{ color: C.gold }} />
                       </div>
-                      {rText && (
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: 12.5,
-                            color: "#9ca3af",
-                            lineHeight: 1.55,
-                          }}
-                        >
-                          {rText}
-                        </p>
-                      )}
-                      {rDate && (
-                        <p
-                          style={{
-                            margin: "5px 0 0",
-                            fontSize: 10.5,
-                            color: "#6b7280",
-                          }}
-                        >
-                          {rDate}
-                        </p>
-                      )}
+                      <span style={{ fontSize: 13.5, color: C.text }}>
+                        {label}
+                      </span>
                     </div>
-                  );
-                })}
-                {reviews.length > 3 && (
-                  <p
+                    <span
+                      style={{ fontSize: 16, fontWeight: 700, color: C.gold }}
+                    >
+                      {value}
+                    </span>
+                  </div>
+                ) : null,
+              )}
+              {!dailyRate && !weeklyRate && !projectRate && (
+                <p
+                  style={{
+                    color: C.muted,
+                    fontSize: 13,
+                    textAlign: "center",
+                    padding: "24px 0",
+                  }}
+                >
+                  No rate information provided.
+                </p>
+              )}
+              <p
+                style={{
+                  margin: "14px 0 0",
+                  fontSize: 12,
+                  color: C.dim,
+                  lineHeight: 1.5,
+                  textAlign: "center",
+                }}
+              >
+                Rates are indicative — final pricing is subject to project
+                scope.
+              </p>
+            </div>
+          )}
+
+          {/* ─── AVAILABILITY ─── */}
+          {activeTab === "availability" && (
+            <div>
+              <SLabel>Availability This Month</SLabel>
+              <div
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 12,
+                  padding: 14,
+                  marginBottom: 12,
+                }}
+              >
+                <MiniCalendar
+                  blockedDates={blockedDates}
+                  freeDates={freeDates}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {freeDates.length > 0 && (
+                  <div
                     style={{
-                      margin: 0,
-                      fontSize: 12,
-                      color: "#9ca3af",
-                      textAlign: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "6px 14px",
+                      background: C.successBg,
+                      border: `1px solid ${C.successBdr}`,
+                      borderRadius: 20,
                     }}
                   >
-                    +{reviews.length - 3} more reviews on full profile
+                    <div
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: "50%",
+                        background: C.success,
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: C.success,
+                      }}
+                    >
+                      {freeDates.length} free day
+                      {freeDates.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                )}
+                {blockedDates.length > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "6px 14px",
+                      background: C.dangerBg,
+                      border: `1px solid ${C.dangerBdr}`,
+                      borderRadius: 20,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: "50%",
+                        background: C.danger,
+                      }}
+                    />
+                    <span
+                      style={{ fontSize: 12, fontWeight: 600, color: C.danger }}
+                    >
+                      {blockedDates.length} booked date
+                      {blockedDates.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                )}
+                {freeDates.length === 0 && blockedDates.length === 0 && (
+                  <p
+                    style={{
+                      color: C.muted,
+                      fontSize: 13,
+                      textAlign: "center",
+                      padding: "18px 0",
+                      width: "100%",
+                    }}
+                  >
+                    No availability data provided yet.
                   </p>
                 )}
               </div>
-            </section>
+            </div>
           )}
 
-          {/* Cover note */}
-          {note && (
-            <section style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Cover Note</p>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 13.5,
-                  color: "#9ca3af",
-                  lineHeight: 1.65,
-                  background: "rgba(255,255,255,0.03)",
-                  borderRadius: 10,
-                  padding: "12px 14px",
-                  borderLeft: "3px solid #c9a961",
-                }}
-              >
-                {note}
-              </p>
-            </section>
+          {/* ─── PORTFOLIO ─── */}
+          {activeTab === "portfolio" && (
+            <div>
+              <SLabel>Portfolio Work</SLabel>
+              {portfolioItems.length > 0 ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill,minmax(140px,1fr))",
+                    gap: 8,
+                  }}
+                >
+                  {portfolioItems.map((item, i) => (
+                    <PortfolioThumb key={i} item={item} />
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "32px 0" }}>
+                  <Play
+                    size={32}
+                    style={{
+                      color: "rgba(156,163,175,0.18)",
+                      margin: "0 auto 10px",
+                      display: "block",
+                    }}
+                  />
+                  <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>
+                    No portfolio items yet
+                  </p>
+                  {portfolioUrl && (
+                    <a
+                      href={portfolioUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                        marginTop: 12,
+                        padding: "8px 18px",
+                        background: C.goldBg,
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 9,
+                        color: C.gold,
+                        textDecoration: "none",
+                        fontSize: 13,
+                        fontWeight: 600,
+                      }}
+                    >
+                      <ExternalLink size={13} /> View External Portfolio
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
-          {/* Truly empty */}
-          {!bio &&
-            !note &&
-            skills.length === 0 &&
-            !email &&
-            !phone &&
-            !portfolio &&
-            portfolioItems.length === 0 &&
-            reviews.length === 0 && (
-              <p
-                style={{
-                  color: "#6b7280",
-                  fontSize: 13,
-                  textAlign: "center",
-                  padding: "32px 0",
-                }}
-              >
-                No additional details available for this applicant.
-              </p>
-            )}
-        </div>
+          {/* ─── EQUIPMENT ─── */}
+          {activeTab === "equipment" && (
+            <div>
+              <SLabel>Equipment &amp; Gear</SLabel>
+              {equipment.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "28px 0" }}>
+                  <Package
+                    size={32}
+                    style={{
+                      color: "rgba(156,163,175,0.18)",
+                      margin: "0 auto 10px",
+                      display: "block",
+                    }}
+                  />
+                  <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>
+                    No equipment listed
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* availability count badge */}
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "5px 12px",
+                      marginBottom: 14,
+                      background: C.goldBg,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 20,
+                    }}
+                  >
+                    <Package size={12} style={{ color: C.gold }} />
+                    <span
+                      style={{ fontSize: 12, fontWeight: 600, color: C.gold }}
+                    >
+                      {equipment.filter((e) => e.rentalOn !== false).length} of{" "}
+                      {equipment.length} items available
+                    </span>
+                  </div>
 
-        {/* ── Action footer ── */}
-        <div
-          style={{
-            padding: "12px 20px",
-            borderTop: "1px solid rgba(201,169,97,0.15)",
-            display: "flex",
-            gap: 8,
-            flexShrink: 0,
-            background: "#22252e",
-          }}
-        >
-          {[
-            {
-              s: "hired",
-              label: "Accept",
-              bg: "rgba(74,222,128,0.15)",
-              color: "#4ade80",
-              Icon: CheckCircle2,
-            },
-            {
-              s: "rejected",
-              label: "Reject",
-              bg: "rgba(248,113,113,0.15)",
-              color: "#f87171",
-              Icon: XCircle,
-            },
-            {
-              s: "pending",
-              label: "Keep Pending",
-              bg: "rgba(251,191,36,0.15)",
-              color: "#fbbf24",
-              Icon: Clock3,
-            },
-          ].map(({ s, label, bg, color, Icon: BtnIcon }) => {
-            const isActive =
-              status === s || (s === "hired" && status === "accepted");
-            return (
-              <button
-                key={s}
-                disabled={isBusy || isActive}
-                onClick={() => onUpdateStatus(app._id, s)}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
+                    {equipment.map((eq, i) => {
+                      const avail = eq.rentalOn !== false;
+                      const catColor = CAT_COLORS[eq.category] || C.gold;
+                      const CatIcon = CAT_ICONS[eq.category] || Package;
+                      return (
+                        <div
+                          key={eq._id || i}
+                          style={{
+                            display: "flex",
+                            gap: 12,
+                            padding: 12,
+                            background: "rgba(255,255,255,0.03)",
+                            border: `1px solid ${avail ? C.border : "rgba(255,255,255,0.04)"}`,
+                            borderRadius: 12,
+                            alignItems: "center",
+                            opacity: avail ? 1 : 0.45,
+                          }}
+                        >
+                          {eq.img ? (
+                            <img
+                              src={eq.img}
+                              alt={eq.name}
+                              style={{
+                                width: 54,
+                                height: 54,
+                                borderRadius: 8,
+                                objectFit: "cover",
+                                flexShrink: 0,
+                                border: `1px solid ${C.border}`,
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: 54,
+                                height: 54,
+                                borderRadius: 8,
+                                background: "rgba(255,255,255,0.05)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0,
+                              }}
+                            >
+                              <CatIcon size={22} style={{ color: C.muted }} />
+                            </div>
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: 6,
+                                marginBottom: 3,
+                              }}
+                            >
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: 13.5,
+                                  fontWeight: 600,
+                                  color: C.text,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {eq.name || "Equipment"}
+                              </p>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  padding: "2px 7px",
+                                  borderRadius: 20,
+                                  background: `${catColor}18`,
+                                  color: catColor,
+                                  border: `1px solid ${catColor}30`,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {eq.category || "Other"}
+                              </span>
+                            </div>
+                            {eq.model && (
+                              <p
+                                style={{
+                                  margin: "0 0 4px",
+                                  fontSize: 12,
+                                  color: C.muted,
+                                }}
+                              >
+                                {eq.model}
+                              </p>
+                            )}
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                              }}
+                            >
+                              {eq.rental ? (
+                                <p
+                                  style={{
+                                    margin: 0,
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    color: C.gold,
+                                  }}
+                                >
+                                  ₹{eq.rental}/day
+                                </p>
+                              ) : (
+                                <span />
+                              )}
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                  padding: "3px 9px",
+                                  borderRadius: 20,
+                                  background: avail ? C.successBg : C.dangerBg,
+                                  border: `1px solid ${avail ? C.successBdr : C.dangerBdr}`,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: 5,
+                                    height: 5,
+                                    borderRadius: "50%",
+                                    background: avail ? C.success : C.danger,
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 600,
+                                    color: avail ? C.success : C.danger,
+                                  }}
+                                >
+                                  {avail ? "Available" : "Booked"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Note — mirrors ArtistProfile.jsx */}
+                  <div
+                    style={{
+                      marginTop: 14,
+                      padding: "12px 16px",
+                      background: C.goldBg,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 10,
+                    }}
+                  >
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 12.5,
+                        color: C.muted,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      <span style={{ fontWeight: 700, color: C.gold }}>
+                        Note:{" "}
+                      </span>
+                      Equipment rates are in addition to the artist's service
+                      rate. Selected items will be included in your booking
+                      request.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ─── REVIEWS ─── */}
+          {activeTab === "reviews" && (
+            <div>
+              <div
                 style={{
-                  flex: 1,
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  gap: 5,
-                  padding: "10px 0",
-                  borderRadius: 9,
-                  background: isActive ? bg : "rgba(255,255,255,0.05)",
-                  color: isActive ? color : "#6b7280",
-                  border: isActive
-                    ? `1px solid ${color}40`
-                    : "1px solid rgba(255,255,255,0.06)",
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  opacity: isBusy ? 0.6 : 1,
-                  cursor: isBusy || isActive ? "default" : "pointer",
-                  transition: "background 0.15s, color 0.15s",
+                  gap: 10,
+                  marginBottom: 14,
                 }}
               >
-                <BtnIcon size={13} />
-                {label}
-              </button>
-            );
-          })}
+                <SLabel noGap>Reviews</SLabel>
+                {avgRating !== null && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      padding: "3px 10px",
+                      background: C.goldBg,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 20,
+                    }}
+                  >
+                    <Star size={11} fill={C.gold} color={C.gold} />
+                    <span
+                      style={{ fontSize: 11, fontWeight: 700, color: C.gold }}
+                    >
+                      {avgRating}
+                    </span>
+                    <span style={{ fontSize: 11, color: C.muted }}>
+                      ({reviewCount})
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {reviews.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "28px 0" }}>
+                  <Star
+                    size={30}
+                    style={{
+                      color: "rgba(156,163,175,0.18)",
+                      margin: "0 auto 10px",
+                      display: "block",
+                    }}
+                  />
+                  <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>
+                    No reviews yet
+                  </p>
+                </div>
+              ) : (
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 10 }}
+                >
+                  {reviews.map((r, i) => {
+                    const rName =
+                      r.name || r.reviewerName || r.hirer?.name || "Anonymous";
+                    const rText = r.text || r.comment || r.message || "";
+                    const rRating = Number(r.rating || 0);
+                    const rDate = dateSh(r.createdAt || r.date);
+                    return (
+                      <div
+                        key={r._id || i}
+                        style={{
+                          padding: "12px 14px",
+                          background: C.input,
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 10,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: 7,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 600,
+                              color: C.text,
+                            }}
+                          >
+                            {rName}
+                          </span>
+                          <div style={{ display: "flex", gap: 2 }}>
+                            {Array.from({ length: 5 }).map((_, j) => (
+                              <Star
+                                key={j}
+                                size={11}
+                                fill={j < rRating ? C.gold : "transparent"}
+                                color={j < rRating ? C.gold : C.muted}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        {rText && (
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 13,
+                              color: C.muted,
+                              lineHeight: 1.55,
+                            }}
+                          >
+                            {rText}
+                          </p>
+                        )}
+                        {rDate && (
+                          <p
+                            style={{
+                              margin: "5px 0 0",
+                              fontSize: 10.5,
+                              color: C.dim,
+                            }}
+                          >
+                            {rDate}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        {/* ══ end body ══ */}
+
+        {/* ── Footer actions ── */}
+        <div
+          style={{
+            padding: "12px 20px 14px",
+            borderTop: `1px solid ${C.border}`,
+            display: "flex",
+            gap: 7,
+            flexShrink: 0,
+            background: C.cardDeep,
+            flexWrap: "wrap",
+          }}
+        >
+          {/* Navigate to full ArtistProfile page */}
+          <button
+            onClick={onNavigateToProfile}
+            style={{
+              flex: "2 1 120px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 5,
+              padding: "10px",
+              borderRadius: 9,
+              background: `linear-gradient(135deg,${C.gold},#a8863d)`,
+              border: "none",
+              color: "#1a1d24",
+              fontSize: 12.5,
+              fontWeight: 700,
+              cursor: "pointer",
+              touchAction: "manipulation",
+            }}
+          >
+            <UserCircle size={14} /> Full Profile
+          </button>
+
+          <button
+            disabled={isBusy || status === "hired" || status === "accepted"}
+            onClick={() => onUpdateStatus(app._id, "hired")}
+            style={{
+              flex: "1 1 68px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 5,
+              padding: "10px",
+              borderRadius: 9,
+              border: "none",
+              background: C.successBg,
+              color: C.success,
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: "pointer",
+              touchAction: "manipulation",
+              opacity:
+                isBusy || status === "hired" || status === "accepted" ? 0.5 : 1,
+            }}
+          >
+            <CheckCircle2 size={13} /> Accept
+          </button>
+
+          <button
+            disabled={isBusy || status === "rejected"}
+            onClick={() => onUpdateStatus(app._id, "rejected")}
+            style={{
+              flex: "1 1 68px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 5,
+              padding: "10px",
+              borderRadius: 9,
+              border: "none",
+              background: C.dangerBg,
+              color: C.danger,
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: "pointer",
+              touchAction: "manipulation",
+              opacity: isBusy || status === "rejected" ? 0.5 : 1,
+            }}
+          >
+            <XCircle size={13} /> Reject
+          </button>
+
+          <button
+            disabled={isBusy || status === "pending"}
+            onClick={() => onUpdateStatus(app._id, "pending")}
+            style={{
+              flex: "1 1 68px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 5,
+              padding: "10px",
+              borderRadius: 9,
+              border: "none",
+              background: C.warnBg,
+              color: C.warn,
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: "pointer",
+              touchAction: "manipulation",
+              opacity: isBusy || status === "pending" ? 0.5 : 1,
+            }}
+          >
+            <Clock3 size={13} /> Pending
+          </button>
         </div>
       </div>
     </>
   );
 }
 
-// ─── Rate chip ─────────────────────────────────────────────────────────────────
-function RateChip({ label, value }) {
-  const display = value && !String(value).startsWith("₹") ? `₹${value}` : value;
+// ═══════════════════════════════════════════════════════════════════════════
+// APPLICATION CARD (list row)
+// ═══════════════════════════════════════════════════════════════════════════
+function AppCard({
+  app,
+  isOpen,
+  onToggleDetail,
+  onUpdateStatus,
+  busyId,
+  showOpp,
+  onNavigateToProfile,
+}) {
+  const [avatarErr, setAvatarErr] = useState(false);
+
+  const status = String(app.status || "pending").toLowerCase();
+  const cfg = sCfg(status);
+  const artist = app.artist || {};
+  const opp = app.opportunity || {};
+  const name = artist.name || artist.username || "Artist";
+  const location = artist.location || "";
+  const role = artist.artCategory || artist.role || "";
+  const avatar = artist.profileImage || artist.avatar || "";
+  const experience = artist.experience || "";
+  const note = app.coverLetter || app.note || app.message || "";
+  const skills = Array.isArray(artist.skills) ? artist.skills : [];
+  const isBusy = busyId === app._id;
+  const dailyRate = artist?.rates?.daily
+    ? String(artist.rates.daily).startsWith("₹")
+      ? artist.rates.daily
+      : `₹${artist.rates.daily}`
+    : null;
+  const appliedAt = app.createdAt
+    ? new Date(app.createdAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+      })
+    : "";
+
   return (
     <div
+      className="app-card"
       style={{
-        padding: "9px 12px",
-        background: "#1a1d24",
-        border: "1px solid rgba(201,169,97,0.15)",
-        borderRadius: 9,
-        textAlign: "center",
+        border: `1px solid ${isOpen ? "rgba(201,169,97,0.5)" : C.border}`,
       }}
     >
-      <p
+      {/* Top section */}
+      <div
         style={{
-          margin: 0,
-          fontSize: 10,
-          color: "#9ca3af",
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          fontWeight: 600,
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 11,
+          marginBottom: 10,
         }}
       >
-        {label}
-      </p>
-      <p
-        style={{
-          margin: "3px 0 0",
-          fontSize: 14,
-          fontWeight: 700,
-          color: "#c9a961",
-        }}
-      >
-        {display}
-      </p>
+        {/* AVATAR — click → full ArtistProfile page */}
+        <div
+          onClick={onNavigateToProfile}
+          title="View full profile"
+          style={{
+            position: "relative",
+            flexShrink: 0,
+            cursor: "pointer",
+            paddingBottom: 14,
+          }}
+        >
+          {avatar && !avatarErr ? (
+            <img
+              src={avatar}
+              alt={name}
+              onError={() => setAvatarErr(true)}
+              className="card-avatar"
+              style={{
+                border: `2px solid ${C.border}`,
+                transition: "border-color .2s,transform .2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = C.gold;
+                e.currentTarget.style.transform = "scale(1.07)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = C.border;
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            />
+          ) : (
+            <div className="card-avatar-ph">
+              <User size={17} style={{ color: "#1a1d24" }} />
+            </div>
+          )}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: "50%",
+              transform: "translateX(-50%)",
+              fontSize: 8,
+              fontWeight: 700,
+              color: C.gold,
+              whiteSpace: "nowrap",
+              background: "rgba(26,29,36,0.85)",
+              padding: "1px 5px",
+              borderRadius: 4,
+              pointerEvents: "none",
+              letterSpacing: "0.04em",
+            }}
+          >
+            PROFILE
+          </div>
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 6,
+              flexWrap: "wrap",
+            }}
+          >
+            <p className="card-name">{name}</p>
+            <span
+              className="status-badge"
+              style={{ background: cfg.bg, color: cfg.color }}
+            >
+              {labelForStatus(status)}
+            </span>
+          </div>
+
+          {role && (
+            <p
+              style={{
+                margin: "2px 0 0",
+                fontSize: 12,
+                color: C.gold,
+                fontWeight: 600,
+              }}
+            >
+              {role}
+            </p>
+          )}
+
+          {showOpp && (opp.title || app.opportunityTitle) && (
+            <p className="card-opp">
+              <Briefcase
+                size={11}
+                style={{ marginRight: 3, color: C.gold, flexShrink: 0 }}
+              />
+              {opp.title || app.opportunityTitle}
+            </p>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "2px 10px",
+              marginTop: 4,
+            }}
+          >
+            {location && (
+              <span className="meta-chip">
+                <MapPin size={10} style={{ color: C.gold }} />
+                {location}
+              </span>
+            )}
+            {experience && (
+              <span className="meta-chip">
+                <Briefcase size={10} style={{ color: C.gold }} />
+                {experience}
+              </span>
+            )}
+            {dailyRate && (
+              <span className="meta-chip">
+                <IndianRupee size={10} style={{ color: C.gold }} />
+                {dailyRate}/day
+              </span>
+            )}
+            {appliedAt && <span className="meta-chip">{appliedAt}</span>}
+          </div>
+
+          {skills.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 4,
+                marginTop: 6,
+              }}
+            >
+              {skills.slice(0, 3).map((sk, i) => (
+                <span
+                  key={i}
+                  style={{
+                    padding: "2px 8px",
+                    background: C.goldDim,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 20,
+                    fontSize: 11,
+                    color: C.gold,
+                    fontWeight: 500,
+                  }}
+                >
+                  {sk}
+                </span>
+              ))}
+              {skills.length > 3 && (
+                <span style={{ fontSize: 11, color: C.muted }}>
+                  +{skills.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+
+          {note && <p className="card-note">{note}</p>}
+        </div>
+      </div>
+
+      {/* Action row */}
+      <div className="card-actions">
+        <button
+          onClick={onToggleDetail}
+          className="btn-details"
+          style={{
+            background: isOpen ? C.goldDim : "transparent",
+            borderColor: isOpen ? C.gold : C.border,
+            color: isOpen ? C.gold : C.text,
+          }}
+        >
+          <Eye size={13} /> {isOpen ? "Hide" : "Details"}
+        </button>
+        <button
+          disabled={isBusy}
+          onClick={() => onUpdateStatus(app._id, "hired")}
+          className="btn-status"
+          style={{
+            background: C.successBg,
+            color: C.success,
+            opacity: isBusy ? 0.6 : 1,
+          }}
+        >
+          <CheckCircle2 size={13} /> Accept
+        </button>
+        <button
+          disabled={isBusy}
+          onClick={() => onUpdateStatus(app._id, "rejected")}
+          className="btn-status"
+          style={{
+            background: C.dangerBg,
+            color: C.danger,
+            opacity: isBusy ? 0.6 : 1,
+          }}
+        >
+          <XCircle size={13} /> Reject
+        </button>
+        <button
+          disabled={isBusy}
+          onClick={() => onUpdateStatus(app._id, "pending")}
+          className="btn-status"
+          style={{
+            background: C.warnBg,
+            color: C.warn,
+            opacity: isBusy ? 0.6 : 1,
+          }}
+        >
+          <Clock3 size={13} /> Pending
+        </button>
+      </div>
     </div>
   );
 }
 
-// ─── Shared micro-styles ───────────────────────────────────────────────────────
-const labelStyle = {
-  margin: "0 0 9px",
-  fontSize: 10.5,
-  fontWeight: 600,
-  color: "#9ca3af",
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-};
-
-const linkRow = {
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  padding: "9px 12px",
-  background: "rgba(255,255,255,0.03)",
-  borderRadius: 8,
-  border: "1px solid rgba(201,169,97,0.15)",
-  color: "#fff",
-  textDecoration: "none",
-  fontSize: 13,
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-};
-
-// ─── Main Applications page ────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN PAGE
+// ═══════════════════════════════════════════════════════════════════════════
 export default function Applications() {
   const [searchParams] = useSearchParams();
-  const preselectedOppId = searchParams.get("opportunityId") || "";
+  const navigate = useNavigate();
+  const preOppId = searchParams.get("opportunityId") || "";
 
   const [items, setItems] = useState([]);
-  const [opportunities, setOpportunities] = useState([]);
+  const [opps, setOpps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
   const [filter, setFilter] = useState("all");
-  const [selectedOppId, setSelectedOppId] = useState(preselectedOppId);
+  const [selOppId, setSelOppId] = useState(preOppId);
   const [detailApp, setDetailApp] = useState(null);
 
   useEffect(() => {
-    let mounted = true;
+    let m = true;
     (async () => {
       try {
-        const [appsData, oppsData] = await Promise.all([
+        const [a, o] = await Promise.all([
           hirerAPI.getApplications().catch(() => []),
           hirerAPI.getOpportunities().catch(() => []),
         ]);
-        if (!mounted) return;
-        setItems(Array.isArray(appsData) ? appsData : []);
-        setOpportunities(Array.isArray(oppsData) ? oppsData : []);
+        if (!m) return;
+        setItems(Array.isArray(a) ? a : []);
+        setOpps(Array.isArray(o) ? o : []);
       } catch {
-        if (mounted) {
+        if (m) {
           setItems([]);
-          setOpportunities([]);
+          setOpps([]);
         }
       } finally {
-        if (mounted) setLoading(false);
+        if (m) setLoading(false);
       }
     })();
     return () => {
-      mounted = false;
+      m = false;
     };
   }, []);
 
   const filtered = useMemo(() => {
     let list = items;
-    if (selectedOppId) {
-      list = list.filter((app) => {
-        const id = app.opportunityId || app.opportunity?._id || app.opportunity;
-        return String(id) === String(selectedOppId);
+    if (selOppId) {
+      list = list.filter((a) => {
+        const id = a.opportunityId || a.opportunity?._id || a.opportunity;
+        return String(id) === String(selOppId);
       });
     }
     if (filter !== "all") {
-      list = list.filter((app) => {
-        const s = String(app.status || "pending").toLowerCase();
-        if (filter === "hired") return s === "hired" || s === "accepted";
-        return s === filter;
+      list = list.filter((a) => {
+        const s = String(a.status || "pending").toLowerCase();
+        return filter === "hired"
+          ? s === "hired" || s === "accepted"
+          : s === filter;
       });
     }
     return list;
-  }, [items, selectedOppId, filter]);
+  }, [items, selOppId, filter]);
 
   const counts = useMemo(() => {
-    const base = selectedOppId
+    const base = selOppId
       ? items.filter(
           (a) =>
             String(a.opportunityId || a.opportunity?._id || a.opportunity) ===
-            String(selectedOppId),
+            String(selOppId),
         )
       : items;
     return {
@@ -1232,7 +2242,7 @@ export default function Applications() {
         .length,
       rejected: base.filter((a) => a.status === "rejected").length,
     };
-  }, [items, selectedOppId]);
+  }, [items, selOppId]);
 
   const updateStatus = async (applicationId, status) => {
     setBusyId(applicationId);
@@ -1248,20 +2258,30 @@ export default function Applications() {
       setDetailApp((prev) =>
         prev?._id === applicationId ? { ...prev, ...updated, status } : prev,
       );
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
+      console.error(e);
     } finally {
       setBusyId("");
     }
   };
 
-  const selectedOpp = opportunities.find((o) => o._id === selectedOppId);
+  // Navigate to the ArtistProfile page
+  const navigateToProfile = (app) => {
+    const artist = app.artist || app.applicant || {};
+    const artistId = artist._id || artist.id || app.artistId;
+    if (!artistId) return;
+    setDetailApp(null);
+    navigate(`/hirer/browse-artists/${artistId}`, { state: { artist } });
+  };
+
+  const selectedOpp = opps.find((o) => o._id === selOppId);
 
   return (
     <div
-      className="min-h-screen flex"
       style={{
-        backgroundColor: "#1a1d24",
+        display: "flex",
+        minHeight: "100vh",
+        backgroundColor: C.bg,
         fontFamily: "'Inter','Segoe UI',sans-serif",
       }}
     >
@@ -1269,24 +2289,24 @@ export default function Applications() {
 
       <div className="apps-wrap">
         <div className="apps-inner">
-          {/* Title */}
+          {/* Header */}
           <div style={{ marginBottom: 20 }}>
             <h1 className="page-title">Applications</h1>
             <p className="page-sub">
               {selectedOpp ? (
                 <>
                   Showing applications for{" "}
-                  <span style={{ color: "#c9a961", fontWeight: 600 }}>
+                  <span style={{ color: C.gold, fontWeight: 600 }}>
                     {selectedOpp.title}
                   </span>
                 </>
               ) : (
-                "Review and manage all applications. Click Details to see the full artist profile."
+                "Review and manage applicants. Click a photo to view the full artist profile."
               )}
             </p>
           </div>
 
-          {/* Post selector */}
+          {/* Post filter */}
           <div style={{ position: "relative", marginBottom: 14 }}>
             <Briefcase
               size={14}
@@ -1295,21 +2315,21 @@ export default function Applications() {
                 left: 12,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "#c9a961",
+                color: C.gold,
                 pointerEvents: "none",
               }}
             />
             <select
-              value={selectedOppId}
+              value={selOppId}
               onChange={(e) => {
-                setSelectedOppId(e.target.value);
+                setSelOppId(e.target.value);
                 setFilter("all");
                 setDetailApp(null);
               }}
               className="post-select"
             >
               <option value="">All posts</option>
-              {opportunities.map((o) => (
+              {opps.map((o) => (
                 <option key={o._id} value={o._id}>
                   {o.title}
                 </option>
@@ -1322,13 +2342,13 @@ export default function Applications() {
                 right: 12,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "#9ca3af",
+                color: C.muted,
                 pointerEvents: "none",
               }}
             />
           </div>
 
-          {/* Tabs */}
+          {/* Status tabs */}
           <div className="tabs-row">
             {[
               { key: "all", label: "All", count: counts.all },
@@ -1363,8 +2383,8 @@ export default function Applications() {
               <Loader2
                 size={26}
                 style={{
-                  color: "#c9a961",
-                  animation: "spin 1s linear infinite",
+                  color: C.gold,
+                  animation: "apps-spin 1s linear infinite",
                 }}
               />
             </div>
@@ -1378,293 +2398,167 @@ export default function Applications() {
                   display: "block",
                 }}
               />
-              <p style={{ color: "#9ca3af", fontSize: 13, margin: "0 0 3px" }}>
-                {selectedOppId
-                  ? "No applications for this post yet"
+              <p style={{ color: C.muted, fontSize: 13, margin: "0 0 3px" }}>
+                {selOppId
+                  ? "No applications for this post yet."
                   : "No applications found."}
               </p>
               {filter !== "all" && (
-                <p style={{ color: "#6b7280", fontSize: 12, margin: 0 }}>
-                  Try a different status filter
+                <p style={{ color: C.dim, fontSize: 12, margin: 0 }}>
+                  Try a different status filter.
                 </p>
               )}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {filtered.map((app) => {
-                const status = String(app.status || "pending").toLowerCase();
-                const sStyle = STATUS_STYLE[status] || STATUS_STYLE.pending;
-                const artist = app.artist || {};
-                const opp = app.opportunity || {};
-                const name = artist.name || artist.username || "Artist";
-                const location = artist.location || "";
-                const role = artist.artCategory || artist.role || "";
-                const avatar = artist.profileImage || artist.avatar || "";
-                const appliedAt = app.createdAt
-                  ? new Date(app.createdAt).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                    })
-                  : "";
-                const note = app.coverLetter || app.note || app.message || "";
-                const isBusy = busyId === app._id;
-                const isOpen = detailApp?._id === app._id;
-                const skills = Array.isArray(artist.skills)
-                  ? artist.skills
-                  : [];
-                const experience = artist.experience || "";
-
-                return (
-                  <div
-                    key={app._id}
-                    className="app-card"
-                    style={{
-                      border: `1px solid ${isOpen ? "rgba(201,169,97,0.5)" : "rgba(201,169,97,0.15)"}`,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 10,
-                        marginBottom: 12,
-                      }}
-                    >
-                      {avatar ? (
-                        <img src={avatar} alt={name} className="card-avatar" />
-                      ) : (
-                        <div className="card-avatar-ph">
-                          <User size={16} style={{ color: "#1a1d24" }} />
-                        </div>
-                      )}
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-start",
-                            gap: 6,
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          <p className="card-name">{name}</p>
-                          <span
-                            className="status-badge-sm"
-                            style={{
-                              background: sStyle.bg,
-                              color: sStyle.color,
-                            }}
-                          >
-                            {labelForStatus(status)}
-                          </span>
-                        </div>
-
-                        {role && (
-                          <p
-                            style={{
-                              margin: "2px 0 0",
-                              fontSize: 12,
-                              color: "#c9a961",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {role}
-                          </p>
-                        )}
-
-                        {!selectedOppId &&
-                          (opp.title || app.opportunityTitle) && (
-                            <p className="card-opp">
-                              <Briefcase
-                                size={11}
-                                style={{ marginRight: 3, color: "#c9a961" }}
-                              />
-                              {opp.title || app.opportunityTitle}
-                            </p>
-                          )}
-
-                        <div
-                          style={{
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: "2px 10px",
-                            marginTop: 3,
-                          }}
-                        >
-                          {location && (
-                            <span className="meta-chip">
-                              <MapPin size={10} style={{ color: "#c9a961" }} />
-                              {location}
-                            </span>
-                          )}
-                          {experience && (
-                            <span className="meta-chip">{experience}</span>
-                          )}
-                          {appliedAt && (
-                            <span className="meta-chip">{appliedAt}</span>
-                          )}
-                        </div>
-
-                        {skills.length > 0 && (
-                          <div
-                            style={{
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: 4,
-                              marginTop: 6,
-                            }}
-                          >
-                            {skills.slice(0, 3).map((sk, i) => (
-                              <span
-                                key={i}
-                                style={{
-                                  padding: "2px 8px",
-                                  background: "rgba(201,169,97,0.08)",
-                                  border: "1px solid rgba(201,169,97,0.12)",
-                                  borderRadius: 20,
-                                  fontSize: 11,
-                                  color: "#c9a961",
-                                  fontWeight: 500,
-                                }}
-                              >
-                                {sk}
-                              </span>
-                            ))}
-                            {skills.length > 3 && (
-                              <span style={{ fontSize: 11, color: "#6b7280" }}>
-                                +{skills.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {note && <p className="card-note">{note}</p>}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="card-actions">
-                      <button
-                        onClick={() => setDetailApp(isOpen ? null : app)}
-                        className="btn-details"
-                        style={{
-                          background: isOpen
-                            ? "rgba(201,169,97,0.1)"
-                            : "transparent",
-                          borderColor: isOpen
-                            ? "#c9a961"
-                            : "rgba(201,169,97,0.15)",
-                          color: isOpen ? "#c9a961" : "#c5cad3",
-                        }}
-                      >
-                        <Eye size={13} /> {isOpen ? "Hide" : "Details"}
-                      </button>
-                      <button
-                        disabled={isBusy}
-                        onClick={() => updateStatus(app._id, "hired")}
-                        className="btn-status"
-                        style={{
-                          background: "rgba(74,222,128,0.18)",
-                          color: "#4ade80",
-                          opacity: isBusy ? 0.6 : 1,
-                        }}
-                      >
-                        <CheckCircle2 size={13} /> Accept
-                      </button>
-                      <button
-                        disabled={isBusy}
-                        onClick={() => updateStatus(app._id, "rejected")}
-                        className="btn-status"
-                        style={{
-                          background: "rgba(248,113,113,0.18)",
-                          color: "#f87171",
-                          opacity: isBusy ? 0.6 : 1,
-                        }}
-                      >
-                        <XCircle size={13} /> Reject
-                      </button>
-                      <button
-                        disabled={isBusy}
-                        onClick={() => updateStatus(app._id, "pending")}
-                        className="btn-status"
-                        style={{
-                          background: "rgba(251,191,36,0.18)",
-                          color: "#fbbf24",
-                          opacity: isBusy ? 0.6 : 1,
-                        }}
-                      >
-                        <Clock3 size={13} /> Pending
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              {filtered.map((app) => (
+                <AppCard
+                  key={app._id}
+                  app={app}
+                  isOpen={detailApp?._id === app._id}
+                  onToggleDetail={() =>
+                    setDetailApp((prev) => (prev?._id === app._id ? null : app))
+                  }
+                  onUpdateStatus={updateStatus}
+                  busyId={busyId}
+                  showOpp={!selOppId}
+                  onNavigateToProfile={() => navigateToProfile(app)}
+                />
+              ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* Detail panel */}
+      {/* Full detail panel */}
       {detailApp && (
-        <ApplicantPanel
+        <ArtistDetailPanel
           app={detailApp}
           onClose={() => setDetailApp(null)}
           onUpdateStatus={updateStatus}
           busyId={busyId}
+          onNavigateToProfile={() => navigateToProfile(detailApp)}
         />
       )}
 
       <style>{`
-        .apps-wrap { flex: 1; overflow-x: hidden; padding: 20px 16px 48px; }
-        @media (min-width: 640px)  { .apps-wrap { padding: 24px 24px 56px; } }
-        @media (min-width: 1024px) { .apps-wrap { margin-left: 288px; padding: 28px 32px 64px; } }
-        .apps-inner { max-width: 860px; margin: 0 auto; }
+        /* Layout */
+        .apps-wrap  { flex:1; overflow-x:hidden; padding:20px 14px 60px; }
+        .apps-inner { max-width:860px; margin:0 auto; }
+        @media(min-width:480px)  { .apps-wrap { padding:22px 20px 64px; } }
+        @media(min-width:640px)  { .apps-wrap { padding:24px 24px 64px; } }
+        @media(min-width:1024px) { .apps-wrap { margin-left:288px; padding:28px 32px 64px; } }
 
-        .page-title { font-size: clamp(20px,4vw,24px); font-weight:700; color:#fff; margin:0 0 4px; }
-        .page-sub   { font-size: 13.5px; color:#9ca3af; margin:0; line-height:1.5; }
+        /* Typography */
+        .page-title { font-size:clamp(20px,4vw,24px); font-weight:700; color:#fff; margin:0 0 4px; }
+        .page-sub   { font-size:13.5px; color:${C.muted}; margin:0; line-height:1.5; }
 
-        .post-select { width:100%; padding:10px 36px 10px 34px; background:#2d3139; border:1px solid rgba(201,169,97,0.15); border-radius:10px; color:#c5cad3; font-size:13.5px; appearance:none; cursor:pointer; outline:none; font-family:inherit; }
-        .post-select option { background:#2d3139; color:#fff; }
+        /* Post selector */
+        .post-select { width:100%; padding:10px 36px 10px 34px; background:${C.card};
+          border:1px solid ${C.border}; border-radius:10px; color:${C.text};
+          font-size:13.5px; appearance:none; -webkit-appearance:none;
+          cursor:pointer; outline:none; font-family:inherit; }
+        .post-select option { background:${C.card}; color:#fff; }
 
-        .tabs-row { display:flex; gap:6px; margin-bottom:18px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; scrollbar-width:none; }
+        /* Status tabs */
+        .tabs-row { display:flex; gap:6px; margin-bottom:18px; overflow-x:auto;
+          -webkit-overflow-scrolling:touch; padding-bottom:2px; scrollbar-width:none; }
         .tabs-row::-webkit-scrollbar { display:none; }
+        .tab-btn { padding:7px 12px; border-radius:8px; border:none; cursor:pointer;
+          flex-shrink:0; background:rgba(255,255,255,0.06); color:${C.text};
+          font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px;
+          -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+          transition:background .15s,color .15s; font-family:inherit; }
+        .tab-btn.tab-active { background:${C.goldDim}; color:${C.gold};
+          outline:1px solid rgba(201,169,97,0.2); }
+        .tab-count { background:rgba(255,255,255,0.08); color:${C.muted};
+          font-size:11px; font-weight:700; border-radius:10px; padding:1px 7px; }
+        .tab-count.tab-count-active { background:rgba(201,169,97,0.22); color:${C.gold}; }
 
-        .tab-btn { padding:7px 12px; border-radius:8px; border:none; cursor:pointer; flex-shrink:0; background:rgba(255,255,255,0.06); color:#c5cad3; font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px; -webkit-tap-highlight-color:transparent; touch-action:manipulation; transition:background 0.15s,color 0.15s; }
-        .tab-btn.tab-active { background:rgba(201,169,97,0.12); color:#c9a961; outline:1px solid rgba(201,169,97,0.2); }
-        .tab-count { background:rgba(255,255,255,0.08); color:#6b7280; font-size:11px; font-weight:700; border-radius:10px; padding:1px 7px; }
-        .tab-count.tab-count-active { background:rgba(201,169,97,0.22); color:#c9a961; }
+        /* Empty */
+        .empty-state { border-radius:12px; padding:40px 20px; text-align:center;
+          background:${C.card}; border:1px solid ${C.border}; }
 
-        .empty-state { border-radius:12px; padding:40px 20px; text-align:center; background:#2d3139; border:1px solid rgba(201,169,97,0.15); }
+        /* App card */
+        .app-card { border-radius:12px; padding:14px 14px 12px;
+          background:${C.card}; transition:border-color .2s; }
+        @media(min-width:480px) { .app-card { padding:16px 18px 14px; } }
 
-        .app-card { border-radius:12px; padding:14px 16px; background:#2d3139; transition:border-color 0.2s; }
-        @media (min-width: 640px) { .app-card { padding:16px 20px; } }
+        .card-avatar    { width:44px; height:44px; border-radius:50%;
+          object-fit:cover; flex-shrink:0; display:block; }
+        .card-avatar-ph { width:44px; height:44px; border-radius:50%; flex-shrink:0;
+          background:linear-gradient(135deg,${C.gold},#a8863d);
+          display:flex; align-items:center; justify-content:center; }
+        .card-name  { margin:0; font-size:14px; font-weight:600; color:#fff;
+          overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+          max-width:calc(100% - 96px); }
+        .card-opp   { display:flex; align-items:center; margin:2px 0 0; font-size:12px;
+          color:${C.gold}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .card-note  { margin:7px 0 0; font-size:12px; color:${C.muted}; line-height:1.45;
+          overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+        .meta-chip  { display:inline-flex; align-items:center; gap:3px;
+          font-size:11.5px; color:${C.muted}; }
+        .status-badge { display:inline-flex; align-items:center; padding:3px 9px;
+          border-radius:20px; font-size:11.5px; font-weight:600;
+          white-space:nowrap; flex-shrink:0; }
 
-        .card-avatar    { width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid rgba(201,169,97,0.2); flex-shrink:0; }
-        .card-avatar-ph { width:44px; height:44px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#c9a961,#a8863d); display:flex; align-items:center; justify-content:center; }
-        .card-name { margin:0; font-size:14px; font-weight:600; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:calc(100% - 90px); }
-        .card-opp  { display:flex; align-items:center; margin:2px 0 0; font-size:12px; color:#c9a961; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .card-note { margin:6px 0 0; font-size:12px; color:#9ca3af; line-height:1.45; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-        .meta-chip { display:inline-flex; align-items:center; gap:3px; font-size:11.5px; color:#9ca3af; }
-
+        /* Card buttons */
         .card-actions { display:flex; flex-wrap:wrap; gap:6px; }
-        .btn-details { display:flex; align-items:center; gap:5px; padding:7px 13px; border-radius:8px; border:1px solid; font-size:12.5px; font-weight:500; cursor:pointer; flex:1 1 auto; justify-content:center; min-width:80px; touch-action:manipulation; transition:background 0.15s,border-color 0.15s,color 0.15s; }
-        .btn-status  { display:flex; align-items:center; gap:5px; padding:7px 13px; border-radius:8px; border:none; font-size:12.5px; font-weight:600; cursor:pointer; flex:1 1 auto; justify-content:center; min-width:80px; touch-action:manipulation; }
-        .btn-status:disabled { opacity:0.55; cursor:default; }
+        .btn-details  { display:flex; align-items:center; gap:5px; padding:8px 13px;
+          border-radius:8px; border:1px solid; font-size:12.5px; font-weight:500;
+          cursor:pointer; flex:1 1 auto; justify-content:center; min-width:80px;
+          touch-action:manipulation; font-family:inherit;
+          transition:background .15s,border-color .15s,color .15s; }
+        .btn-status   { display:flex; align-items:center; gap:5px; padding:8px 13px;
+          border-radius:8px; border:none; font-size:12.5px; font-weight:600;
+          cursor:pointer; flex:1 1 auto; justify-content:center; min-width:68px;
+          touch-action:manipulation; font-family:inherit; }
+        .btn-status:disabled { opacity:.55; cursor:default; }
 
-        .status-badge-sm { display:inline-flex; align-items:center; padding:3px 9px; border-radius:20px; font-size:11.5px; font-weight:600; white-space:nowrap; flex-shrink:0; }
-
-        @media (min-width: 768px) {
-          .mobile-handle { display: none !important; }
+        /* Detail panel — mobile bottom sheet */
+        .adp-panel {
+          position:fixed; left:0; right:0; bottom:0; z-index:1001;
+          height:93vh; background:${C.cardDeep};
+          border-radius:18px 18px 0 0; border:1px solid ${C.border};
+          box-shadow:0 -10px 56px rgba(0,0,0,0.65);
+          display:flex; flex-direction:column; overflow:hidden;
+          animation:adp-up .28s cubic-bezier(.4,0,.2,1);
+        }
+        /* Detail panel — desktop right drawer */
+        @media(min-width:768px) {
+          .adp-panel {
+            left:auto; top:0; right:0; bottom:0; height:100vh;
+            width:clamp(360px,44vw,520px); border-radius:0;
+            border-left:1px solid ${C.border};
+            border-top:none; border-bottom:none; border-right:none;
+            animation:adp-right .28s cubic-bezier(.4,0,.2,1);
+          }
         }
 
-        @keyframes slideUp      { from { transform:translateY(100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
-        @keyframes slideInRight { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
-        @keyframes spin         { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+        /* Tabs inside detail panel */
+        .adp-tabs { display:flex; border-bottom:1px solid ${C.border}; flex-shrink:0;
+          overflow-x:auto; scrollbar-width:none; padding:0 20px; }
+        .adp-tabs::-webkit-scrollbar { display:none; }
+        .adp-tab { padding:10px 14px; font-size:12.5px; font-weight:600; border:none;
+          background:transparent; cursor:pointer; white-space:nowrap; flex-shrink:0;
+          color:${C.muted}; border-bottom:2px solid transparent;
+          transition:color .2s; margin-bottom:-1px;
+          touch-action:manipulation; font-family:inherit; }
+        .adp-tab.adp-tab-active { color:${C.gold}; border-bottom-color:${C.gold}; }
 
+        /* Mobile drag handle */
+        .adp-handle { display:flex; justify-content:center; padding:8px 0 2px; flex-shrink:0; }
+        @media(min-width:768px) { .adp-handle { display:none; } }
+
+        /* Keyframes */
+        @keyframes adp-up    { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+        @keyframes adp-right { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+        @keyframes apps-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+        /* Global */
         * { box-sizing:border-box; }
-        input,select,textarea,button { -webkit-tap-highlight-color:transparent; }
-        select option { background:#2d3139; color:#ffffff; }
+        input,select,textarea,button { -webkit-tap-highlight-color:transparent; font-family:inherit; }
+        select option { background:${C.card}; color:#ffffff; }
         ::-webkit-scrollbar { width:4px; height:4px; }
         ::-webkit-scrollbar-track { background:transparent; }
         ::-webkit-scrollbar-thumb { background:rgba(201,169,97,0.2); border-radius:4px; }

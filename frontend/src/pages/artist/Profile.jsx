@@ -15,6 +15,8 @@ import {
   X,
   ChevronLeft as PrevIcon,
   ChevronRight as NextIcon,
+  Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 import { artistAPI, getUser, setUser, uploadFile } from "../../services/api";
@@ -50,6 +52,71 @@ const MONTHS = [
 ];
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+const ARTIST_ROLES = [
+  "Film & TV Production",
+  "Advertising & Commercial Shoots",
+  "Music Videos",
+  "Cinematographer",
+  "Director",
+  "Actor",
+  "Lead Actor",
+  "Supporting Actor",
+  "Dancer",
+  "Choreographer",
+  "Producer",
+  "Screenwriter",
+  "Film Editor",
+  "Sound Designer",
+  "Costume Designer",
+  "Makeup Artist",
+  "Production Designer",
+  "Stunt Coordinator",
+  "Voice Artist",
+  "Background Artist",
+  "Art Director",
+  "Lighting Director",
+  "Assistant Director",
+  "Camera Operator",
+  "Colorist",
+  "VFX Artist",
+  "Music Composer",
+  "Lyricist",
+  "Writer",
+  "Casting Director",
+  "Dialogue Writer",
+  "Event Videography",
+  "Wedding Cinematography",
+  "Documentary Production",
+  "Streaming Content Production",
+  "YouTubers Hiring Editors",
+  "Influencers Hiring Videographers",
+  "Podcast Production Teams",
+  "Social Media Content Studios",
+  "Brand Creator Collaborations",
+  "Game Cinematics",
+  "Motion Capture Crews",
+  "3D Animation Teams",
+  "Virtual Production Specialists",
+  "Unreal Engine Artists",
+  "Corporate Video Production",
+  "Training Content Creation",
+  "Marketing Media Teams",
+  "Internal Communication Studios",
+];
+
+const EXPERIENCE_OPTIONS = [
+  "Less than 1 year",
+  "1 year",
+  "2 years",
+  "3 years",
+  "4 years",
+  "5 years",
+  "6–8 years",
+  "9–12 years",
+  "13–15 years",
+  "15+ years",
+];
+
 const DEFAULT_EQUIPMENT = [];
 
 function dateKey(year, month, day) {
@@ -69,6 +136,7 @@ function getMonthFreeDates(year, month, blockedDates) {
   return free;
 }
 
+/* ─── Reusable Input ─────────────────────────────────────────────── */
 function Input({ label, value, onChange, icon: Icon, placeholder, hint }) {
   return (
     <div className="flex flex-col gap-[6px]">
@@ -115,6 +183,75 @@ function Input({ label, value, onChange, icon: Icon, placeholder, hint }) {
   );
 }
 
+/* ─── Reusable Dropdown ──────────────────────────────────────────── */
+function Dropdown({
+  label,
+  value,
+  onChange,
+  options,
+  icon: Icon,
+  placeholder,
+}) {
+  return (
+    <div className="flex flex-col gap-[6px]">
+      {label && (
+        <label
+          className="text-[12.5px] font-medium"
+          style={{ color: C.lightText }}
+        >
+          {label}
+        </label>
+      )}
+      <div className="relative flex items-center">
+        {Icon && (
+          <span className="absolute left-3 z-10 pointer-events-none">
+            <Icon size={14} style={{ color: C.lightText }} />
+          </span>
+        )}
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full rounded-xl text-[13.5px] outline-none appearance-none cursor-pointer transition-all"
+          style={{
+            background: C.inputBg,
+            border: `1px solid ${C.inputBorder}`,
+            color: value ? C.darkText : "rgba(139,163,144,0.45)",
+            padding: Icon ? "10px 36px 10px 34px" : "10px 36px 10px 14px",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "rgba(179,169,97,0.45)";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = C.inputBorder;
+          }}
+        >
+          {placeholder && (
+            <option value="" disabled>
+              {placeholder}
+            </option>
+          )}
+          {options.map((opt) => (
+            <option
+              key={opt}
+              value={opt}
+              style={{ background: C.card, color: C.darkText }}
+            >
+              {opt}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          size={14}
+          className="absolute right-3 pointer-events-none"
+          style={{ color: C.lightText }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Save Button ────────────────────────────────────────────────── */
 function SaveBtn({ label, onClick, saving = false }) {
   return (
     <button
@@ -132,12 +269,21 @@ function SaveBtn({ label, onClick, saving = false }) {
   );
 }
 
-function BasicInfo({ basicInfo, onChange, onSave, saving, onAvatarPick, avatarUploading }) {
+/* ─── Basic Info Tab ─────────────────────────────────────────────── */
+function BasicInfo({
+  basicInfo,
+  onChange,
+  onSave,
+  saving,
+  onAvatarPick,
+  avatarUploading,
+}) {
   const set = (k) => (v) => onChange((prev) => ({ ...prev, [k]: v }));
   const fileInputRef = useRef(null);
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Avatar Card */}
       <div
         className="rounded-2xl p-6 flex items-center gap-6"
         style={{ background: C.card, border: `1px solid ${C.border}` }}
@@ -188,6 +334,7 @@ function BasicInfo({ basicInfo, onChange, onSave, saving, onAvatarPick, avatarUp
         </div>
       </div>
 
+      {/* Fields Card */}
       <div
         className="rounded-2xl p-6"
         style={{ background: C.card, border: `1px solid ${C.border}` }}
@@ -205,18 +352,22 @@ function BasicInfo({ basicInfo, onChange, onSave, saving, onAvatarPick, avatarUp
             onChange={set("name")}
             placeholder="Your full name"
           />
-          <Input
+          {/* Primary Role — Dropdown */}
+          <Dropdown
             label="Primary Role"
             value={basicInfo.artCategory}
             onChange={set("artCategory")}
-            placeholder="e.g. Cinematographer"
+            options={ARTIST_ROLES}
+            placeholder="Select your role"
           />
-          <Input
+          {/* Experience — Dropdown */}
+          <Dropdown
             label="Experience"
             value={basicInfo.experience}
             onChange={set("experience")}
-            placeholder="e.g. 5+ years"
+            options={EXPERIENCE_OPTIONS}
             icon={Briefcase}
+            placeholder="Select experience"
           />
           <Input
             label="Location"
@@ -254,9 +405,9 @@ function BasicInfo({ basicInfo, onChange, onSave, saving, onAvatarPick, avatarUp
   );
 }
 
+/* ─── Rates Tab ──────────────────────────────────────────────────── */
 function Rates({ rates, onChange, onSave, saving }) {
   const set = (k) => (v) => onChange((prev) => ({ ...prev, [k]: v }));
-
   return (
     <div className="flex flex-col gap-5">
       <div
@@ -271,7 +422,6 @@ function Rates({ rates, onChange, onSave, saving }) {
             Your Rates
           </h3>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <Input
             label="Daily Rate"
@@ -293,12 +443,12 @@ function Rates({ rates, onChange, onSave, saving }) {
           />
         </div>
       </div>
-
       <SaveBtn label="Save Rates" onClick={onSave} saving={saving} />
     </div>
   );
 }
 
+/* ─── Availability Tab ───────────────────────────────────────────── */
 function Availability({ availability, onChange, onSave, saving, syncing }) {
   const today = new Date();
   const [current, setCurrent] = useState({
@@ -331,7 +481,6 @@ function Availability({ availability, onChange, onSave, saving, syncing }) {
     const next = new Set(blockedSet);
     if (next.has(key)) next.delete(key);
     else next.add(key);
-
     const blockedDates = Array.from(next).sort();
     const freeDates = getMonthFreeDates(
       current.year,
@@ -351,7 +500,6 @@ function Availability({ availability, onChange, onSave, saving, syncing }) {
       );
       onSave({ blockedDates: availability.blockedDates || [], freeDates });
     }, 350);
-
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
@@ -438,7 +586,6 @@ function Availability({ availability, onChange, onSave, saving, syncing }) {
               day === today.getDate() &&
               current.month === today.getMonth() &&
               current.year === today.getFullYear();
-
             return (
               <button
                 key={key}
@@ -479,14 +626,45 @@ function Availability({ availability, onChange, onSave, saving, syncing }) {
   );
 }
 
+/* ─── Add Equipment Modal (with image upload) ────────────────────── */
 function AddEquipmentModal({ onClose, onAdd }) {
   const [form, setForm] = useState({
     category: "Camera",
     name: "",
     model: "",
-    img: "",
+    rental: "",
+    img: null,
+    imgPreview: null,
   });
+  const [uploading, setUploading] = useState(false);
+  const imgInputRef = useRef(null);
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const handleImagePick = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !file.type.startsWith("image/")) return;
+
+    // Show local preview immediately
+    const reader = new FileReader();
+    reader.onload = (ev) =>
+      setForm((f) => ({ ...f, imgPreview: ev.target.result }));
+    reader.readAsDataURL(file);
+
+    setUploading(true);
+    try {
+      const uploaded = await uploadFile(file, {
+        bucket: "equipment-images",
+        type: "equipment",
+        fieldName: "file",
+      });
+      setForm((f) => ({ ...f, img: uploaded.url }));
+    } catch (err) {
+      console.error("Equipment image upload failed", err);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleAdd = () => {
     if (!form.name.trim()) return;
@@ -497,14 +675,14 @@ function AddEquipmentModal({ onClose, onAdd }) {
       category: form.category,
       rental: form.rental,
       rentalOn: true,
-      img: form.img.trim() || null,
+      img: form.img || null,
     });
     onClose();
   };
 
   return (
     <div
-      className="fixed inset-0 z-[3000] flex justify-center items-center top-0"
+      className="fixed inset-0 z-[3000] flex justify-center items-center"
       style={{ backdropFilter: "blur(6px)", background: "rgba(10,12,16,0.55)" }}
       onClick={onClose}
     >
@@ -532,6 +710,7 @@ function AddEquipmentModal({ onClose, onAdd }) {
         </p>
 
         <div className="flex flex-col gap-4">
+          {/* Category */}
           <div className="flex flex-col gap-[6px]">
             <label
               className="text-[12.5px] font-medium"
@@ -583,24 +762,116 @@ function AddEquipmentModal({ onClose, onAdd }) {
             onChange={set("rental")}
             placeholder="₹400"
           />
-          <Input
-            label="Image URL (Optional)"
-            value={form.img}
-            onChange={set("img")}
-            placeholder="https://..."
-          />
+
+          {/* ── Image Upload ── */}
+          <div className="flex flex-col gap-[6px]">
+            <label
+              className="text-[12.5px] font-medium"
+              style={{ color: "#8ba390" }}
+            >
+              Equipment Image
+            </label>
+            <input
+              ref={imgInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImagePick}
+            />
+
+            {form.imgPreview ? (
+              <div
+                className="relative rounded-xl overflow-hidden"
+                style={{ height: "140px" }}
+              >
+                <img
+                  src={form.imgPreview}
+                  alt="preview"
+                  className="w-full h-full object-cover"
+                />
+                {uploading && (
+                  <div
+                    className="absolute inset-0 flex items-center justify-center"
+                    style={{ background: "rgba(10,12,16,0.6)" }}
+                  >
+                    <p
+                      className="text-[12px] font-semibold"
+                      style={{ color: C.gold }}
+                    >
+                      Uploading to Supabase...
+                    </p>
+                  </div>
+                )}
+                {!uploading && form.img && (
+                  <div
+                    className="absolute top-2 right-2 px-2 py-[3px] rounded-full text-[10.5px] font-bold"
+                    style={{
+                      background: "rgba(34,197,94,0.2)",
+                      color: "#4ade80",
+                      border: "1px solid rgba(34,197,94,0.3)",
+                    }}
+                  >
+                    ✓ Uploaded
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    setForm((f) => ({ ...f, img: null, imgPreview: null }));
+                  }}
+                  className="absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center border-0 outline-none cursor-pointer"
+                  style={{
+                    background: "rgba(239,68,68,0.2)",
+                    border: "1px solid rgba(239,68,68,0.3)",
+                  }}
+                >
+                  <X size={13} color="#f87171" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => imgInputRef.current?.click()}
+                className="w-full rounded-xl flex flex-col items-center justify-center gap-2 border-dashed cursor-pointer transition-all"
+                style={{
+                  background: "rgba(255,255,255,0.02)",
+                  border: "2px dashed rgba(255,255,255,0.1)",
+                  height: "100px",
+                  color: "#8ba390",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(179,169,97,0.4)";
+                  e.currentTarget.style.background = "rgba(179,169,97,0.04)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+                }}
+              >
+                <Upload size={20} style={{ color: "#8ba390" }} />
+                <p className="text-[12.5px] font-medium">
+                  Click to upload image
+                </p>
+                <p
+                  className="text-[11px]"
+                  style={{ color: "rgba(139,163,144,0.5)" }}
+                >
+                  JPG, PNG, WEBP supported
+                </p>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mt-6">
           <button
             onClick={handleAdd}
-            className="py-[11px] rounded-xl text-[13.5px] font-bold border-0 outline-none cursor-pointer"
+            disabled={uploading}
+            className="py-[11px] rounded-xl text-[13.5px] font-bold border-0 outline-none cursor-pointer disabled:opacity-50"
             style={{
               background: "linear-gradient(135deg, #b3a961, #cfc060)",
               color: "#1a1d24",
             }}
           >
-            Add Equipment
+            {uploading ? "Uploading..." : "Add Equipment"}
           </button>
           <button
             onClick={onClose}
@@ -619,6 +890,7 @@ function AddEquipmentModal({ onClose, onAdd }) {
   );
 }
 
+/* ─── Equipment Tab ──────────────────────────────────────────────── */
 function Equipment({ equipment, onChange, onSave, saving }) {
   const [showModal, setShowModal] = useState(false);
 
@@ -795,6 +1067,7 @@ function Equipment({ equipment, onChange, onSave, saving }) {
   );
 }
 
+/* ─── Main Profile Page ──────────────────────────────────────────── */
 export default function Profile() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
@@ -826,10 +1099,8 @@ export default function Profile() {
     (async () => {
       try {
         const local = getUser();
-        if (local) {
+        if (local)
           setBasicInfo((prev) => ({ ...prev, name: local.name || prev.name }));
-        }
-
         const profile = await artistAPI.getProfile();
         setBasicInfo({
           name: profile.name || "",
@@ -889,9 +1160,7 @@ export default function Profile() {
   const handleAvatarPick = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
-    if (!file) return;
-    if (!String(file.type || "").startsWith("image/")) return;
-
+    if (!file || !String(file.type || "").startsWith("image/")) return;
     setUploadingAvatar(true);
     try {
       const uploaded = await uploadFile(file, {
@@ -902,11 +1171,8 @@ export default function Profile() {
       const updated = await artistAPI.updateProfile({ avatar: uploaded.url });
       const avatarUrl = updated?.avatar || uploaded.url;
       setBasicInfo((prev) => ({ ...prev, avatar: avatarUrl }));
-
       const localUser = getUser();
-      if (localUser) {
-        setUser({ ...localUser, avatar: avatarUrl });
-      }
+      if (localUser) setUser({ ...localUser, avatar: avatarUrl });
     } catch (error) {
       console.error("Failed to upload profile photo", error);
     } finally {
@@ -991,13 +1257,11 @@ export default function Profile() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-        @keyframes fadeUp {
-          from { opacity:0; transform:translateY(12px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
         .profile-content { animation: fadeUp 0.3s ease both; }
         input::placeholder, textarea::placeholder { color: rgba(139,163,144,0.45); }
         input, textarea { caret-color: #b3a961; }
+        select option { background: #22252e; color: #e8e9eb; }
       `}</style>
 
       <Sidebar />
