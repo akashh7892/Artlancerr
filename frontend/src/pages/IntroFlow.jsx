@@ -174,7 +174,7 @@ export default function IntroFlow() {
   };
   const handleEnter = goHome;
   const handleExploreGuest = goHome;
-  const handleSignIn = () => navigate(`/auth/${role}/signin`);
+  const handleSignIn = () => navigate(`/auth/${role}/login`);
 
   const current = slides[currentScreen];
 

@@ -96,7 +96,7 @@ export default function HirerSidebar() {
           <div className="flex items-center gap-2">
             <img
               src="/logo.jpeg"
-              alt="Artlancing"
+              alt="Flip"
               className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
               style={{ border: "1.5px solid rgba(201,169,97,0.3)" }}
             />
@@ -241,7 +241,7 @@ export default function HirerSidebar() {
                       className="text-lg font-semibold"
                       style={{ color: "#ffffff" }}
                     >
-                      Artlancing
+                      Flip
                     </span>
                   </div>
                   <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>

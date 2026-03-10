@@ -98,7 +98,7 @@ app.use("/api/upload", uploadRoutes);
 
 // Health
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", message: "Artlancing API is running" });
+  res.json({ status: "ok", message: "Flip API is running" });
 });
 
 /* ========== SOCKET.IO CORS ========= */

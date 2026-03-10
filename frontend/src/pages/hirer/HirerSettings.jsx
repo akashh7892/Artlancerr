@@ -1175,7 +1175,7 @@ export default function HirerSettings() {
                         checked={notif.marketingEmails}
                         onChange={(v) => patchNotif("marketingEmails", v)}
                         label="Product & Marketing"
-                        description="News, features, and tips from Artlancing"
+                        description="News, features, and tips from Flip"
                       />
                     </Card>
                     <Card>
@@ -1932,7 +1932,7 @@ export default function HirerSettings() {
                         checked={privacy.dataAnalytics}
                         onChange={(v) => patchPrivacy("dataAnalytics", v)}
                         label="Usage Analytics"
-                        description="Help improve Artlancing by sharing anonymous usage data"
+                        description="Help improve Flip by sharing anonymous usage data"
                       />
                     </Card>
 
