@@ -96,7 +96,7 @@ const HIRER_STATS = [
   },
   {
     label: "Artists Hired",
-    value: "23",
+    value: "26",
     Icon: Users,
     bg: "rgba(96,165,250,0.12)",
     color: C.blue,
