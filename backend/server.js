@@ -22,6 +22,7 @@ const categoryRoutes = require("./routes/categories");
 const dashboardRoutes = require("./routes/dashboard");
 const promotionRoutes = require("./routes/promotions");
 const uploadRoutes = require("./routes/upload");
+const publicRoutes = require("./routes/public");
 
 const app = express();
 const server = http.createServer(app);
@@ -55,7 +56,7 @@ const defaultDevOrigins = [
 const allowedOrigins = new Set(
   process.env.NODE_ENV === "production"
     ? configuredOrigins
-    : [...configuredOrigins, ...defaultDevOrigins]
+    : [...configuredOrigins, ...defaultDevOrigins],
 );
 
 const corsOriginCheck = (origin, callback) => {
@@ -70,7 +71,7 @@ app.use(
   cors({
     origin: corsOriginCheck,
     credentials: true,
-  })
+  }),
 );
 
 /* =============================================== */
@@ -95,6 +96,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/promotions", promotionRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/public", publicRoutes); // ← NEW — no auth, safe for /home page
 
 // Health
 app.get("/api/health", (req, res) => {
@@ -169,7 +171,3 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-
-
-

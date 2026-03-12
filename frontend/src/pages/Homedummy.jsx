@@ -1,9 +1,9 @@
 /**
  * HomeDummy.jsx  –  /home
  *
- * Artist: Browse real opportunities → fill application form → sign-in gate on submit
- * Hirer:  Browse real artists → post requirement form → sign-in gate on submit
- * Uses realistic mock data for Indian film industry
+ * Artist: Browse real opportunities from backend → fill application form → sign-in gate on submit
+ * Hirer:  Browse real artists from backend → post requirement form → sign-in gate on submit
+ * No dummy data. Fetches from /api/public/opportunities and /api/public/artists
  *
  * Route: <Route path="/home" element={<HomeDummy />} />
  */
@@ -47,6 +47,15 @@ const C = {
   blue: "#60a5fa",
   red: "#f87171",
 };
+
+/* ─── API base (reuses same env var as services/api.js) ──────────────────── */
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+async function publicFetch(path) {
+  const res = await fetch(`${BASE_URL}${path}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
 
 /* ─── Static Options ─────────────────────────────────────────────────────── */
 const ARTIST_ROLE_OPTS = [
@@ -115,405 +124,7 @@ const ARTIST_CATS = [
   "Voice Artist",
 ];
 
-/* ─── MOCK DATA ──────────────────────────────────────────────────────────── */
-
-const MOCK_OPPORTUNITIES = [
-  {
-    _id: "opp_001",
-    title: "Lead Actor – Hindi Feature Film",
-    category: "Acting",
-    description:
-      "Casting for a male lead in a drama-thriller feature film backed by a major Mumbai production house. Character is a 28–35 year old journalist uncovering a political conspiracy. Fluency in Hindi required. Prior feature film credits preferred.",
-    hirer: { companyName: "Dharma Productions" },
-    budgetMin: 400000,
-    budgetMax: 700000,
-    location: "Mumbai",
-    deadline: "2025-08-15",
-    applicationCount: 84,
-    maxSlots: 1,
-    projectType: "Feature Film",
-  },
-  {
-    _id: "opp_002",
-    title: "Cinematographer – OTT Web Series (5 Episodes)",
-    category: "Cinematography",
-    description:
-      "Looking for an experienced DOP for a 5-episode crime thriller web series for a major OTT platform. Must be comfortable shooting in low-light, handheld styles. Sony VENICE or ARRI Alexa experience mandatory.",
-    hirer: { companyName: "Applause Entertainment" },
-    budgetMin: 180000,
-    budgetMax: 280000,
-    location: "Hyderabad",
-    deadline: "2025-07-30",
-    applicationCount: 37,
-    maxSlots: 1,
-    projectType: "OTT Content",
-  },
-  {
-    _id: "opp_003",
-    title: "Background Dancers – Bollywood Item Number",
-    category: "Dance",
-    description:
-      "Require 12 trained background dancers (male & female) for a high-energy item number featuring a top Bollywood artist. Rehearsals in Mumbai for 5 days followed by a 2-day shoot. Contemporary, hip-hop, or classical training preferred.",
-    hirer: { companyName: "T-Series Films" },
-    budgetMin: 15000,
-    budgetMax: 25000,
-    location: "Mumbai",
-    deadline: "2025-07-20",
-    applicationCount: 210,
-    maxSlots: 12,
-    projectType: "Feature Film",
-  },
-  {
-    _id: "opp_004",
-    title: "Voice Artist – Hindi Audiobook Narration",
-    category: "Voice",
-    description:
-      "Need a warm, expressive male voice for narrating a 10-chapter fiction audiobook (~4.5 hours total). The tone is introspective and literary. Studio recording in Delhi. Prior audiobook or radio experience a plus.",
-    hirer: { companyName: "Audible India Originals" },
-    budgetMin: 35000,
-    budgetMax: 55000,
-    location: "Delhi",
-    deadline: "2025-08-05",
-    applicationCount: 62,
-    maxSlots: 1,
-    projectType: "OTT Content",
-  },
-  {
-    _id: "opp_005",
-    title: "Assistant Director – Short Film (National Award Entry)",
-    category: "Direction",
-    description:
-      "Seeking a driven AD for a 28-minute short film being submitted to NFDC competitions and international festivals. Shoot over 6 days in Pune. Must be detail-oriented, comfortable on set, and passionate about meaningful cinema.",
-    hirer: { companyName: "Cinestaan Film Company" },
-    budgetMin: 20000,
-    budgetMax: 30000,
-    location: "Pune",
-    deadline: "2025-07-25",
-    applicationCount: 48,
-    maxSlots: 2,
-    projectType: "Short Film",
-  },
-  {
-    _id: "opp_006",
-    title: "Prosthetics & SFX Makeup Artist – Horror Series",
-    category: "Makeup",
-    description:
-      "A 6-episode supernatural horror series for OTT needs an experienced SFX/prosthetics makeup artist. You will design and apply creature looks, wound effects, and aging makeup. Portfolio with practical FX work required.",
-    hirer: { companyName: "Vikram Bhatt Productions" },
-    budgetMin: 90000,
-    budgetMax: 140000,
-    location: "Mumbai",
-    deadline: "2025-08-20",
-    applicationCount: 19,
-    maxSlots: 1,
-    projectType: "OTT Content",
-  },
-  {
-    _id: "opp_007",
-    title: "VFX Compositor – Telugu Action Feature",
-    category: "VFX",
-    description:
-      "Looking for a mid-to-senior level Nuke compositor for a big-budget Telugu action film. Responsibilities include clean plates, sky replacements, crowd multiplications, and wire removals. 6-month project at Hyderabad studio.",
-    hirer: { companyName: "Geetha Arts" },
-    budgetMin: 65000,
-    budgetMax: 95000,
-    location: "Hyderabad",
-    deadline: "2025-09-01",
-    applicationCount: 31,
-    maxSlots: 3,
-    projectType: "Feature Film",
-  },
-  {
-    _id: "opp_008",
-    title: "Screenwriter – Ad Campaign Scripts (FMCG Brand)",
-    category: "Writing",
-    description:
-      "An award-winning ad agency needs a sharp screenwriter to develop 4 TVC scripts (30 sec + 60 sec versions) for a leading FMCG brand. Must understand mass-market storytelling and have prior TVC writing credits.",
-    hirer: { companyName: "Ogilvy India" },
-    budgetMin: 50000,
-    budgetMax: 80000,
-    location: "Bengaluru / Remote",
-    deadline: "2025-07-18",
-    applicationCount: 55,
-    maxSlots: 1,
-    projectType: "Ad Campaign",
-  },
-  {
-    _id: "opp_009",
-    title: "Female Lead – Tamil Romantic Drama",
-    category: "Acting",
-    description:
-      "Auditioning for the female lead of a Tamil romantic drama with a confirmed theatrical release. Age: 22–28. Must be fluent in Tamil. Prior TV or film experience preferred. Audition rounds in Chennai.",
-    hirer: { companyName: "Lyca Productions" },
-    budgetMin: 300000,
-    budgetMax: 500000,
-    location: "Chennai",
-    deadline: "2025-08-10",
-    applicationCount: 143,
-    maxSlots: 1,
-    projectType: "Feature Film",
-  },
-  {
-    _id: "opp_010",
-    title: "Music Composer – Indie Documentary",
-    category: "Other",
-    description:
-      "An award-winning documentary on urban migration needs an original background score (~40 minutes). We want something minimal and evocative — ambient, folk-influenced, or orchestral. Composer must deliver stems for final mix.",
-    hirer: { companyName: "Documentary Films India" },
-    budgetMin: 45000,
-    budgetMax: 70000,
-    location: "Remote",
-    deadline: "2025-08-25",
-    applicationCount: 27,
-    maxSlots: 1,
-    projectType: "Documentary",
-  },
-  {
-    _id: "opp_011",
-    title: "Stunt Coordinator – Action Web Series",
-    category: "Other",
-    description:
-      "Seeking an experienced stunt coordinator for a 10-episode action web series. Must have a verified stunt team, knowledge of wire work, and prior OTT or feature film credits. Full NDA required.",
-    hirer: { companyName: "Excel Entertainment" },
-    budgetMin: 150000,
-    budgetMax: 250000,
-    location: "Mumbai",
-    deadline: "2025-09-10",
-    applicationCount: 14,
-    maxSlots: 1,
-    projectType: "OTT Content",
-  },
-  {
-    _id: "opp_012",
-    title: "Camera Operator – Corporate Video Series",
-    category: "Cinematography",
-    description:
-      "A Bengaluru-based agency needs a skilled camera operator for a 3-day corporate shoot for a leading IT company. Sony FX6 or FX9 proficiency required. Must have own gimbal and basic lighting kit.",
-    hirer: { companyName: "Frame One Films" },
-    budgetMin: 18000,
-    budgetMax: 27000,
-    location: "Bengaluru",
-    deadline: "2025-07-22",
-    applicationCount: 41,
-    maxSlots: 2,
-    projectType: "Corporate Video",
-  },
-];
-
-const MOCK_ARTISTS = [
-  {
-    _id: "art_001",
-    name: "Priya Nair",
-    artCategory: "Actor",
-    location: "Mumbai",
-    experience: "6–8 years",
-    rating: 4.8,
-    skills: ["Drama", "Action", "Tamil", "Hindi"],
-    dailyRate: 35000,
-    avatar: null,
-    bio: "FTII trained actor with 3 feature film credits and 2 OTT series.",
-  },
-  {
-    _id: "art_002",
-    name: "Arjun Mehta",
-    artCategory: "Cinematographer",
-    location: "Mumbai",
-    experience: "9–12 years",
-    rating: 4.9,
-    skills: ["ARRI Alexa", "Sony Venice", "Low-light", "OTT"],
-    dailyRate: 55000,
-    avatar: null,
-    bio: "National Award nominated DOP. 8 feature films, 4 web series.",
-  },
-  {
-    _id: "art_003",
-    name: "Sneha Reddy",
-    artCategory: "Makeup Artist",
-    location: "Hyderabad",
-    experience: "4–5 years",
-    rating: 4.6,
-    skills: ["Prosthetics", "SFX", "Bridal", "Period Looks"],
-    dailyRate: 12000,
-    avatar: null,
-    bio: "Specialized in SFX and prosthetic makeup for Telugu and Bollywood productions.",
-  },
-  {
-    _id: "art_004",
-    name: "Rahul Dasgupta",
-    artCategory: "Director",
-    location: "Kolkata",
-    experience: "6–8 years",
-    rating: 4.7,
-    skills: ["Drama", "Documentary", "Short Film", "OTT"],
-    dailyRate: 40000,
-    avatar: null,
-    bio: "Cannes Short Film Corner selection. Directed 2 OTT originals for MX Player.",
-  },
-  {
-    _id: "art_005",
-    name: "Kavya Iyer",
-    artCategory: "Dancer",
-    location: "Chennai",
-    experience: "9–12 years",
-    rating: 4.5,
-    skills: ["Bharatanatyam", "Contemporary", "Bollywood", "Choreography"],
-    dailyRate: 18000,
-    avatar: null,
-    bio: "Trained at Kalakshetra. Performed in over 40 films as lead dancer.",
-  },
-  {
-    _id: "art_006",
-    name: "Vikram Sinha",
-    artCategory: "VFX Artist",
-    location: "Mumbai",
-    experience: "6–8 years",
-    rating: 4.7,
-    skills: ["Nuke", "Houdini", "Flame", "Compositing"],
-    dailyRate: 28000,
-    avatar: null,
-    bio: "Senior compositor at Prime Focus for 5 years. Worked on 3 Pan India blockbusters.",
-  },
-  {
-    _id: "art_007",
-    name: "Ananya Bose",
-    artCategory: "Actor",
-    location: "Delhi",
-    experience: "3 years",
-    rating: 4.3,
-    skills: ["Theatre", "Hindi", "Bengali", "Comedy"],
-    dailyRate: 15000,
-    avatar: null,
-    bio: "National School of Drama graduate. 2 OTT credits and strong theatre background.",
-  },
-  {
-    _id: "art_008",
-    name: "Siddharth Kulkarni",
-    artCategory: "Voice Artist",
-    location: "Pune",
-    experience: "4–5 years",
-    rating: 4.6,
-    skills: ["Hindi Narration", "Dubbing", "Commercial VO", "Audiobooks"],
-    dailyRate: 8000,
-    avatar: null,
-    bio: "Voice of 3 Hindi audiobooks and VO artist for 15+ national ad campaigns.",
-  },
-  {
-    _id: "art_009",
-    name: "Meera Krishnan",
-    artCategory: "Cinematographer",
-    location: "Chennai",
-    experience: "4–5 years",
-    rating: 4.4,
-    skills: ["Sony FX9", "Gimbal", "Natural Light", "Docs"],
-    dailyRate: 22000,
-    avatar: null,
-    bio: "Specialist in documentary and indie features. 6 short film festival credits.",
-  },
-  {
-    _id: "art_010",
-    name: "Rohan Kapoor",
-    artCategory: "Director",
-    location: "Mumbai",
-    experience: "13–15 years",
-    rating: 4.9,
-    skills: ["Feature Film", "Ad Films", "OTT", "Brand Content"],
-    dailyRate: 80000,
-    avatar: null,
-    bio: "Filmfare Award winning director. 4 theatrical releases, 2 OTT originals.",
-  },
-  {
-    _id: "art_011",
-    name: "Deepika Rao",
-    artCategory: "Makeup Artist",
-    location: "Mumbai",
-    experience: "9–12 years",
-    rating: 4.8,
-    skills: ["HD Makeup", "Period Styling", "Prosthetics", "Editorial"],
-    dailyRate: 20000,
-    avatar: null,
-    bio: "Head makeup artist on 6 Bollywood features. Trained in London and Mumbai.",
-  },
-  {
-    _id: "art_012",
-    name: "Ajay Nambiar",
-    artCategory: "VFX Artist",
-    location: "Bengaluru",
-    experience: "6–8 years",
-    rating: 4.5,
-    skills: ["After Effects", "Cinema 4D", "Motion Graphics", "Title Design"],
-    dailyRate: 18000,
-    avatar: null,
-    bio: "Motion designer and VFX artist for OTT title sequences and ad campaigns.",
-  },
-  {
-    _id: "art_013",
-    name: "Tanvi Pillai",
-    artCategory: "Actor",
-    location: "Kochi",
-    experience: "4–5 years",
-    rating: 4.4,
-    skills: ["Malayalam", "Tamil", "Drama", "Thriller"],
-    dailyRate: 20000,
-    avatar: null,
-    bio: "Known for her intense dramatic roles in 3 Malayalam films and 1 OTT series.",
-  },
-  {
-    _id: "art_014",
-    name: "Nikhil Sharma",
-    artCategory: "Dancer",
-    location: "Mumbai",
-    experience: "6–8 years",
-    rating: 4.6,
-    skills: ["Hip-Hop", "Freestyle", "Bollywood", "Locking & Popping"],
-    dailyRate: 14000,
-    avatar: null,
-    bio: "Featured dancer in 10 Bollywood item numbers and 3 music videos.",
-  },
-  {
-    _id: "art_015",
-    name: "Pooja Venkat",
-    artCategory: "Voice Artist",
-    location: "Chennai",
-    experience: "6–8 years",
-    rating: 4.7,
-    skills: ["Tamil Dubbing", "Hindi VO", "Corporate Narration", "Animation"],
-    dailyRate: 10000,
-    avatar: null,
-    bio: "Voice for 20+ animated characters, national brand campaigns, and 2 Tamil audiobooks.",
-  },
-];
-
-/* ─── Simulated Fetch ────────────────────────────────────────────────────── */
-function simulateFetch(
-  allItems,
-  { category, search, page, limit, categoryKey },
-) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      let filtered = allItems;
-      if (category && category !== "All") {
-        filtered = filtered.filter((item) =>
-          (item[categoryKey] || "")
-            .toLowerCase()
-            .includes(category.toLowerCase()),
-        );
-      }
-      if (search && search.trim()) {
-        const q = search.trim().toLowerCase();
-        filtered = filtered.filter((item) =>
-          JSON.stringify(item).toLowerCase().includes(q),
-        );
-      }
-      const total = filtered.length;
-      const totalPages = Math.ceil(total / limit);
-      const start = (page - 1) * limit;
-      const data = filtered.slice(start, start + limit);
-      resolve({ data, totalPages });
-    }, 480);
-  });
-}
-
-/* ─── Static Options ─────────────────────────────────────────────────────── */
+/* ─── CSS ─────────────────────────────────────────────────────────────────── */
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;}
@@ -628,8 +239,6 @@ p{margin:0;}img{display:block;max-width:100%;}
 .artist-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,0.018);border:1px solid rgba(201,169,97,0.12);transition:background .15s;cursor:pointer;}
 .artist-row:hover{background:rgba(201,169,97,0.04);}
 .a-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,169,97,0.32);flex-shrink:0;background:#22252e;}
-.a-avatar-placeholder{width:48px;height:48px;border-radius:50%;border:2px solid rgba(201,169,97,0.32);flex-shrink:0;background:linear-gradient(135deg,#22252e,#2a2d38);display:flex;align-items:center;justify-content:center;}
-.a-initials{font-size:15px;font-weight:700;color:#c9a961;font-family:'Playfair Display',serif;}
 .a-body{flex:1;min-width:0;}
 .a-name{font-size:13.5px;font-weight:700;color:#e8e9eb;}
 .a-role{font-size:11.5px;color:#8b95a3;margin-bottom:4px;}
@@ -660,16 +269,22 @@ p{margin:0;}img{display:block;max-width:100%;}
 .empty-title{font-size:14px;font-weight:600;color:#e8e9eb;margin-bottom:5px;}
 .empty-sub{font-size:12.5px;}
 
-/* MODAL */
-.modal-backdrop{position:fixed;inset:0;z-index:800;background:rgba(10,12,18,0.75);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;animation:backdropIn .2s ease both;}
-@media(min-width:640px){.modal-backdrop{align-items:center;}}
-.modal-sheet{width:100%;max-width:540px;max-height:90vh;overflow-y:auto;background:#1a1d24;border:1px solid rgba(201,169,97,0.18);border-radius:20px 20px 0 0;padding:20px 18px 32px;animation:slideUp .28s cubic-bezier(.34,1.2,.64,1) both;}
-@media(min-width:640px){.modal-sheet{border-radius:20px;margin:16px;padding:24px 22px 28px;}}
-.modal-handle{width:36px;height:3px;border-radius:20px;background:rgba(255,255,255,0.12);margin:0 auto 16px;}
-@media(min-width:640px){.modal-handle{display:none;}}
-.modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:18px;}
-.modal-title{font-size:clamp(16px,4vw,20px);font-weight:700;color:#e8e9eb;font-family:'Playfair Display',serif;}
-.modal-close{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,0.06);border:none;display:flex;align-items:center;justify-content:center;color:#8b95a3;flex-shrink:0;margin-top:2px;}
+/* MODAL — always centered card, never bottom sheet */
+@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-backdrop{position:fixed;inset:0;z-index:800;background:rgba(10,12,18,0.80);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-start;justify-content:center;padding:80px 16px 16px;animation:backdropIn .18s ease both;}
+@media(min-width:640px){.modal-backdrop{padding:90px 16px 16px;}}
+.modal-card{position:relative;width:100%;max-width:500px;max-height:88vh;display:flex;flex-direction:column;background:#1a1d24;border:1px solid rgba(201,169,97,0.22);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.03);animation:modalIn .22s cubic-bezier(.34,1.18,.64,1) both;overflow:hidden;}
+.modal-card.lg{max-width:560px;}
+.modal-card-head{flex-shrink:0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:18px 18px 0;}
+@media(min-width:480px){.modal-card-head{padding:22px 22px 0;}}
+.modal-card-body{flex:1;overflow-y:auto;padding:16px 18px 20px;}
+@media(min-width:480px){.modal-card-body{padding:18px 22px 22px;}}
+.modal-card-body::-webkit-scrollbar{width:3px;}
+.modal-card-body::-webkit-scrollbar-thumb{background:rgba(201,169,97,0.2);border-radius:3px;}
+.modal-title{font-size:clamp(15px,4vw,19px);font-weight:700;color:#e8e9eb;font-family:'Playfair Display',serif;line-height:1.2;}
+.modal-sub{font-size:12px;color:#8b95a3;margin-top:3px;}
+.modal-close{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;color:#8b95a3;flex-shrink:0;transition:background .15s,color .15s;}
+.modal-close:hover{background:rgba(255,255,255,0.10);color:#e8e9eb;}
 
 /* FORM */
 .form-stack{display:flex;flex-direction:column;gap:14px;}
@@ -750,14 +365,6 @@ function SignInWall({ role, navigate, title, desc }) {
   );
 }
 
-function getInitials(name) {
-  if (!name) return "?";
-  const parts = name.trim().split(" ");
-  return parts.length >= 2
-    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-    : name.slice(0, 2).toUpperCase();
-}
-
 /* ─── Skeletons ──────────────────────────────────────────────────────────── */
 function OppSkeleton() {
   return Array.from({ length: 3 }).map((_, i) => (
@@ -828,174 +435,181 @@ function ApplyModal({ opp, role, navigate, onClose }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-handle" />
-        <div className="modal-header">
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="modal-card-head">
           <div>
             <p className="modal-title">Apply for Role</p>
-            <p style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
-              {opp?.title} · {opp?.hirer?.companyName || "Studio"}
+            <p className="modal-sub">
+              {opp?.title} ·{" "}
+              {opp?.hirer?.companyName || opp?.hirer?.name || "Studio"}
             </p>
           </div>
           <button className="modal-close" onClick={onClose}>
             <X size={14} />
           </button>
         </div>
-        {step === 1 ? (
-          <div className="form-stack">
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Full Name *</label>
-                <input
-                  className="form-input"
-                  placeholder="Your name"
-                  value={form.name}
-                  onChange={(e) => set("name")(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Email *</label>
-                <input
-                  className="form-input"
-                  type="email"
-                  placeholder="you@email.com"
-                  value={form.email}
-                  onChange={(e) => set("email")(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Phone</label>
-                <input
-                  className="form-input"
-                  placeholder="+91 XXXXX XXXXX"
-                  value={form.phone}
-                  onChange={(e) => set("phone")(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Experience</label>
-                <div className="form-select-wrap">
-                  <select
-                    className="form-select"
-                    value={form.experience}
-                    onChange={(e) => set("experience")(e.target.value)}
-                  >
-                    <option value="">Select</option>
-                    {EXPERIENCE_OPTIONS.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
+
+        {/* Body — scrolls independently, no page scroll needed */}
+        <div className="modal-card-body">
+          {step === 1 ? (
+            <div className="form-stack">
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Full Name *</label>
+                  <input
+                    className="form-input"
+                    placeholder="Your name"
+                    value={form.name}
+                    onChange={(e) => set("name")(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    className="form-input"
+                    type="email"
+                    placeholder="you@email.com"
+                    value={form.email}
+                    onChange={(e) => set("email")(e.target.value)}
+                  />
                 </div>
               </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Expected Rate</label>
-              <input
-                className="form-input"
-                placeholder="e.g. ₹30,000 negotiable"
-                value={form.rate}
-                onChange={(e) => set("rate")(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Portfolio / Showreel URL</label>
-              <input
-                className="form-input"
-                placeholder="https://yourportfolio.com"
-                value={form.portfolio}
-                onChange={(e) => set("portfolio")(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Why are you a great fit?</label>
-              <textarea
-                className="form-textarea"
-                placeholder="Tell the hirer about your relevant experience…"
-                value={form.bio}
-                onChange={(e) => set("bio")(e.target.value)}
-                rows={4}
-              />
-            </div>
-            <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
-              <button
-                className="btn-outline sm"
-                onClick={onClose}
-                style={{ flex: 1, justifyContent: "center" }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-gold"
-                onClick={() => setStep(2)}
-                style={{ flex: 2, justifyContent: "center" }}
-              >
-                <Send size={13} /> Submit Application
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div style={{ textAlign: "center", padding: "10px 0 18px" }}>
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 12,
-                  background: "rgba(201,169,97,0.12)",
-                  border: "1px solid rgba(201,169,97,0.25)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 12px",
-                }}
-              >
-                <CheckCircle2 size={22} style={{ color: C.gold }} />
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Phone</label>
+                  <input
+                    className="form-input"
+                    placeholder="+91 XXXXX XXXXX"
+                    value={form.phone}
+                    onChange={(e) => set("phone")(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Experience</label>
+                  <div className="form-select-wrap">
+                    <select
+                      className="form-select"
+                      value={form.experience}
+                      onChange={(e) => set("experience")(e.target.value)}
+                    >
+                      <option value="">Select</option>
+                      {EXPERIENCE_OPTIONS.map((o) => (
+                        <option key={o} value={o}>
+                          {o}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
-              <p
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: C.text,
-                  marginBottom: 6,
-                }}
-              >
-                Application Ready!
-              </p>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: C.muted,
-                  marginBottom: 18,
-                  lineHeight: 1.5,
-                }}
-              >
-                Sign in or create a free account to officially submit your
-                application to{" "}
-                <strong style={{ color: C.text }}>
-                  {opp?.hirer?.companyName || "this studio"}
-                </strong>
-                .
-              </p>
+              <div className="form-group">
+                <label className="form-label">Expected Rate</label>
+                <input
+                  className="form-input"
+                  placeholder="e.g. ₹30,000 negotiable"
+                  value={form.rate}
+                  onChange={(e) => set("rate")(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Portfolio / Showreel URL</label>
+                <input
+                  className="form-input"
+                  placeholder="https://yourportfolio.com"
+                  value={form.portfolio}
+                  onChange={(e) => set("portfolio")(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Why are you a great fit?</label>
+                <textarea
+                  className="form-textarea"
+                  placeholder="Tell the hirer about your relevant experience…"
+                  value={form.bio}
+                  onChange={(e) => set("bio")(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
+                <button
+                  className="btn-outline sm"
+                  onClick={onClose}
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn-gold"
+                  onClick={() => setStep(2)}
+                  style={{ flex: 2, justifyContent: "center" }}
+                >
+                  <Send size={13} /> Submit Application
+                </button>
+              </div>
             </div>
-            <SignInWall
-              role={role}
-              navigate={navigate}
-              title="Sign in to submit"
-              desc="Your application is ready — just sign in to send it."
-            />
-            <button
-              className="btn-outline full"
-              onClick={() => setStep(1)}
-              style={{ marginTop: 12, justifyContent: "center" }}
-            >
-              ← Edit Details
-            </button>
-          </div>
-        )}
+          ) : (
+            <div>
+              <div style={{ textAlign: "center", padding: "12px 0 18px" }}>
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 14,
+                    background: "rgba(201,169,97,0.12)",
+                    border: "1px solid rgba(201,169,97,0.28)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 14px",
+                  }}
+                >
+                  <CheckCircle2 size={24} style={{ color: C.gold }} />
+                </div>
+                <p
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: C.text,
+                    marginBottom: 7,
+                  }}
+                >
+                  Application Ready!
+                </p>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: C.muted,
+                    lineHeight: 1.6,
+                    marginBottom: 18,
+                  }}
+                >
+                  Sign in or create a free account to officially submit your
+                  application to{" "}
+                  <strong style={{ color: C.text }}>
+                    {opp?.hirer?.companyName ||
+                      opp?.hirer?.name ||
+                      "this studio"}
+                  </strong>
+                  .
+                </p>
+              </div>
+              <SignInWall
+                role={role}
+                navigate={navigate}
+                title="Sign in to submit"
+                desc="Your application is ready — just sign in to send it."
+              />
+              <button
+                className="btn-outline full"
+                onClick={() => setStep(1)}
+                style={{ marginTop: 10, justifyContent: "center" }}
+              >
+                ← Edit Details
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1022,257 +636,265 @@ function PostRequirementModal({ role, navigate, onClose }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-handle" />
-        <div className="modal-header">
+      <div className="modal-card lg" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="modal-card-head">
           <div>
             <p className="modal-title">Post a Requirement</p>
-            <p style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
-              Find the right talent for your project
-            </p>
+            <p className="modal-sub">Find the right talent for your project</p>
           </div>
           <button className="modal-close" onClick={onClose}>
             <X size={14} />
           </button>
         </div>
-        {step === 1 ? (
-          <div className="form-stack">
-            <div className="form-group">
-              <label className="form-label">Role / Position Title *</label>
-              <input
-                className="form-input"
-                placeholder="e.g. Lead Actor for Feature Film"
-                value={form.title}
-                onChange={(e) => set("title")(e.target.value)}
-              />
-            </div>
-            <div className="form-row">
+
+        {/* Scrollable body */}
+        <div className="modal-card-body">
+          {step === 1 ? (
+            <div className="form-stack">
               <div className="form-group">
-                <label className="form-label">Category *</label>
-                <div className="form-select-wrap">
-                  <select
-                    className="form-select"
-                    value={form.category}
-                    onChange={(e) => set("category")(e.target.value)}
-                  >
-                    <option value="">Select role</option>
-                    {ARTIST_ROLE_OPTS.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Project Type</label>
-                <div className="form-select-wrap">
-                  <select
-                    className="form-select"
-                    value={form.projectType}
-                    onChange={(e) => set("projectType")(e.target.value)}
-                  >
-                    <option value="">Select type</option>
-                    {PROJECT_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Budget Range (₹)</label>
-              <div className="form-row">
+                <label className="form-label">Role / Position Title *</label>
                 <input
                   className="form-input"
-                  placeholder="Min e.g. 20000"
-                  value={form.budgetMin}
-                  onChange={(e) => set("budgetMin")(e.target.value)}
-                />
-                <input
-                  className="form-input"
-                  placeholder="Max e.g. 60000"
-                  value={form.budgetMax}
-                  onChange={(e) => set("budgetMax")(e.target.value)}
+                  placeholder="e.g. Lead Actor for Feature Film"
+                  value={form.title}
+                  onChange={(e) => set("title")(e.target.value)}
                 />
               </div>
-              <p className="form-hint">Leave blank if negotiable</p>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Location / City</label>
-                <input
-                  className="form-input"
-                  placeholder="e.g. Mumbai or Remote"
-                  value={form.location}
-                  onChange={(e) => set("location")(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Application Deadline</label>
-                <input
-                  className="form-input"
-                  type="date"
-                  value={form.deadline}
-                  onChange={(e) => set("deadline")(e.target.value)}
-                  style={{ colorScheme: "dark" }}
-                />
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">No. of Slots</label>
-              <input
-                className="form-input"
-                type="number"
-                min="1"
-                placeholder="1"
-                value={form.slots}
-                onChange={(e) => set("slots")(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Project Description *</label>
-              <textarea
-                className="form-textarea"
-                placeholder="Describe your project, timeline, shoot dates…"
-                value={form.description}
-                onChange={(e) => set("description")(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Specific Requirements</label>
-              <textarea
-                className="form-textarea"
-                placeholder="Must-have skills, equipment, language requirements…"
-                value={form.requirements}
-                onChange={(e) => set("requirements")(e.target.value)}
-                rows={2}
-              />
-            </div>
-            <div
-              style={{
-                borderTop: "1px solid rgba(255,255,255,0.05)",
-                paddingTop: 12,
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: C.muted,
-                  marginBottom: 10,
-                }}
-              >
-                Your Contact Details
-              </p>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Your Name *</label>
+                  <label className="form-label">Category *</label>
+                  <div className="form-select-wrap">
+                    <select
+                      className="form-select"
+                      value={form.category}
+                      onChange={(e) => set("category")(e.target.value)}
+                    >
+                      <option value="">Select role</option>
+                      {ARTIST_ROLE_OPTS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Project Type</label>
+                  <div className="form-select-wrap">
+                    <select
+                      className="form-select"
+                      value={form.projectType}
+                      onChange={(e) => set("projectType")(e.target.value)}
+                    >
+                      <option value="">Select type</option>
+                      {PROJECT_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Budget Range (₹)</label>
+                <div className="form-row">
                   <input
                     className="form-input"
-                    placeholder="Full name"
-                    value={form.contactName}
-                    onChange={(e) => set("contactName")(e.target.value)}
+                    placeholder="Min e.g. 20000"
+                    value={form.budgetMin}
+                    onChange={(e) => set("budgetMin")(e.target.value)}
+                  />
+                  <input
+                    className="form-input"
+                    placeholder="Max e.g. 60000"
+                    value={form.budgetMax}
+                    onChange={(e) => set("budgetMax")(e.target.value)}
+                  />
+                </div>
+                <p className="form-hint">Leave blank if negotiable</p>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Location / City</label>
+                  <input
+                    className="form-input"
+                    placeholder="e.g. Mumbai or Remote"
+                    value={form.location}
+                    onChange={(e) => set("location")(e.target.value)}
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Email *</label>
+                  <label className="form-label">Deadline</label>
                   <input
                     className="form-input"
-                    type="email"
-                    placeholder="you@studio.com"
-                    value={form.contactEmail}
-                    onChange={(e) => set("contactEmail")(e.target.value)}
+                    type="date"
+                    value={form.deadline}
+                    onChange={(e) => set("deadline")(e.target.value)}
+                    style={{ colorScheme: "dark" }}
                   />
                 </div>
               </div>
-            </div>
-            <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
-              <button
-                className="btn-outline sm"
-                onClick={onClose}
-                style={{ flex: 1, justifyContent: "center" }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-gold"
-                onClick={() => setStep(2)}
-                style={{ flex: 2, justifyContent: "center" }}
-              >
-                <Sparkles size={13} /> Preview & Post
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div
-              style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(201,169,97,0.15)",
-                borderRadius: 12,
-                padding: 14,
-                marginBottom: 16,
-              }}
-            >
-              <p
+              <div className="form-group">
+                <label className="form-label">No. of Slots</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  min="1"
+                  placeholder="1"
+                  value={form.slots}
+                  onChange={(e) => set("slots")(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Project Description *</label>
+                <textarea
+                  className="form-textarea"
+                  placeholder="Describe your project, timeline, shoot dates…"
+                  value={form.description}
+                  onChange={(e) => set("description")(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Specific Requirements</label>
+                <textarea
+                  className="form-textarea"
+                  placeholder="Must-have skills, equipment, language requirements…"
+                  value={form.requirements}
+                  onChange={(e) => set("requirements")(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              <div
                 style={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: C.text,
-                  marginBottom: 6,
+                  borderTop: "1px solid rgba(255,255,255,0.05)",
+                  paddingTop: 12,
                 }}
               >
-                {form.title || "Untitled Requirement"}
-              </p>
-              {form.category && (
-                <p style={{ fontSize: 11.5, color: C.muted, marginBottom: 3 }}>
-                  Role: {form.category}
-                </p>
-              )}
-              {(form.budgetMin || form.budgetMax) && (
-                <p style={{ fontSize: 11.5, color: C.muted, marginBottom: 3 }}>
-                  Budget: ₹{form.budgetMin}
-                  {form.budgetMax ? `–₹${form.budgetMax}` : "+"}
-                </p>
-              )}
-              {form.location && (
-                <p style={{ fontSize: 11.5, color: C.muted, marginBottom: 3 }}>
-                  Location: {form.location}
-                </p>
-              )}
-              {form.description && (
                 <p
                   style={{
-                    fontSize: 11.5,
+                    fontSize: 12,
+                    fontWeight: 700,
                     color: C.muted,
-                    marginTop: 6,
-                    lineHeight: 1.5,
+                    marginBottom: 10,
                   }}
                 >
-                  {form.description.slice(0, 120)}
-                  {form.description.length > 120 ? "…" : ""}
+                  Your Contact Details
                 </p>
-              )}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Your Name *</label>
+                    <input
+                      className="form-input"
+                      placeholder="Full name"
+                      value={form.contactName}
+                      onChange={(e) => set("contactName")(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Email *</label>
+                    <input
+                      className="form-input"
+                      type="email"
+                      placeholder="you@studio.com"
+                      value={form.contactEmail}
+                      onChange={(e) => set("contactEmail")(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
+                <button
+                  className="btn-outline sm"
+                  onClick={onClose}
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn-gold"
+                  onClick={() => setStep(2)}
+                  style={{ flex: 2, justifyContent: "center" }}
+                >
+                  <Sparkles size={13} /> Preview & Post
+                </button>
+              </div>
             </div>
-            <SignInWall
-              role={role}
-              navigate={navigate}
-              title="Sign in to publish"
-              desc="Your requirement is ready — sign in to post it and start receiving applications."
-            />
-            <button
-              className="btn-outline full"
-              onClick={() => setStep(1)}
-              style={{ marginTop: 12, justifyContent: "center" }}
-            >
-              ← Edit Requirement
-            </button>
-          </div>
-        )}
+          ) : (
+            <div>
+              <div
+                style={{
+                  background: "rgba(255,255,255,0.02)",
+                  border: "1px solid rgba(201,169,97,0.15)",
+                  borderRadius: 12,
+                  padding: 14,
+                  marginBottom: 16,
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: C.text,
+                    marginBottom: 6,
+                  }}
+                >
+                  {form.title || "Untitled Requirement"}
+                </p>
+                {form.category && (
+                  <p
+                    style={{ fontSize: 11.5, color: C.muted, marginBottom: 3 }}
+                  >
+                    Role: {form.category}
+                  </p>
+                )}
+                {(form.budgetMin || form.budgetMax) && (
+                  <p
+                    style={{ fontSize: 11.5, color: C.muted, marginBottom: 3 }}
+                  >
+                    Budget: ₹{form.budgetMin}
+                    {form.budgetMax ? `–₹${form.budgetMax}` : "+"}
+                  </p>
+                )}
+                {form.location && (
+                  <p
+                    style={{ fontSize: 11.5, color: C.muted, marginBottom: 3 }}
+                  >
+                    Location: {form.location}
+                  </p>
+                )}
+                {form.description && (
+                  <p
+                    style={{
+                      fontSize: 11.5,
+                      color: C.muted,
+                      marginTop: 6,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {form.description.slice(0, 120)}
+                    {form.description.length > 120 ? "…" : ""}
+                  </p>
+                )}
+              </div>
+              <SignInWall
+                role={role}
+                navigate={navigate}
+                title="Sign in to publish"
+                desc="Your requirement is ready — sign in to post it and start receiving applications."
+              />
+              <button
+                className="btn-outline full"
+                onClick={() => setStep(1)}
+                style={{ marginTop: 10, justifyContent: "center" }}
+              >
+                ← Edit Requirement
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1294,24 +916,46 @@ function ContactArtistModal({ artist, role, navigate, onClose }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-handle" />
-        <div className="modal-header">
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        {/* Header with artist info */}
+        <div className="modal-card-head">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              className="a-avatar-placeholder"
-              style={{ width: 40, height: 40, flexShrink: 0 }}
-            >
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>
-                {getInitials(artist?.name)}
-              </span>
-            </div>
+            {artist?.avatar ? (
+              <img
+                src={artist.avatar}
+                alt={artist.name}
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid rgba(201,169,97,0.3)",
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: "50%",
+                  background: "#22252e",
+                  border: "2px solid rgba(201,169,97,0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Users size={17} style={{ color: C.muted }} />
+              </div>
+            )}
             <div>
               <p className="modal-title" style={{ fontSize: 17 }}>
                 Contact Artist
               </p>
-              <p style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
-                {artist?.name} · {artist?.artCategory}
+              <p className="modal-sub">
+                {artist?.name} · {artist?.artCategory || artist?.role}
               </p>
             </div>
           </div>
@@ -1319,165 +963,169 @@ function ContactArtistModal({ artist, role, navigate, onClose }) {
             <X size={14} />
           </button>
         </div>
-        {step === 1 ? (
-          <div className="form-stack">
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Your Name *</label>
-                <input
-                  className="form-input"
-                  placeholder="Full name"
-                  value={form.name}
-                  onChange={(e) => set("name")(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Email *</label>
-                <input
-                  className="form-input"
-                  type="email"
-                  placeholder="you@studio.com"
-                  value={form.email}
-                  onChange={(e) => set("email")(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Project Title *</label>
-              <input
-                className="form-input"
-                placeholder="e.g. Brand Campaign for XYZ"
-                value={form.projectTitle}
-                onChange={(e) => set("projectTitle")(e.target.value)}
-              />
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Project Type</label>
-                <div className="form-select-wrap">
-                  <select
-                    className="form-select"
-                    value={form.projectType}
-                    onChange={(e) => set("projectType")(e.target.value)}
-                  >
-                    <option value="">Select</option>
-                    {PROJECT_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
+
+        {/* Scrollable body */}
+        <div className="modal-card-body">
+          {step === 1 ? (
+            <div className="form-stack">
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Your Name *</label>
+                  <input
+                    className="form-input"
+                    placeholder="Full name"
+                    value={form.name}
+                    onChange={(e) => set("name")(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    className="form-input"
+                    type="email"
+                    placeholder="you@studio.com"
+                    value={form.email}
+                    onChange={(e) => set("email")(e.target.value)}
+                  />
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label">Budget Offer</label>
+                <label className="form-label">Project Title *</label>
                 <input
                   className="form-input"
-                  placeholder="e.g. ₹50,000"
-                  value={form.budget}
-                  onChange={(e) => set("budget")(e.target.value)}
+                  placeholder="e.g. Brand Campaign for XYZ"
+                  value={form.projectTitle}
+                  onChange={(e) => set("projectTitle")(e.target.value)}
                 />
               </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Expected Start Date</label>
-              <input
-                className="form-input"
-                type="date"
-                value={form.startDate}
-                onChange={(e) => set("startDate")(e.target.value)}
-                style={{ colorScheme: "dark" }}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Message to Artist *</label>
-              <textarea
-                className="form-textarea"
-                placeholder={`Hi ${artist?.name}, I'd love to collaborate on…`}
-                value={form.message}
-                onChange={(e) => set("message")(e.target.value)}
-                rows={4}
-              />
-            </div>
-            <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
-              <button
-                className="btn-outline sm"
-                onClick={onClose}
-                style={{ flex: 1, justifyContent: "center" }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-gold"
-                onClick={() => setStep(2)}
-                style={{ flex: 2, justifyContent: "center" }}
-              >
-                <Send size={13} /> Send Enquiry
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div style={{ textAlign: "center", padding: "10px 0 18px" }}>
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 12,
-                  background: "rgba(201,169,97,0.12)",
-                  border: "1px solid rgba(201,169,97,0.25)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 12px",
-                }}
-              >
-                <CheckCircle2 size={22} style={{ color: C.gold }} />
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Project Type</label>
+                  <div className="form-select-wrap">
+                    <select
+                      className="form-select"
+                      value={form.projectType}
+                      onChange={(e) => set("projectType")(e.target.value)}
+                    >
+                      <option value="">Select</option>
+                      {PROJECT_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Budget Offer</label>
+                  <input
+                    className="form-input"
+                    placeholder="e.g. ₹50,000"
+                    value={form.budget}
+                    onChange={(e) => set("budget")(e.target.value)}
+                  />
+                </div>
               </div>
-              <p
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: C.text,
-                  marginBottom: 6,
-                }}
-              >
-                Message Ready!
-              </p>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: C.muted,
-                  marginBottom: 18,
-                  lineHeight: 1.5,
-                }}
-              >
-                Sign in to send your enquiry to{" "}
-                <strong style={{ color: C.text }}>{artist?.name}</strong>.
-              </p>
+              <div className="form-group">
+                <label className="form-label">Expected Start Date</label>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={form.startDate}
+                  onChange={(e) => set("startDate")(e.target.value)}
+                  style={{ colorScheme: "dark" }}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Message to Artist *</label>
+                <textarea
+                  className="form-textarea"
+                  placeholder={`Hi ${artist?.name}, I'd love to collaborate on…`}
+                  value={form.message}
+                  onChange={(e) => set("message")(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
+                <button
+                  className="btn-outline sm"
+                  onClick={onClose}
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn-gold"
+                  onClick={() => setStep(2)}
+                  style={{ flex: 2, justifyContent: "center" }}
+                >
+                  <Send size={13} /> Send Enquiry
+                </button>
+              </div>
             </div>
-            <SignInWall
-              role={role}
-              navigate={navigate}
-              title="Sign in to send message"
-              desc="Your message is ready — sign in to deliver it instantly."
-            />
-            <button
-              className="btn-outline full"
-              onClick={() => setStep(1)}
-              style={{ marginTop: 12, justifyContent: "center" }}
-            >
-              ← Edit Message
-            </button>
-          </div>
-        )}
+          ) : (
+            <div>
+              <div style={{ textAlign: "center", padding: "12px 0 18px" }}>
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 14,
+                    background: "rgba(201,169,97,0.12)",
+                    border: "1px solid rgba(201,169,97,0.28)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 14px",
+                  }}
+                >
+                  <CheckCircle2 size={24} style={{ color: C.gold }} />
+                </div>
+                <p
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: C.text,
+                    marginBottom: 7,
+                  }}
+                >
+                  Message Ready!
+                </p>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: C.muted,
+                    lineHeight: 1.6,
+                    marginBottom: 18,
+                  }}
+                >
+                  Sign in to send your enquiry to{" "}
+                  <strong style={{ color: C.text }}>{artist?.name}</strong>.
+                </p>
+              </div>
+              <SignInWall
+                role={role}
+                navigate={navigate}
+                title="Sign in to send message"
+                desc="Your message is ready — sign in to deliver it instantly."
+              />
+              <button
+                className="btn-outline full"
+                onClick={() => setStep(1)}
+                style={{ marginTop: 10, justifyContent: "center" }}
+              >
+                ← Edit Message
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   ARTIST VIEW
+   ARTIST VIEW — real data from /api/public/opportunities
 ═══════════════════════════════════════════════════════════════════════════ */
 function ArtistView({ navigate }) {
   const [cat, setCat] = useState("All");
@@ -1493,15 +1141,16 @@ function ArtistView({ navigate }) {
     setLoading(true);
     setError("");
     try {
-      const { data, totalPages } = await simulateFetch(MOCK_OPPORTUNITIES, {
-        category,
-        search: searchTerm,
-        page: pageNum,
-        limit: 6,
-        categoryKey: "category",
-      });
-      setOpps((prev) => (pageNum === 1 ? data : [...prev, ...data]));
-      setHasMore(pageNum < totalPages);
+      const params = new URLSearchParams({ page: pageNum, limit: 10 });
+      if (category && category !== "All") params.set("category", category);
+      if (searchTerm.trim()) params.set("search", searchTerm.trim());
+      const data = await publicFetch(`/api/public/opportunities?${params}`);
+      const list = Array.isArray(data)
+        ? data
+        : data.opportunities || data.data || [];
+      const pages = data.totalPages || 1;
+      setOpps((prev) => (pageNum === 1 ? list : [...prev, ...list]));
+      setHasMore(pageNum < pages);
     } catch {
       setError("Could not load opportunities. Please try again.");
     } finally {
@@ -1509,6 +1158,7 @@ function ArtistView({ navigate }) {
     }
   }, []);
 
+  // debounce search
   useEffect(() => {
     const t = setTimeout(() => {
       setPage(1);
@@ -1525,9 +1175,9 @@ function ArtistView({ navigate }) {
 
   const fmtBudget = (opp) => {
     if (opp.budgetMin && opp.budgetMax)
-      return `₹${Number(opp.budgetMin).toLocaleString("en-IN")}–₹${Number(opp.budgetMax).toLocaleString("en-IN")}`;
-    if (opp.budgetMin)
-      return `₹${Number(opp.budgetMin).toLocaleString("en-IN")}+`;
+      return `₹${Number(opp.budgetMin).toLocaleString()}–₹${Number(opp.budgetMax).toLocaleString()}`;
+    if (opp.budgetMin) return `₹${Number(opp.budgetMin).toLocaleString()}+`;
+    if (opp.budget) return `₹${Number(opp.budget).toLocaleString()}`;
     return "Negotiable";
   };
   const fmtDeadline = (opp) => {
@@ -1578,6 +1228,7 @@ function ArtistView({ navigate }) {
         >
           🔍 Browse Live Opportunities
         </ST>
+
         <div className="search-row">
           <div className="search-wrap">
             <Search size={13} className="search-ic" />
@@ -1599,6 +1250,7 @@ function ArtistView({ navigate }) {
             <Filter size={12} /> Filter
           </button>
         </div>
+
         <div className="chips">
           {OPP_CATEGORIES.map((c) => (
             <button
@@ -1610,8 +1262,10 @@ function ArtistView({ navigate }) {
             </button>
           ))}
         </div>
+
         <div className="lst">
           {loading && page === 1 && <OppSkeleton />}
+
           {!loading && !error && opps.length === 0 && (
             <div className="empty-state">
               <div className="empty-icon">
@@ -1623,6 +1277,7 @@ function ArtistView({ navigate }) {
               </p>
             </div>
           )}
+
           {error && (
             <div className="empty-state">
               <div className="empty-icon">
@@ -1644,19 +1299,25 @@ function ArtistView({ navigate }) {
               </button>
             </div>
           )}
+
           {opps.map((opp) => (
             <div key={opp._id} className="opp-card">
               <div className="opp-top">
                 <p className="opp-title">{opp.title}</p>
-                <span className="opp-cat">{opp.category}</span>
+                <span className="opp-cat">
+                  {opp.category || opp.artCategory || "General"}
+                </span>
               </div>
               <p className="opp-company">
-                {opp.hirer?.companyName || "Studio"}
+                {opp.hirer?.companyName ||
+                  opp.hirer?.name ||
+                  opp.postedBy?.name ||
+                  "Studio"}
               </p>
               {opp.description && (
                 <p className="opp-desc">
-                  {opp.description.slice(0, 130)}
-                  {opp.description.length > 130 ? "…" : ""}
+                  {opp.description.slice(0, 120)}
+                  {opp.description.length > 120 ? "…" : ""}
                 </p>
               )}
               <div className="opp-meta">
@@ -1699,6 +1360,7 @@ function ArtistView({ navigate }) {
               </div>
             </div>
           ))}
+
           {loading && page > 1 && (
             <div
               style={{
@@ -1714,6 +1376,7 @@ function ArtistView({ navigate }) {
             </div>
           )}
         </div>
+
         {hasMore && !loading && (
           <button
             className="btn-outline full"
@@ -1723,6 +1386,7 @@ function ArtistView({ navigate }) {
             Load More
           </button>
         )}
+
         <div style={{ marginTop: 16 }}>
           <SignInWall
             role="artist"
@@ -1746,7 +1410,7 @@ function ArtistView({ navigate }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HIRER VIEW
+   HIRER VIEW — real data from /api/public/artists
 ═══════════════════════════════════════════════════════════════════════════ */
 function HirerView({ navigate }) {
   const [cat, setCat] = useState("All");
@@ -1763,15 +1427,14 @@ function HirerView({ navigate }) {
     setLoading(true);
     setError("");
     try {
-      const { data, totalPages } = await simulateFetch(MOCK_ARTISTS, {
-        category,
-        search: searchTerm,
-        page: pageNum,
-        limit: 8,
-        categoryKey: "artCategory",
-      });
-      setArtists((prev) => (pageNum === 1 ? data : [...prev, ...data]));
-      setHasMore(pageNum < totalPages);
+      const params = new URLSearchParams({ page: pageNum, limit: 12 });
+      if (category && category !== "All") params.set("artCategory", category);
+      if (searchTerm.trim()) params.set("search", searchTerm.trim());
+      const data = await publicFetch(`/api/public/artists?${params}`);
+      const list = Array.isArray(data) ? data : data.artists || data.data || [];
+      const pages = data.totalPages || 1;
+      setArtists((prev) => (pageNum === 1 ? list : [...prev, ...list]));
+      setHasMore(pageNum < pages);
     } catch {
       setError("Could not load artists. Please try again.");
     } finally {
@@ -1794,8 +1457,8 @@ function HirerView({ navigate }) {
   };
 
   const fmtRate = (a) => {
-    if (a.dailyRate)
-      return `₹${Number(a.dailyRate).toLocaleString("en-IN")}/day`;
+    if (a.rates?.daily) return `₹${Number(a.rates.daily).toLocaleString()}/day`;
+    if (a.dailyRate) return `₹${Number(a.dailyRate).toLocaleString()}/day`;
     return null;
   };
 
@@ -1835,6 +1498,7 @@ function HirerView({ navigate }) {
         >
           🎭 Browse Verified Artists
         </ST>
+
         <div className="search-row">
           <div className="search-wrap">
             <Search size={13} className="search-ic" />
@@ -1856,6 +1520,7 @@ function HirerView({ navigate }) {
             <Filter size={12} /> Filter
           </button>
         </div>
+
         <div className="chips">
           {ARTIST_CATS.map((c) => (
             <button
@@ -1867,8 +1532,10 @@ function HirerView({ navigate }) {
             </button>
           ))}
         </div>
+
         <div className="lst">
           {loading && page === 1 && <ArtistSkeleton />}
+
           {!loading && !error && artists.length === 0 && (
             <div className="empty-state">
               <div className="empty-icon">
@@ -1880,6 +1547,7 @@ function HirerView({ navigate }) {
               </p>
             </div>
           )}
+
           {error && (
             <div className="empty-state">
               <div className="empty-icon">
@@ -1901,6 +1569,7 @@ function HirerView({ navigate }) {
               </button>
             </div>
           )}
+
           {artists.map((artist) => {
             const rate = fmtRate(artist);
             const skills = Array.isArray(artist.skills) ? artist.skills : [];
@@ -1911,9 +1580,24 @@ function HirerView({ navigate }) {
                 className="artist-row"
                 onClick={() => setContactArtist(artist)}
               >
-                <div className="a-avatar-placeholder">
-                  <span className="a-initials">{getInitials(artist.name)}</span>
-                </div>
+                {artist.avatar ? (
+                  <img
+                    src={artist.avatar}
+                    alt={artist.name}
+                    className="a-avatar"
+                  />
+                ) : (
+                  <div
+                    className="a-avatar"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Users size={18} style={{ color: C.muted }} />
+                  </div>
+                )}
                 <div className="a-body">
                   <div
                     style={{
@@ -1927,7 +1611,7 @@ function HirerView({ navigate }) {
                     <div>
                       <p className="a-name">{artist.name}</p>
                       <p className="a-role">
-                        {artist.artCategory}
+                        {artist.artCategory || artist.role || "Artist"}
                         {artist.location ? ` · ${artist.location}` : ""}
                       </p>
                     </div>
@@ -2001,6 +1685,7 @@ function HirerView({ navigate }) {
               </div>
             );
           })}
+
           {loading && page > 1 && (
             <div
               style={{
@@ -2016,6 +1701,7 @@ function HirerView({ navigate }) {
             </div>
           )}
         </div>
+
         {hasMore && !loading && (
           <button
             className="btn-outline full"
@@ -2025,6 +1711,7 @@ function HirerView({ navigate }) {
             Load More
           </button>
         )}
+
         <div style={{ marginTop: 16 }}>
           <SignInWall
             role="hirer"
@@ -2067,6 +1754,7 @@ export default function HomeDummy() {
     sessionStorage.setItem("hd_role", r);
     setRole(r);
   };
+
   const isArtist = role === "artist";
 
   return (
@@ -2082,6 +1770,7 @@ export default function HomeDummy() {
             </div>
             <span className="hd-logo-text"></span>
           </div>
+
           <div className="hd-toggle">
             {["artist", "hirer"].map((r) => (
               <button
@@ -2101,6 +1790,7 @@ export default function HomeDummy() {
               </button>
             ))}
           </div>
+
           <div className="hd-nav-auth">
             <button
               className="hd-nav-signin"
