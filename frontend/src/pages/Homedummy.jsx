@@ -1,39 +1,35 @@
 /**
  * HomeDummy.jsx  –  /home
  *
- * Single page showing ALL features for both Artist & Hirer roles.
- * Fully responsive: 320px phones → 480px → 640px → 768px → 1024px → 1280px+
- * Every action → auth nudge toast → /auth/:role/signup
+ * Artist: Browse real opportunities → fill application form → sign-in gate on submit
+ * Hirer:  Browse real artists → post requirement form → sign-in gate on submit
+ * Uses realistic mock data for Indian film industry
  *
  * Route: <Route path="/home" element={<HomeDummy />} />
  */
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Star,
   Briefcase,
   ArrowLeftRight,
-  Eye,
   IndianRupee,
-  MessageSquare,
-  Clock,
-  CheckCircle2,
   Users,
-  Shield,
-  AlertCircle,
   MapPin,
   Search,
   Filter,
   ChevronRight,
   Plus,
-  FileText,
-  Video,
   ArrowRight,
   LogIn,
-  BarChart2,
   Calendar,
-  Award,
+  X,
+  Send,
+  Sparkles,
+  CheckCircle2,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 /* ─── Tokens ─────────────────────────────────────────────────────────────── */
@@ -41,789 +37,677 @@ const C = {
   bg: "#12141a",
   surface: "#1a1d24",
   card: "#22252e",
-  card2: "#282c36",
   text: "#e8e9eb",
   muted: "#8b95a3",
   gold: "#c9a961",
   goldBg: "rgba(201,169,97,0.10)",
-  goldGlow: "rgba(201,169,97,0.18)",
   border: "rgba(201,169,97,0.12)",
   borderHi: "rgba(201,169,97,0.32)",
   green: "#34d399",
   blue: "#60a5fa",
-  orange: "#fb923c",
   red: "#f87171",
 };
 
-/* ─── Data ───────────────────────────────────────────────────────────────── */
-const ARTIST_STATS = [
-  {
-    label: "Profile Views",
-    value: "2,847",
-    Icon: Eye,
-    bg: "rgba(201,169,97,0.12)",
-    color: C.gold,
-  },
-  {
-    label: "Active Projects",
-    value: "3",
-    Icon: Briefcase,
-    bg: "rgba(96,165,250,0.12)",
-    color: C.blue,
-  },
-  {
-    label: "Total Earnings",
-    value: "₹1.2L",
-    Icon: IndianRupee,
-    bg: "rgba(52,211,153,0.12)",
-    color: C.green,
-  },
-  {
-    label: "Messages",
-    value: "12",
-    Icon: MessageSquare,
-    bg: "rgba(251,191,36,0.12)",
-    color: "#fbbf24",
-  },
+/* ─── Static Options ─────────────────────────────────────────────────────── */
+const ARTIST_ROLE_OPTS = [
+  "Actor",
+  "Director",
+  "Cinematographer",
+  "Screenwriter",
+  "Film Editor",
+  "Sound Designer",
+  "Costume Designer",
+  "Makeup Artist",
+  "VFX Artist",
+  "Dancer",
+  "Choreographer",
+  "Voice Artist",
+  "Music Composer",
+  "Producer",
+  "Camera Operator",
+  "Colorist",
+  "Art Director",
+  "Stunt Coordinator",
 ];
-const HIRER_STATS = [
-  {
-    label: "Active Projects",
-    value: "5",
-    Icon: Briefcase,
-    bg: "rgba(201,169,97,0.12)",
-    color: C.gold,
-  },
-  {
-    label: "Artists Hired",
-    value: "26",
-    Icon: Users,
-    bg: "rgba(96,165,250,0.12)",
-    color: C.blue,
-  },
-  {
-    label: "Total Spent",
-    value: "₹8.4L",
-    Icon: IndianRupee,
-    bg: "rgba(52,211,153,0.12)",
-    color: C.green,
-  },
-  {
-    label: "In Escrow",
-    value: "₹1.1L",
-    Icon: Shield,
-    bg: "rgba(234,179,8,0.12)",
-    color: "#facc15",
-  },
+const EXPERIENCE_OPTIONS = [
+  "Less than 1 year",
+  "1 year",
+  "2 years",
+  "3 years",
+  "4–5 years",
+  "6–8 years",
+  "9–12 years",
+  "13–15 years",
+  "15+ years",
 ];
-const APPLICATIONS = [
-  {
-    title: "Lead Actor – Short Film",
-    company: "Red Lens Studios",
-    budget: "₹45,000",
-    time: "2h ago",
-    status: "shortlisted",
-  },
-  {
-    title: "Cinematographer – Web Series",
-    company: "Pixel Frame Pvt Ltd",
-    budget: "₹80,000",
-    time: "5h ago",
-    status: "pending",
-  },
-  {
-    title: "Voice Artist – Ad Campaign",
-    company: "SoundHouse India",
-    budget: "₹20,000",
-    time: "1d ago",
-    status: "accepted",
-  },
-  {
-    title: "Choreographer – Music Video",
-    company: "BeatSync Media",
-    budget: "₹35,000",
-    time: "2d ago",
-    status: "in_review",
-  },
+const PROJECT_TYPES = [
+  "Feature Film",
+  "Short Film",
+  "Web Series",
+  "Ad Campaign",
+  "Music Video",
+  "Documentary",
+  "Corporate Video",
+  "Wedding Film",
+  "OTT Content",
+  "Social Media",
 ];
-const BROWSE_ARTISTS = [
-  {
-    name: "Arjun Mehta",
-    role: "Cinematographer",
-    rating: 4.9,
-    city: "Mumbai",
-    img: "https://i.pravatar.cc/80?img=11",
-    badge: "Top Rated",
-  },
-  {
-    name: "Priya Nair",
-    role: "Lead Actress",
-    rating: 4.8,
-    city: "Chennai",
-    img: "https://i.pravatar.cc/80?img=21",
-    badge: "Featured",
-  },
-  {
-    name: "Rahul Das",
-    role: "Film Director",
-    rating: 4.7,
-    city: "Kolkata",
-    img: "https://i.pravatar.cc/80?img=15",
-    badge: null,
-  },
-  {
-    name: "Sanya Kapoor",
-    role: "Makeup Artist",
-    rating: 4.9,
-    city: "Delhi",
-    img: "https://i.pravatar.cc/80?img=25",
-    badge: "Top Rated",
-  },
-  {
-    name: "Dev Anand",
-    role: "VFX Artist",
-    rating: 4.6,
-    city: "Pune",
-    img: "https://i.pravatar.cc/80?img=33",
-    badge: null,
-  },
-  {
-    name: "Meera Pillai",
-    role: "Screenwriter",
-    rating: 4.8,
-    city: "Kochi",
-    img: "https://i.pravatar.cc/80?img=44",
-    badge: "Featured",
-  },
-];
-const TASKS = [
-  {
-    project: "Monsoon Web Series",
-    artist: "Arjun Mehta",
-    milestone: "Episode 3 Shoot",
-    amount: 75000,
-    progress: 68,
-    status: "in_progress",
-  },
-  {
-    project: "Brand Campaign – Nike",
-    artist: "Sanya Kapoor",
-    milestone: "Post Production",
-    amount: 45000,
-    progress: 100,
-    status: "submitted",
-  },
-  {
-    project: "Short Film – Awaaz",
-    artist: "Priya Nair",
-    milestone: "Principal Photography",
-    amount: 30000,
-    progress: 25,
-    status: "overdue",
-  },
-];
-const REQUIREMENTS = [
-  {
-    title: "Lead Actor for OTT Series",
-    budget: "₹60K–₹90K",
-    apps: 18,
-    deadline: "Dec 28",
-    category: "Acting",
-  },
-  {
-    title: "DOP for Feature Film",
-    budget: "₹1.2L–₹2L",
-    apps: 9,
-    deadline: "Jan 5",
-    category: "Cinematography",
-  },
-  {
-    title: "Background Dancers – 10 Slots",
-    budget: "₹15K each",
-    apps: 34,
-    deadline: "Dec 20",
-    category: "Dance",
-  },
-];
-const PAYMENTS = [
-  {
-    title: "Monsoon Web Series – Ep 1",
-    date: "Dec 10, 2024",
-    amount: "₹38,000",
-    status: "Paid",
-  },
-  {
-    title: "Brand Ad – Voiceover",
-    date: "Dec 5, 2024",
-    amount: "₹12,000",
-    status: "Paid",
-  },
-  {
-    title: "Music Video – Dance",
-    date: "Dec 18, 2024",
-    amount: "₹22,000",
-    status: "Pending",
-  },
-];
-const CATEGORIES = [
+const OPP_CATEGORIES = [
   "All",
-  "🎭 Acting",
-  "💃 Dance",
-  "🎥 Cinema",
-  "🎬 Direction",
-  "🎨 Makeup",
-  "🎵 Music",
-  "✍️ Writing",
-  "🖥️ VFX",
+  "Acting",
+  "Cinematography",
+  "Dance",
+  "Voice",
+  "Direction",
+  "Makeup",
+  "VFX",
+  "Writing",
+  "Other",
 ];
-const STATUS_STYLE = {
-  shortlisted: {
-    bg: "rgba(139,92,246,0.15)",
-    color: "#a78bfa",
-    border: "rgba(139,92,246,0.25)",
-  },
-  pending: {
-    bg: "rgba(251,146,60,0.15)",
-    color: "#fb923c",
-    border: "rgba(251,146,60,0.25)",
-  },
-  accepted: {
-    bg: "rgba(52,211,153,0.15)",
-    color: "#34d399",
-    border: "rgba(52,211,153,0.25)",
-  },
-  in_review: {
-    bg: "rgba(96,165,250,0.15)",
-    color: "#60a5fa",
-    border: "rgba(96,165,250,0.25)",
-  },
-  submitted: {
-    bg: "rgba(34,197,94,0.1)",
-    color: "#4ade80",
-    border: "rgba(34,197,94,0.2)",
-  },
-  in_progress: {
-    bg: "rgba(59,130,246,0.1)",
-    color: "#60a5fa",
-    border: "rgba(59,130,246,0.2)",
-  },
-  overdue: {
-    bg: "rgba(239,68,68,0.1)",
-    color: "#f87171",
-    border: "rgba(239,68,68,0.2)",
-  },
-};
+const ARTIST_CATS = [
+  "All",
+  "Actor",
+  "Director",
+  "Cinematographer",
+  "Makeup Artist",
+  "VFX Artist",
+  "Dancer",
+  "Voice Artist",
+];
 
-/* ─── CSS ────────────────────────────────────────────────────────────────── */
+/* ─── MOCK DATA ──────────────────────────────────────────────────────────── */
+
+const MOCK_OPPORTUNITIES = [
+  {
+    _id: "opp_001",
+    title: "Lead Actor – Hindi Feature Film",
+    category: "Acting",
+    description:
+      "Casting for a male lead in a drama-thriller feature film backed by a major Mumbai production house. Character is a 28–35 year old journalist uncovering a political conspiracy. Fluency in Hindi required. Prior feature film credits preferred.",
+    hirer: { companyName: "Dharma Productions" },
+    budgetMin: 400000,
+    budgetMax: 700000,
+    location: "Mumbai",
+    deadline: "2025-08-15",
+    applicationCount: 84,
+    maxSlots: 1,
+    projectType: "Feature Film",
+  },
+  {
+    _id: "opp_002",
+    title: "Cinematographer – OTT Web Series (5 Episodes)",
+    category: "Cinematography",
+    description:
+      "Looking for an experienced DOP for a 5-episode crime thriller web series for a major OTT platform. Must be comfortable shooting in low-light, handheld styles. Sony VENICE or ARRI Alexa experience mandatory.",
+    hirer: { companyName: "Applause Entertainment" },
+    budgetMin: 180000,
+    budgetMax: 280000,
+    location: "Hyderabad",
+    deadline: "2025-07-30",
+    applicationCount: 37,
+    maxSlots: 1,
+    projectType: "OTT Content",
+  },
+  {
+    _id: "opp_003",
+    title: "Background Dancers – Bollywood Item Number",
+    category: "Dance",
+    description:
+      "Require 12 trained background dancers (male & female) for a high-energy item number featuring a top Bollywood artist. Rehearsals in Mumbai for 5 days followed by a 2-day shoot. Contemporary, hip-hop, or classical training preferred.",
+    hirer: { companyName: "T-Series Films" },
+    budgetMin: 15000,
+    budgetMax: 25000,
+    location: "Mumbai",
+    deadline: "2025-07-20",
+    applicationCount: 210,
+    maxSlots: 12,
+    projectType: "Feature Film",
+  },
+  {
+    _id: "opp_004",
+    title: "Voice Artist – Hindi Audiobook Narration",
+    category: "Voice",
+    description:
+      "Need a warm, expressive male voice for narrating a 10-chapter fiction audiobook (~4.5 hours total). The tone is introspective and literary. Studio recording in Delhi. Prior audiobook or radio experience a plus.",
+    hirer: { companyName: "Audible India Originals" },
+    budgetMin: 35000,
+    budgetMax: 55000,
+    location: "Delhi",
+    deadline: "2025-08-05",
+    applicationCount: 62,
+    maxSlots: 1,
+    projectType: "OTT Content",
+  },
+  {
+    _id: "opp_005",
+    title: "Assistant Director – Short Film (National Award Entry)",
+    category: "Direction",
+    description:
+      "Seeking a driven AD for a 28-minute short film being submitted to NFDC competitions and international festivals. Shoot over 6 days in Pune. Must be detail-oriented, comfortable on set, and passionate about meaningful cinema.",
+    hirer: { companyName: "Cinestaan Film Company" },
+    budgetMin: 20000,
+    budgetMax: 30000,
+    location: "Pune",
+    deadline: "2025-07-25",
+    applicationCount: 48,
+    maxSlots: 2,
+    projectType: "Short Film",
+  },
+  {
+    _id: "opp_006",
+    title: "Prosthetics & SFX Makeup Artist – Horror Series",
+    category: "Makeup",
+    description:
+      "A 6-episode supernatural horror series for OTT needs an experienced SFX/prosthetics makeup artist. You will design and apply creature looks, wound effects, and aging makeup. Portfolio with practical FX work required.",
+    hirer: { companyName: "Vikram Bhatt Productions" },
+    budgetMin: 90000,
+    budgetMax: 140000,
+    location: "Mumbai",
+    deadline: "2025-08-20",
+    applicationCount: 19,
+    maxSlots: 1,
+    projectType: "OTT Content",
+  },
+  {
+    _id: "opp_007",
+    title: "VFX Compositor – Telugu Action Feature",
+    category: "VFX",
+    description:
+      "Looking for a mid-to-senior level Nuke compositor for a big-budget Telugu action film. Responsibilities include clean plates, sky replacements, crowd multiplications, and wire removals. 6-month project at Hyderabad studio.",
+    hirer: { companyName: "Geetha Arts" },
+    budgetMin: 65000,
+    budgetMax: 95000,
+    location: "Hyderabad",
+    deadline: "2025-09-01",
+    applicationCount: 31,
+    maxSlots: 3,
+    projectType: "Feature Film",
+  },
+  {
+    _id: "opp_008",
+    title: "Screenwriter – Ad Campaign Scripts (FMCG Brand)",
+    category: "Writing",
+    description:
+      "An award-winning ad agency needs a sharp screenwriter to develop 4 TVC scripts (30 sec + 60 sec versions) for a leading FMCG brand. Must understand mass-market storytelling and have prior TVC writing credits.",
+    hirer: { companyName: "Ogilvy India" },
+    budgetMin: 50000,
+    budgetMax: 80000,
+    location: "Bengaluru / Remote",
+    deadline: "2025-07-18",
+    applicationCount: 55,
+    maxSlots: 1,
+    projectType: "Ad Campaign",
+  },
+  {
+    _id: "opp_009",
+    title: "Female Lead – Tamil Romantic Drama",
+    category: "Acting",
+    description:
+      "Auditioning for the female lead of a Tamil romantic drama with a confirmed theatrical release. Age: 22–28. Must be fluent in Tamil. Prior TV or film experience preferred. Audition rounds in Chennai.",
+    hirer: { companyName: "Lyca Productions" },
+    budgetMin: 300000,
+    budgetMax: 500000,
+    location: "Chennai",
+    deadline: "2025-08-10",
+    applicationCount: 143,
+    maxSlots: 1,
+    projectType: "Feature Film",
+  },
+  {
+    _id: "opp_010",
+    title: "Music Composer – Indie Documentary",
+    category: "Other",
+    description:
+      "An award-winning documentary on urban migration needs an original background score (~40 minutes). We want something minimal and evocative — ambient, folk-influenced, or orchestral. Composer must deliver stems for final mix.",
+    hirer: { companyName: "Documentary Films India" },
+    budgetMin: 45000,
+    budgetMax: 70000,
+    location: "Remote",
+    deadline: "2025-08-25",
+    applicationCount: 27,
+    maxSlots: 1,
+    projectType: "Documentary",
+  },
+  {
+    _id: "opp_011",
+    title: "Stunt Coordinator – Action Web Series",
+    category: "Other",
+    description:
+      "Seeking an experienced stunt coordinator for a 10-episode action web series. Must have a verified stunt team, knowledge of wire work, and prior OTT or feature film credits. Full NDA required.",
+    hirer: { companyName: "Excel Entertainment" },
+    budgetMin: 150000,
+    budgetMax: 250000,
+    location: "Mumbai",
+    deadline: "2025-09-10",
+    applicationCount: 14,
+    maxSlots: 1,
+    projectType: "OTT Content",
+  },
+  {
+    _id: "opp_012",
+    title: "Camera Operator – Corporate Video Series",
+    category: "Cinematography",
+    description:
+      "A Bengaluru-based agency needs a skilled camera operator for a 3-day corporate shoot for a leading IT company. Sony FX6 or FX9 proficiency required. Must have own gimbal and basic lighting kit.",
+    hirer: { companyName: "Frame One Films" },
+    budgetMin: 18000,
+    budgetMax: 27000,
+    location: "Bengaluru",
+    deadline: "2025-07-22",
+    applicationCount: 41,
+    maxSlots: 2,
+    projectType: "Corporate Video",
+  },
+];
+
+const MOCK_ARTISTS = [
+  {
+    _id: "art_001",
+    name: "Priya Nair",
+    artCategory: "Actor",
+    location: "Mumbai",
+    experience: "6–8 years",
+    rating: 4.8,
+    skills: ["Drama", "Action", "Tamil", "Hindi"],
+    dailyRate: 35000,
+    avatar: null,
+    bio: "FTII trained actor with 3 feature film credits and 2 OTT series.",
+  },
+  {
+    _id: "art_002",
+    name: "Arjun Mehta",
+    artCategory: "Cinematographer",
+    location: "Mumbai",
+    experience: "9–12 years",
+    rating: 4.9,
+    skills: ["ARRI Alexa", "Sony Venice", "Low-light", "OTT"],
+    dailyRate: 55000,
+    avatar: null,
+    bio: "National Award nominated DOP. 8 feature films, 4 web series.",
+  },
+  {
+    _id: "art_003",
+    name: "Sneha Reddy",
+    artCategory: "Makeup Artist",
+    location: "Hyderabad",
+    experience: "4–5 years",
+    rating: 4.6,
+    skills: ["Prosthetics", "SFX", "Bridal", "Period Looks"],
+    dailyRate: 12000,
+    avatar: null,
+    bio: "Specialized in SFX and prosthetic makeup for Telugu and Bollywood productions.",
+  },
+  {
+    _id: "art_004",
+    name: "Rahul Dasgupta",
+    artCategory: "Director",
+    location: "Kolkata",
+    experience: "6–8 years",
+    rating: 4.7,
+    skills: ["Drama", "Documentary", "Short Film", "OTT"],
+    dailyRate: 40000,
+    avatar: null,
+    bio: "Cannes Short Film Corner selection. Directed 2 OTT originals for MX Player.",
+  },
+  {
+    _id: "art_005",
+    name: "Kavya Iyer",
+    artCategory: "Dancer",
+    location: "Chennai",
+    experience: "9–12 years",
+    rating: 4.5,
+    skills: ["Bharatanatyam", "Contemporary", "Bollywood", "Choreography"],
+    dailyRate: 18000,
+    avatar: null,
+    bio: "Trained at Kalakshetra. Performed in over 40 films as lead dancer.",
+  },
+  {
+    _id: "art_006",
+    name: "Vikram Sinha",
+    artCategory: "VFX Artist",
+    location: "Mumbai",
+    experience: "6–8 years",
+    rating: 4.7,
+    skills: ["Nuke", "Houdini", "Flame", "Compositing"],
+    dailyRate: 28000,
+    avatar: null,
+    bio: "Senior compositor at Prime Focus for 5 years. Worked on 3 Pan India blockbusters.",
+  },
+  {
+    _id: "art_007",
+    name: "Ananya Bose",
+    artCategory: "Actor",
+    location: "Delhi",
+    experience: "3 years",
+    rating: 4.3,
+    skills: ["Theatre", "Hindi", "Bengali", "Comedy"],
+    dailyRate: 15000,
+    avatar: null,
+    bio: "National School of Drama graduate. 2 OTT credits and strong theatre background.",
+  },
+  {
+    _id: "art_008",
+    name: "Siddharth Kulkarni",
+    artCategory: "Voice Artist",
+    location: "Pune",
+    experience: "4–5 years",
+    rating: 4.6,
+    skills: ["Hindi Narration", "Dubbing", "Commercial VO", "Audiobooks"],
+    dailyRate: 8000,
+    avatar: null,
+    bio: "Voice of 3 Hindi audiobooks and VO artist for 15+ national ad campaigns.",
+  },
+  {
+    _id: "art_009",
+    name: "Meera Krishnan",
+    artCategory: "Cinematographer",
+    location: "Chennai",
+    experience: "4–5 years",
+    rating: 4.4,
+    skills: ["Sony FX9", "Gimbal", "Natural Light", "Docs"],
+    dailyRate: 22000,
+    avatar: null,
+    bio: "Specialist in documentary and indie features. 6 short film festival credits.",
+  },
+  {
+    _id: "art_010",
+    name: "Rohan Kapoor",
+    artCategory: "Director",
+    location: "Mumbai",
+    experience: "13–15 years",
+    rating: 4.9,
+    skills: ["Feature Film", "Ad Films", "OTT", "Brand Content"],
+    dailyRate: 80000,
+    avatar: null,
+    bio: "Filmfare Award winning director. 4 theatrical releases, 2 OTT originals.",
+  },
+  {
+    _id: "art_011",
+    name: "Deepika Rao",
+    artCategory: "Makeup Artist",
+    location: "Mumbai",
+    experience: "9–12 years",
+    rating: 4.8,
+    skills: ["HD Makeup", "Period Styling", "Prosthetics", "Editorial"],
+    dailyRate: 20000,
+    avatar: null,
+    bio: "Head makeup artist on 6 Bollywood features. Trained in London and Mumbai.",
+  },
+  {
+    _id: "art_012",
+    name: "Ajay Nambiar",
+    artCategory: "VFX Artist",
+    location: "Bengaluru",
+    experience: "6–8 years",
+    rating: 4.5,
+    skills: ["After Effects", "Cinema 4D", "Motion Graphics", "Title Design"],
+    dailyRate: 18000,
+    avatar: null,
+    bio: "Motion designer and VFX artist for OTT title sequences and ad campaigns.",
+  },
+  {
+    _id: "art_013",
+    name: "Tanvi Pillai",
+    artCategory: "Actor",
+    location: "Kochi",
+    experience: "4–5 years",
+    rating: 4.4,
+    skills: ["Malayalam", "Tamil", "Drama", "Thriller"],
+    dailyRate: 20000,
+    avatar: null,
+    bio: "Known for her intense dramatic roles in 3 Malayalam films and 1 OTT series.",
+  },
+  {
+    _id: "art_014",
+    name: "Nikhil Sharma",
+    artCategory: "Dancer",
+    location: "Mumbai",
+    experience: "6–8 years",
+    rating: 4.6,
+    skills: ["Hip-Hop", "Freestyle", "Bollywood", "Locking & Popping"],
+    dailyRate: 14000,
+    avatar: null,
+    bio: "Featured dancer in 10 Bollywood item numbers and 3 music videos.",
+  },
+  {
+    _id: "art_015",
+    name: "Pooja Venkat",
+    artCategory: "Voice Artist",
+    location: "Chennai",
+    experience: "6–8 years",
+    rating: 4.7,
+    skills: ["Tamil Dubbing", "Hindi VO", "Corporate Narration", "Animation"],
+    dailyRate: 10000,
+    avatar: null,
+    bio: "Voice for 20+ animated characters, national brand campaigns, and 2 Tamil audiobooks.",
+  },
+];
+
+/* ─── Simulated Fetch ────────────────────────────────────────────────────── */
+function simulateFetch(
+  allItems,
+  { category, search, page, limit, categoryKey },
+) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      let filtered = allItems;
+      if (category && category !== "All") {
+        filtered = filtered.filter((item) =>
+          (item[categoryKey] || "")
+            .toLowerCase()
+            .includes(category.toLowerCase()),
+        );
+      }
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        filtered = filtered.filter((item) =>
+          JSON.stringify(item).toLowerCase().includes(q),
+        );
+      }
+      const total = filtered.length;
+      const totalPages = Math.ceil(total / limit);
+      const start = (page - 1) * limit;
+      const data = filtered.slice(start, start + limit);
+      resolve({ data, totalPages });
+    }, 480);
+  });
+}
+
+/* ─── Static Options ─────────────────────────────────────────────────────── */
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0;overflow-x:hidden;}
+button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer;font-family:inherit;}
+p{margin:0;}img{display:block;max-width:100%;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(201,169,97,0.25);border-radius:4px;}
 
-/* Reset */
-*, *::before, *::after { box-sizing:border-box; }
-body { margin:0; overflow-x:hidden; }
-button { -webkit-tap-highlight-color:transparent; touch-action:manipulation; cursor:pointer; font-family:inherit; }
-p { margin:0; }
-img { display:block; max-width:100%; }
-::-webkit-scrollbar { width:4px; height:4px; }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:rgba(201,169,97,0.25); border-radius:4px; }
+@keyframes fadeUp   {from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp  {from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes backdropIn{from{opacity:0}to{opacity:1}}
+@keyframes spin     {to{transform:rotate(360deg)}}
+@keyframes shimmer  {0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-/* Animations */
-@keyframes nudge  { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.hd{min-height:100vh;background:#12141a;font-family:'Plus Jakarta Sans','Segoe UI',sans-serif;color:#e8e9eb;overflow-x:hidden;}
 
-/* ── Root ─────────────────────────────────────────────────────────────────── */
-.hd {
-  min-height:100vh;
-  background:#12141a;
-  font-family:'Plus Jakarta Sans','Segoe UI',sans-serif;
-  color:#e8e9eb;
-  overflow-x:hidden;
-}
+/* NAV */
+.hd-nav{position:sticky;top:0;z-index:200;background:rgba(18,20,26,0.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(201,169,97,0.12);}
+.hd-nav-inner{max-width:1280px;margin:0 auto;height:52px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+@media(min-width:480px){.hd-nav-inner{height:56px;padding:0 18px;}}
+@media(min-width:768px){.hd-nav-inner{height:60px;padding:0 28px;gap:14px;}}
+@media(min-width:1024px){.hd-nav-inner{padding:0 40px;}}
+.hd-logo{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.hd-logo-icon{width:28px;height:28px;border-radius:7px;flex-shrink:0;background:transparent;display:flex;align-items:center;justify-content:center;}
+.hd-logo-img{width:100%;height:100%;object-fit:contain;border-radius:inherit;}
+.hd-logo-text{font-size:15px;font-weight:800;color:#e8e9eb;font-family:'Playfair Display',serif;letter-spacing:-0.01em;white-space:nowrap;}
+@media(min-width:768px){.hd-logo-icon{width:32px;height:32px;}.hd-logo-text{font-size:17px;}}
+.hd-toggle{display:flex;gap:2px;padding:3px;background:rgba(255,255,255,0.05);border-radius:11px;border:1px solid rgba(201,169,97,0.12);flex-shrink:0;}
+.hd-toggle-btn{padding:5px 9px;border-radius:8px;border:none;font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap;}
+@media(min-width:400px){.hd-toggle-btn{padding:5px 12px;font-size:12px;}}
+@media(min-width:640px){.hd-toggle-btn{padding:6px 16px;font-size:12.5px;gap:5px;}}
+.hd-nav-auth{display:flex;gap:5px;flex-shrink:0;}
+.hd-nav-signin{padding:5px 9px;border-radius:8px;border:1px solid rgba(201,169,97,0.12);background:transparent;color:#8b95a3;font-size:11.5px;font-weight:600;transition:border-color .15s,color .15s;white-space:nowrap;}
+.hd-nav-signin:hover{border-color:rgba(201,169,97,0.32);color:#e8e9eb;}
+.hd-nav-signup{padding:5px 9px;border-radius:8px;background:linear-gradient(135deg,#c9a961,#a8863d);border:none;color:#12141a;font-size:11.5px;font-weight:700;white-space:nowrap;}
+@media(min-width:400px){.hd-nav-signin,.hd-nav-signup{padding:6px 12px;font-size:12px;}}
+@media(min-width:640px){.hd-nav-signin,.hd-nav-signup{padding:7px 16px;font-size:12.5px;border-radius:9px;}}
+@media(min-width:768px){.hd-nav-signin,.hd-nav-signup{padding:7px 18px;font-size:13px;}}
 
-/* ── Navbar ───────────────────────────────────────────────────────────────── */
-.hd-nav {
-  position:sticky; top:0; z-index:200;
-  background:rgba(18,20,26,0.94);
-  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
-  border-bottom:1px solid rgba(201,169,97,0.12);
-}
-.hd-nav-inner {
-  max-width:1280px; margin:0 auto;
-  height:52px;
-  padding:0 14px;
-  display:flex; align-items:center; justify-content:space-between; gap:8px;
-}
-@media(min-width:480px){ .hd-nav-inner{ height:56px; padding:0 18px; } }
-@media(min-width:768px){ .hd-nav-inner{ height:60px; padding:0 28px; gap:14px; } }
-@media(min-width:1024px){ .hd-nav-inner{ padding:0 40px; } }
+/* BANNER */
+.hd-banner-wrap{max-width:1280px;margin:0 auto;padding:12px 14px 0;}
+@media(min-width:480px){.hd-banner-wrap{padding:14px 18px 0;}}
+@media(min-width:768px){.hd-banner-wrap{padding:18px 28px 0;}}
+@media(min-width:1024px){.hd-banner-wrap{padding:22px 40px 0;}}
+.hd-banner{width:100%;padding:10px 12px;background:#22252e;border:1px solid rgba(201,169,97,0.12);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;transition:border-color .2s,background .2s;}
+.hd-banner:hover{border-color:rgba(201,169,97,0.32);background:#282c36;}
+@media(min-width:768px){.hd-banner{padding:12px 16px;border-radius:14px;}}
+.hd-banner-left{display:flex;align-items:center;gap:9px;min-width:0;}
+.hd-banner-icons{position:relative;flex-shrink:0;width:38px;height:36px;}
+.hd-banner-main{width:32px;height:32px;border-radius:8px;border:1px solid rgba(201,169,97,0.12);display:flex;align-items:center;justify-content:center;}
+.hd-banner-sub{position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;}
+.hd-banner-title{font-size:clamp(11.5px,3vw,13.5px);font-weight:700;color:#e8e9eb;white-space:nowrap;}
+.hd-banner-desc{font-size:11px;color:#8b95a3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;}
+.hd-banner-pill{display:flex;align-items:center;gap:3px;flex-shrink:0;padding:4px 8px;border-radius:20px;background:rgba(201,169,97,0.10);border:1px solid rgba(201,169,97,0.32);}
+.hd-banner-pill span{font-size:11px;font-weight:700;color:#c9a961;}
 
-/* Logo */
-.hd-logo { display:flex; align-items:center; gap:7px; flex-shrink:0; }
-.hd-logo-icon {
-  width:28px; height:28px; border-radius:7px; flex-shrink:0;
-  background:transparent;
-  display:flex; align-items:center; justify-content:center;
-}
-  .hd-logo-img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  border-radius:inherit;
-}
-.hd-logo-text {
-  font-size:15px; font-weight:800; color:#e8e9eb;
-  font-family:'Playfair Display',serif; letter-spacing:-0.01em;
-  white-space:nowrap;
-}
-@media(min-width:480px){ .hd-logo-icon{width:30px;height:30px;border-radius:8px;} .hd-logo-text{font-size:16px;} }
-@media(min-width:768px){ .hd-logo-icon{width:32px;height:32px;border-radius:9px;} .hd-logo-text{font-size:17px;} }
+/* CONTENT */
+.hd-content{max-width:1280px;margin:0 auto;padding:14px 14px 96px;animation:fadeUp .3s ease both;}
+@media(min-width:480px){.hd-content{padding:16px 18px 100px;}}
+@media(min-width:768px){.hd-content{padding:20px 28px 104px;}}
+@media(min-width:1024px){.hd-content{padding:24px 40px 110px;}}
+.view-stack{display:flex;flex-direction:column;gap:16px;}
+@media(min-width:640px){.view-stack{gap:20px;}}
 
-/* Role toggle */
-.hd-toggle {
-  display:flex; gap:2px; padding:3px;
-  background:rgba(255,255,255,0.05);
-  border-radius:11px; border:1px solid rgba(201,169,97,0.12);
-  flex-shrink:0;
-}
-.hd-toggle-btn {
-  padding:5px 9px; border-radius:8px; border:none;
-  font-size:11.5px; font-weight:700;
-  display:flex; align-items:center; gap:4px;
-  transition:all .18s; white-space:nowrap;
-}
-@media(min-width:400px){ .hd-toggle-btn{ padding:5px 12px; font-size:12px; } }
-@media(min-width:640px){ .hd-toggle-btn{ padding:6px 16px; font-size:12.5px; gap:5px; } }
+/* HERO */
+.hero-section{border-radius:18px;background:linear-gradient(135deg,#1a1d24 0%,#22252e 60%,rgba(201,169,97,0.06) 100%);border:1px solid rgba(201,169,97,0.15);padding:28px 22px;position:relative;overflow:hidden;}
+.hero-section::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(201,169,97,0.08) 0%,transparent 70%);pointer-events:none;}
+@media(min-width:640px){.hero-section{padding:36px 32px;}}
+.hero-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;background:rgba(201,169,97,0.10);border:1px solid rgba(201,169,97,0.25);margin-bottom:12px;}
+.hero-badge span{font-size:11px;font-weight:700;color:#c9a961;}
+.hero-title{font-size:clamp(22px,5vw,34px);font-weight:700;color:#e8e9eb;font-family:'Playfair Display',serif;line-height:1.2;margin-bottom:10px;}
+.hero-sub{font-size:clamp(13px,3vw,15px);color:#8b95a3;margin-bottom:20px;line-height:1.55;max-width:520px;}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;}
 
-/* Nav auth */
-.hd-nav-auth { display:flex; gap:5px; flex-shrink:0; }
-.hd-nav-signin {
-  padding:5px 9px; border-radius:8px;
-  border:1px solid rgba(201,169,97,0.12);
-  background:transparent; color:#8b95a3;
-  font-size:11.5px; font-weight:600;
-  transition:border-color .15s,color .15s;
-  white-space:nowrap;
-}
-.hd-nav-signin:hover { border-color:rgba(201,169,97,0.32); color:#e8e9eb; }
-.hd-nav-signup {
-  padding:5px 9px; border-radius:8px;
-  background:linear-gradient(135deg,#c9a961,#a8863d);
-  border:none; color:#12141a;
-  font-size:11.5px; font-weight:700;
-  white-space:nowrap;
-}
-@media(min-width:400px){ .hd-nav-signin,.hd-nav-signup{ padding:6px 12px; font-size:12px; } }
-@media(min-width:640px){ .hd-nav-signin,.hd-nav-signup{ padding:7px 16px; font-size:12.5px; border-radius:9px; } }
-@media(min-width:768px){ .hd-nav-signin,.hd-nav-signup{ padding:7px 18px; font-size:13px; } }
+/* CARD */
+.card{background:#22252e;border:1px solid rgba(201,169,97,0.12);border-radius:16px;padding:16px;}
+@media(min-width:640px){.card{padding:20px;border-radius:18px;}}
 
-/* ── Switch Banner ────────────────────────────────────────────────────────── */
-.hd-banner-wrap {
-  max-width:1280px; margin:0 auto;
-  padding:12px 14px 0;
-}
-@media(min-width:480px){ .hd-banner-wrap{ padding:14px 18px 0; } }
-@media(min-width:768px){ .hd-banner-wrap{ padding:18px 28px 0; } }
-@media(min-width:1024px){ .hd-banner-wrap{ padding:22px 40px 0; } }
+/* SEC TITLE */
+.sec-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sec-h{margin:0;font-size:clamp(13px,3.5vw,16px);font-weight:700;color:#e8e9eb;}
+.sec-action{display:flex;align-items:center;gap:3px;font-size:clamp(11px,2.5vw,12.5px);font-weight:600;color:#c9a961;background:none;border:none;padding:0;flex-shrink:0;}
 
-.hd-banner {
-  width:100%; padding:10px 12px;
-  background:#22252e; border:1px solid rgba(201,169,97,0.12);
-  border-radius:12px;
-  display:flex; align-items:center; justify-content:space-between; gap:8px;
-  text-align:left; transition:border-color .2s,background .2s;
-}
-.hd-banner:hover { border-color:rgba(201,169,97,0.32); background:#282c36; }
-@media(min-width:480px){ .hd-banner{ padding:11px 14px; border-radius:13px; } }
-@media(min-width:768px){ .hd-banner{ padding:12px 16px; border-radius:14px; } }
+/* SEARCH */
+.search-row{display:flex;gap:7px;margin-bottom:11px;}
+.search-wrap{flex:1;position:relative;min-width:0;}
+.search-ic{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#8b95a3;pointer-events:none;}
+.filter-btn{padding:8px 10px;border-radius:9px;background:rgba(201,169,97,0.10);border:1px solid rgba(201,169,97,0.32);color:#c9a961;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:4px;flex-shrink:0;}
 
-.hd-banner-left { display:flex; align-items:center; gap:9px; min-width:0; }
+/* CHIPS */
+.chips{display:flex;gap:5px;overflow-x:auto;padding-bottom:3px;margin-bottom:14px;scrollbar-width:none;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{padding:4px 10px;border-radius:20px;border:none;background:rgba(255,255,255,0.05);color:#8b95a3;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;transition:all .15s;}
+.chip.on{background:linear-gradient(135deg,#c9a961,#a8863d);color:#12141a;}
 
-.hd-banner-icons { position:relative; flex-shrink:0; width:38px; height:36px; }
-.hd-banner-main  {
-  width:32px; height:32px; border-radius:8px;
-  border:1px solid rgba(201,169,97,0.12);
-  display:flex; align-items:center; justify-content:center;
-}
-.hd-banner-sub   {
-  position:absolute; bottom:-2px; right:-2px;
-  width:16px; height:16px; border-radius:4px;
-  display:flex; align-items:center; justify-content:center;
-}
-@media(min-width:480px){
-  .hd-banner-icons{ width:42px; height:39px; }
-  .hd-banner-main { width:35px; height:35px; border-radius:9px; }
-  .hd-banner-sub  { width:18px; height:18px; border-radius:5px; }
-}
+/* OPP CARD */
+.opp-card{padding:14px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(201,169,97,0.12);transition:background .15s,border-color .15s;}
+.opp-card:hover{background:rgba(201,169,97,0.04);border-color:rgba(201,169,97,0.25);}
+.opp-top{display:flex;justify-content:space-between;align-items:flex-start;gap:7px;margin-bottom:5px;}
+.opp-title{font-size:clamp(12.5px,3vw,14px);font-weight:700;color:#e8e9eb;line-height:1.3;}
+.opp-cat{font-size:10px;padding:2px 7px;border-radius:20px;flex-shrink:0;background:rgba(201,169,97,0.10);color:#c9a961;border:1px solid rgba(201,169,97,0.32);white-space:nowrap;}
+.opp-company{font-size:11.5px;color:#8b95a3;margin-bottom:6px;}
+.opp-desc{font-size:12px;color:#8b95a3;line-height:1.5;margin-bottom:10px;}
+.opp-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.mi{font-size:clamp(10px,2.5vw,12px);color:#8b95a3;display:flex;align-items:center;gap:3px;}
+.opp-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
 
-.hd-banner-title { font-size:clamp(11.5px,3vw,13.5px); font-weight:700; color:#e8e9eb; white-space:nowrap; }
-.hd-banner-desc  { font-size:11px; color:#8b95a3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px; }
-@media(min-width:480px){ .hd-banner-desc{ font-size:11.5px; } }
+/* ARTIST ROW */
+.lst{display:flex;flex-direction:column;gap:9px;}
+.artist-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,0.018);border:1px solid rgba(201,169,97,0.12);transition:background .15s;cursor:pointer;}
+.artist-row:hover{background:rgba(201,169,97,0.04);}
+.a-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,169,97,0.32);flex-shrink:0;background:#22252e;}
+.a-avatar-placeholder{width:48px;height:48px;border-radius:50%;border:2px solid rgba(201,169,97,0.32);flex-shrink:0;background:linear-gradient(135deg,#22252e,#2a2d38);display:flex;align-items:center;justify-content:center;}
+.a-initials{font-size:15px;font-weight:700;color:#c9a961;font-family:'Playfair Display',serif;}
+.a-body{flex:1;min-width:0;}
+.a-name{font-size:13.5px;font-weight:700;color:#e8e9eb;}
+.a-role{font-size:11.5px;color:#8b95a3;margin-bottom:4px;}
+.a-skills{display:flex;gap:5px;flex-wrap:wrap;}
+.a-skill{font-size:10px;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,0.05);color:#8b95a3;border:1px solid rgba(255,255,255,0.06);}
+.a-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;white-space:nowrap;}
+.a-rating{display:flex;align-items:center;gap:3px;}
+.a-rating span{font-size:11px;font-weight:600;color:#c9a961;}
 
-.hd-banner-pill {
-  display:flex; align-items:center; gap:3px; flex-shrink:0;
-  padding:4px 8px; border-radius:20px;
-  background:rgba(201,169,97,0.10); border:1px solid rgba(201,169,97,0.32);
-}
-.hd-banner-pill span { font-size:11px; font-weight:700; color:#c9a961; }
-@media(min-width:480px){ .hd-banner-pill{ padding:4px 10px; gap:4px; } .hd-banner-pill span{ font-size:11.5px; } }
+/* BUTTONS */
+.btn-gold{padding:8px 16px;border-radius:9px;background:linear-gradient(135deg,#c9a961,#a8863d);border:none;color:#12141a;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:5px;transition:filter .15s;}
+.btn-gold:hover{filter:brightness(1.08);}
+.btn-gold.sm{padding:6px 12px;font-size:11.5px;border-radius:8px;}
+.btn-gold.full{width:100%;justify-content:center;}
+.btn-outline{padding:8px 16px;border-radius:9px;background:transparent;border:1px solid rgba(201,169,97,0.12);color:#8b95a3;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:border-color .15s,color .15s;}
+.btn-outline:hover{border-color:rgba(201,169,97,0.32);color:#e8e9eb;}
+.btn-outline.sm{padding:6px 12px;font-size:11.5px;border-radius:8px;}
+.btn-outline.full{width:100%;justify-content:center;}
 
-/* ── Main content ─────────────────────────────────────────────────────────── */
-.hd-content {
-  max-width:1280px; margin:0 auto;
-  padding:14px 14px 96px;
-  animation:fadeUp .3s ease both;
-}
-@media(min-width:480px){ .hd-content{ padding:16px 18px 100px; } }
-@media(min-width:768px){ .hd-content{ padding:20px 28px 104px; } }
-@media(min-width:1024px){ .hd-content{ padding:24px 40px 110px; } }
+/* SKELETON */
+.skel{background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;}
+.skel-card{padding:14px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(201,169,97,0.08);margin-bottom:9px;}
+.skel-line{border-radius:6px;margin-bottom:8px;}
 
-/* ── View stack ───────────────────────────────────────────────────────────── */
-.view-stack { display:flex; flex-direction:column; gap:14px; }
-@media(min-width:480px){ .view-stack{ gap:16px; } }
-@media(min-width:640px){ .view-stack{ gap:20px; } }
-@media(min-width:1024px){ .view-stack{ gap:24px; } }
+/* EMPTY / ERROR */
+.empty-state{text-align:center;padding:40px 20px;color:#8b95a3;}
+.empty-icon{width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+.empty-title{font-size:14px;font-weight:600;color:#e8e9eb;margin-bottom:5px;}
+.empty-sub{font-size:12.5px;}
 
-/* View heading */
-.view-title {
-  font-size:clamp(19px,5vw,28px); font-weight:700; color:#e8e9eb;
-  font-family:'Playfair Display',serif; margin:0 0 4px;
-}
-.view-sub { font-size:clamp(11.5px,3vw,13.5px); color:#8b95a3; }
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;z-index:800;background:rgba(10,12,18,0.75);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;animation:backdropIn .2s ease both;}
+@media(min-width:640px){.modal-backdrop{align-items:center;}}
+.modal-sheet{width:100%;max-width:540px;max-height:90vh;overflow-y:auto;background:#1a1d24;border:1px solid rgba(201,169,97,0.18);border-radius:20px 20px 0 0;padding:20px 18px 32px;animation:slideUp .28s cubic-bezier(.34,1.2,.64,1) both;}
+@media(min-width:640px){.modal-sheet{border-radius:20px;margin:16px;padding:24px 22px 28px;}}
+.modal-handle{width:36px;height:3px;border-radius:20px;background:rgba(255,255,255,0.12);margin:0 auto 16px;}
+@media(min-width:640px){.modal-handle{display:none;}}
+.modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:18px;}
+.modal-title{font-size:clamp(16px,4vw,20px);font-weight:700;color:#e8e9eb;font-family:'Playfair Display',serif;}
+.modal-close{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,0.06);border:none;display:flex;align-items:center;justify-content:center;color:#8b95a3;flex-shrink:0;margin-top:2px;}
 
-/* Hirer top-row with button */
-.hirer-header {
-  display:flex; align-items:flex-start;
-  justify-content:space-between; gap:10px; flex-wrap:wrap;
-}
+/* FORM */
+.form-stack{display:flex;flex-direction:column;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-size:12px;font-weight:600;color:#8b95a3;}
+.form-input,.form-select,.form-textarea{padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#e8e9eb;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;width:100%;transition:border-color .15s;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:rgba(201,169,97,0.45);}
+.form-input::placeholder,.form-textarea::placeholder{color:rgba(139,149,163,0.45);}
+.form-select{appearance:none;cursor:pointer;}
+.form-select option{background:#22252e;color:#e8e9eb;}
+.form-textarea{resize:vertical;min-height:80px;}
+.form-select-wrap{position:relative;}
+.form-select-wrap::after{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #8b95a3;pointer-events:none;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:400px){.form-row{grid-template-columns:1fr;}}
+.form-hint{font-size:11px;color:rgba(139,149,163,0.6);}
 
-/* ── Stats grid ───────────────────────────────────────────────────────────── */
-.stat-grid {
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:9px;
-}
-@media(min-width:480px){ .stat-grid{ gap:11px; } }
-@media(min-width:640px){ .stat-grid{ grid-template-columns:repeat(4,1fr); gap:13px; } }
-@media(min-width:1024px){ .stat-grid{ gap:16px; } }
+/* SIGN-IN WALL */
+.signin-wall{padding:22px 18px;border-radius:14px;background:rgba(201,169,97,0.06);border:1px solid rgba(201,169,97,0.20);text-align:center;}
+.signin-wall-icon{width:44px;height:44px;border-radius:11px;background:rgba(201,169,97,0.12);border:1px solid rgba(201,169,97,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+.signin-wall-title{font-size:15px;font-weight:700;color:#e8e9eb;margin-bottom:5px;}
+.signin-wall-sub{font-size:12.5px;color:#8b95a3;margin-bottom:16px;}
+.signin-wall-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
 
-.stat-card {
-  background:#22252e; border:1px solid rgba(201,169,97,0.12);
-  border-radius:13px; padding:13px;
-  display:flex; flex-direction:column; gap:9px;
-}
-@media(min-width:480px){ .stat-card{ padding:15px; border-radius:14px; } }
-@media(min-width:768px){ .stat-card{ padding:17px; border-radius:16px; gap:11px; } }
-
-.stat-icon { width:30px; height:30px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-@media(min-width:480px){ .stat-icon{ width:32px; height:32px; border-radius:8px; } }
-@media(min-width:768px){ .stat-icon{ width:34px; height:34px; border-radius:9px; } }
-
-.stat-val { font-size:clamp(16px,4.5vw,22px); font-weight:700; color:#e8e9eb; margin-bottom:2px; }
-.stat-lbl { font-size:clamp(10px,2.5vw,12px); color:#8b95a3; }
-
-/* ── Card shell ───────────────────────────────────────────────────────────── */
-.card {
-  background:#22252e; border:1px solid rgba(201,169,97,0.12);
-  border-radius:15px; padding:14px;
-}
-@media(min-width:480px){ .card{ padding:16px; border-radius:16px; } }
-@media(min-width:640px){ .card{ padding:18px; border-radius:18px; } }
-@media(min-width:768px){ .card{ padding:20px; border-radius:20px; } }
-
-/* ── Section title ────────────────────────────────────────────────────────── */
-.sec-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:13px; }
-.sec-h { margin:0; font-size:clamp(13px,3.5vw,16px); font-weight:700; color:#e8e9eb; }
-.sec-action {
-  display:flex; align-items:center; gap:3px;
-  font-size:clamp(11px,2.5vw,12.5px); font-weight:600; color:#c9a961;
-  background:none; border:none; padding:0; flex-shrink:0;
-}
-
-/* ── Search row ───────────────────────────────────────────────────────────── */
-.search-row { display:flex; gap:7px; margin-bottom:11px; }
-.search-wrap { flex:1; position:relative; min-width:0; }
-.search-ic { position:absolute; left:9px; top:50%; transform:translateY(-50%); color:#8b95a3; pointer-events:none; }
-.search-fake {
-  padding:8px 9px 8px 28px;
-  border-radius:9px; background:rgba(255,255,255,0.04);
-  border:1px solid rgba(201,169,97,0.12);
-  color:#8b95a3; font-size:clamp(11px,3vw,13px);
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-}
-@media(min-width:480px){ .search-fake{ padding:9px 10px 9px 30px; } }
-.filter-btn {
-  padding:8px 10px; border-radius:9px;
-  background:rgba(201,169,97,0.10); border:1px solid rgba(201,169,97,0.32);
-  color:#c9a961; font-size:11.5px; font-weight:600;
-  display:flex; align-items:center; gap:4px; flex-shrink:0;
-}
-@media(min-width:480px){ .filter-btn{ padding:8px 12px; font-size:12px; } }
-
-/* ── Chips ────────────────────────────────────────────────────────────────── */
-.chips { display:flex; gap:5px; overflow-x:auto; padding-bottom:3px; margin-bottom:12px; scrollbar-width:none; }
-.chips::-webkit-scrollbar { display:none; }
-.chip {
-  padding:4px 10px; border-radius:20px; border:none;
-  background:rgba(255,255,255,0.05); color:#8b95a3;
-  font-size:11px; font-weight:600; white-space:nowrap; flex-shrink:0;
-  transition:all .15s;
-}
-.chip.on { background:linear-gradient(135deg,#c9a961,#a8863d); color:#12141a; }
-@media(min-width:480px){ .chip{ padding:5px 12px; font-size:11.5px; } }
-
-/* ── List stack ───────────────────────────────────────────────────────────── */
-.lst { display:flex; flex-direction:column; gap:8px; }
-@media(min-width:480px){ .lst{ gap:9px; } }
-
-/* ── Requirement card ─────────────────────────────────────────────────────── */
-.req-card {
-  padding:12px; border-radius:11px;
-  background:rgba(255,255,255,0.02); border:1px solid rgba(201,169,97,0.12);
-  transition:background .15s;
-}
-.req-card:hover { background:rgba(201,169,97,0.04); }
-@media(min-width:480px){ .req-card{ padding:13px; } }
-@media(min-width:768px){ .req-card{ padding:14px; } }
-
-.req-top { display:flex; justify-content:space-between; align-items:flex-start; gap:7px; margin-bottom:6px; }
-.req-title { font-size:clamp(12px,3vw,13.5px); font-weight:700; color:#e8e9eb; line-height:1.35; }
-.req-cat   { font-size:10px; padding:2px 7px; border-radius:20px; flex-shrink:0; background:rgba(201,169,97,0.10); color:#c9a961; border:1px solid rgba(201,169,97,0.32); white-space:nowrap; }
-.req-meta  { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
-.apply-btn {
-  padding:5px 12px; border-radius:8px;
-  background:linear-gradient(135deg,#c9a961,#a8863d);
-  border:none; color:#12141a; font-size:11.5px; font-weight:700;
-}
-@media(min-width:480px){ .apply-btn{ padding:6px 14px; font-size:12px; } }
-
-/* Meta item */
-.mi { font-size:clamp(10px,2.5vw,12px); color:#8b95a3; display:flex; align-items:center; gap:3px; }
-
-/* ── Application row ──────────────────────────────────────────────────────── */
-.app-row {
-  display:flex; align-items:center; gap:10px; padding:11px;
-  border-radius:11px;
-  background:rgba(255,255,255,0.018); border:1px solid rgba(201,169,97,0.12);
-  transition:background .15s;
-}
-.app-row:hover { background:rgba(201,169,97,0.04); }
-@media(min-width:480px){ .app-row{ gap:11px; padding:12px; } }
-@media(min-width:768px){ .app-row{ gap:12px; padding:13px; } }
-
-.app-ic {
-  width:38px; height:38px; border-radius:9px; flex-shrink:0;
-  background:rgba(201,169,97,0.10); border:1px solid rgba(201,169,97,0.12);
-  display:flex; align-items:center; justify-content:center;
-}
-@media(min-width:480px){ .app-ic{ width:40px; height:40px; } }
-@media(min-width:768px){ .app-ic{ width:42px; height:42px; } }
-
-.app-body { flex:1; min-width:0; }
-.app-top  { display:flex; align-items:flex-start; justify-content:space-between; gap:5px; margin-bottom:2px; }
-.app-ttl  { font-size:clamp(11.5px,3vw,13.5px); font-weight:600; color:#e8e9eb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.app-co   { font-size:11px; color:#8b95a3; margin-bottom:4px; }
-.app-meta { display:flex; gap:9px; flex-wrap:wrap; }
-@media(min-width:480px){ .app-co{ font-size:11.5px; margin-bottom:5px; } }
-
-.sbadge { font-size:9.5px; font-weight:700; padding:2px 6px; border-radius:20px; flex-shrink:0; text-transform:capitalize; white-space:nowrap; }
-@media(min-width:480px){ .sbadge{ font-size:10px; padding:2px 7px; } }
-@media(min-width:640px){ .sbadge{ font-size:10.5px; padding:2px 8px; } }
-
-/* ── Two-col layout ───────────────────────────────────────────────────────── */
-.two-col { display:grid; grid-template-columns:1fr; gap:14px; }
-@media(min-width:768px){ .two-col{ grid-template-columns:1fr 1fr; gap:16px; } }
-@media(min-width:1024px){ .two-col{ gap:20px; } }
-
-/* ── Profile strength ─────────────────────────────────────────────────────── */
-.prog-track { width:100%; height:6px; border-radius:20px; overflow:hidden; background:rgba(255,255,255,0.07); margin-bottom:8px; }
-.prog-fill  { height:100%; border-radius:20px; background:linear-gradient(90deg,#c9a961,#e0d070); }
-.prog-pct   { font-size:24px; font-weight:700; color:#e8e9eb; margin-bottom:8px; }
-.card-sub   { font-size:12px; color:#8b95a3; margin-bottom:8px; }
-.cl-row { display:flex; align-items:center; gap:7px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
-.cl-dot {
-  width:16px; height:16px; border-radius:50%; flex-shrink:0;
-  background:rgba(255,255,255,0.06); border:1px solid rgba(201,169,97,0.12);
-  display:flex; align-items:center; justify-content:center;
-}
-.cl-dot.done { background:rgba(52,211,153,0.15); border-color:rgba(52,211,153,0.3); }
-.cl-lbl { font-size:12px; color:#e8e9eb; }
-.cl-lbl.done { color:#8b95a3; text-decoration:line-through; }
-@media(min-width:480px){ .cl-lbl{ font-size:12.5px; } .cl-dot{ width:17px; height:17px; } }
-
-/* ── Payments ─────────────────────────────────────────────────────────────── */
-.pay-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
-.pay-ttl { font-size:clamp(11.5px,3vw,13px); font-weight:600; color:#e8e9eb; margin-bottom:2px; }
-.pay-dt  { font-size:10.5px; color:#8b95a3; }
-.pay-amt { font-size:clamp(12.5px,3vw,13.5px); font-weight:700; color:#e8e9eb; margin-bottom:3px; text-align:right; }
-.pay-st  { font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; float:right; }
-
-/* ── Artist grid ──────────────────────────────────────────────────────────── */
-.artist-grid {
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:8px; margin-top:4px;
-}
-@media(min-width:400px){ .artist-grid{ grid-template-columns:repeat(3,1fr); } }
-@media(min-width:640px){ .artist-grid{ grid-template-columns:repeat(4,1fr); gap:10px; } }
-@media(min-width:900px){ .artist-grid{ grid-template-columns:repeat(6,1fr); } }
-@media(min-width:1024px){ .artist-grid{ gap:12px; } }
-
-.a-card {
-  border-radius:11px; padding:11px 9px; text-align:center;
-  background:rgba(255,255,255,0.025); border:1px solid rgba(201,169,97,0.12);
-  transition:all .18s; position:relative;
-}
-.a-card:hover { background:rgba(201,169,97,0.06); border-color:rgba(201,169,97,0.32); }
-@media(min-width:480px){ .a-card{ padding:12px 10px; border-radius:12px; } }
-@media(min-width:768px){ .a-card{ padding:13px 11px; border-radius:13px; } }
-
-.a-badge {
-  position:absolute; top:6px; right:6px;
-  font-size:8px; font-weight:700; padding:1px 5px; border-radius:20px;
-}
-@media(min-width:480px){ .a-badge{ font-size:8.5px; } }
-
-.a-avatar { width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid rgba(201,169,97,0.32); margin:0 auto 6px; }
-@media(min-width:480px){ .a-avatar{ width:48px; height:48px; } }
-@media(min-width:640px){ .a-avatar{ width:52px; height:52px; } }
-
-.a-name { font-size:11.5px; font-weight:700; color:#e8e9eb; margin-bottom:2px; }
-.a-role { font-size:10px; color:#8b95a3; margin-bottom:5px; }
-.a-rating { display:flex; align-items:center; justify-content:center; gap:3px; margin-bottom:4px; }
-.a-rating span { font-size:10.5px; font-weight:600; color:#c9a961; }
-.a-city { display:flex; align-items:center; justify-content:center; gap:2px; }
-.a-city span { font-size:9.5px; color:#8b95a3; }
-@media(min-width:640px){ .a-name{font-size:12px;} .a-role{font-size:10.5px;} }
-
-/* ── Task card ────────────────────────────────────────────────────────────── */
-.task-card { padding:13px; border-radius:11px; background:rgba(255,255,255,0.02); border:1px solid rgba(201,169,97,0.12); }
-@media(min-width:480px){ .task-card{ padding:14px; border-radius:12px; } }
-@media(min-width:768px){ .task-card{ padding:16px; border-radius:13px; } }
-
-.task-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:9px; flex-wrap:wrap; }
-.task-proj { font-size:clamp(12.5px,3vw,14px); font-weight:700; color:#e8e9eb; margin-bottom:2px; }
-.task-sub  { font-size:11px; color:#8b95a3; }
-@media(min-width:480px){ .task-sub{ font-size:11.5px; } }
-.task-prog-hd { display:flex; justify-content:space-between; font-size:11.5px; color:#8b95a3; margin-bottom:4px; }
-.task-prog-hd span:last-child { color:#e8e9eb; }
-.task-foot { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:7px; margin-top:10px; }
-
-/* ── Requirements row ─────────────────────────────────────────────────────── */
-.rr { padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); transition:opacity .15s; }
-.rr:hover { opacity:.75; }
-.rr-top { display:flex; justify-content:space-between; align-items:flex-start; gap:7px; margin-bottom:4px; }
-.rr-ttl  { font-size:clamp(12px,3vw,13.5px); font-weight:600; color:#e8e9eb; }
-.rr-apps { font-size:10px; padding:2px 7px; border-radius:20px; background:rgba(201,169,97,0.10); color:#c9a961; border:1px solid rgba(201,169,97,0.32); flex-shrink:0; }
-.rr-meta { display:flex; gap:12px; font-size:11.5px; color:#8b95a3; flex-wrap:wrap; }
-
-/* ── Quick stats ──────────────────────────────────────────────────────────── */
-.qs-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
-.qs-left { display:flex; align-items:center; gap:8px; }
-.qs-ic   { width:25px; height:25px; border-radius:6px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.qs-lbl  { font-size:clamp(10.5px,2.5vw,12.5px); color:#8b95a3; }
-.qs-val  { font-size:clamp(12.5px,3vw,14px); font-weight:700; color:#e8e9eb; }
-
-/* ── Buttons ──────────────────────────────────────────────────────────────── */
-.btn-gold {
-  padding:8px 16px; border-radius:9px;
-  background:linear-gradient(135deg,#c9a961,#a8863d);
-  border:none; color:#12141a; font-size:12.5px; font-weight:700;
-  display:inline-flex; align-items:center; gap:5px;
-  transition:filter .15s;
-}
-.btn-gold:hover { filter:brightness(1.08); }
-.btn-gold.sm  { padding:6px 11px; font-size:11.5px; border-radius:8px; }
-.btn-gold.full{ width:100%; justify-content:center; }
-@media(min-width:640px){ .btn-gold{ padding:9px 18px; font-size:13px; } .btn-gold.sm{ padding:6px 12px; } }
-
-.btn-outline {
-  padding:8px 16px; border-radius:9px;
-  background:transparent; border:1px solid rgba(201,169,97,0.12);
-  color:#8b95a3; font-size:12.5px; font-weight:600;
-  display:inline-flex; align-items:center; gap:5px;
-  transition:border-color .15s,color .15s;
-}
-.btn-outline:hover { border-color:rgba(201,169,97,0.32); color:#e8e9eb; }
-.btn-outline.sm   { padding:6px 11px; font-size:11.5px; border-radius:8px; }
-.btn-outline.full { width:100%; justify-content:center; }
-@media(min-width:640px){ .btn-outline{ padding:9px 18px; font-size:13px; } .btn-outline.sm{ padding:6px 12px; } }
-
-.btn-danger {
-  padding:6px 11px; border-radius:8px;
-  border:1px solid rgba(239,68,68,0.25); color:#f87171;
-  background:transparent; font-size:11.5px; font-weight:600;
-  display:inline-flex; align-items:center; gap:4px;
-}
-@media(min-width:480px){ .btn-danger{ padding:6px 12px; } }
-
-/* ── Bottom CTA bar ───────────────────────────────────────────────────────── */
-.hd-bar {
-  position:fixed; bottom:0; left:0; right:0; z-index:100;
-  background:rgba(18,20,26,0.97);
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-  border-top:1px solid rgba(201,169,97,0.12);
-  padding:9px 14px;
-}
-.hd-bar-inner {
-  max-width:1280px; margin:0 auto;
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-}
-@media(min-width:480px){ .hd-bar{ padding:10px 18px; } }
-@media(min-width:768px){ .hd-bar{ padding:11px 28px; } }
-@media(min-width:1024px){ .hd-bar{ padding:12px 40px; } }
-
-.bar-title { font-size:clamp(12px,3vw,13.5px); font-weight:700; color:#e8e9eb; margin-bottom:1px; }
-.bar-sub   { font-size:clamp(10px,2.5vw,11.5px); color:#8b95a3; }
-.bar-btns  { display:flex; gap:7px; flex-shrink:0; }
-.bar-si {
-  padding:7px 12px; border-radius:8px;
-  background:transparent; border:1px solid rgba(201,169,97,0.12);
-  color:#8b95a3; font-size:12px; font-weight:600;
-}
-.bar-su {
-  padding:7px 13px; border-radius:8px;
-  background:linear-gradient(135deg,#c9a961,#a8863d);
-  border:none; color:#12141a; font-size:12px; font-weight:700;
-  display:flex; align-items:center; gap:5px;
-}
-@media(min-width:480px){ .bar-si,.bar-su{ padding:8px 15px; font-size:12.5px; border-radius:9px; gap:6px; } }
-@media(min-width:640px){ .bar-si,.bar-su{ padding:8px 18px; font-size:13px; } }
-
-/* ── Auth nudge ───────────────────────────────────────────────────────────── */
-.nudge {
-  position:fixed; bottom:68px; left:50%; transform:translateX(-50%);
-  z-index:3000; width:calc(100% - 20px); max-width:400px;
-  background:#22252e; border:1px solid rgba(201,169,97,0.32);
-  border-radius:14px; padding:12px 13px;
-  box-shadow:0 14px 44px rgba(0,0,0,0.7);
-  display:flex; align-items:center; gap:10px;
-  animation:nudge .3s cubic-bezier(.34,1.4,.64,1) both;
-}
-@media(min-width:480px){ .nudge{ bottom:74px; width:calc(100% - 28px); max-width:420px; padding:13px 14px; border-radius:15px; } }
-
-.nudge-ic {
-  width:34px; height:34px; border-radius:8px; flex-shrink:0;
-  background:rgba(201,169,97,0.10); border:1px solid rgba(201,169,97,0.32);
-  display:flex; align-items:center; justify-content:center;
-}
-.nudge-body { flex:1; min-width:0; }
-.nudge-ttl { font-size:12.5px; font-weight:700; color:#e8e9eb; }
-.nudge-sub { font-size:10.5px; color:#8b95a3; margin-top:2px; }
-.nudge-acts { display:flex; gap:6px; flex-shrink:0; }
-.n-later {
-  padding:5px 8px; border-radius:7px;
-  background:transparent; border:1px solid rgba(201,169,97,0.12);
-  color:#8b95a3; font-size:11px;
-}
-.n-signup {
-  padding:5px 10px; border-radius:7px;
-  background:linear-gradient(135deg,#c9a961,#a8863d);
-  border:none; color:#12141a; font-size:11px; font-weight:700; white-space:nowrap;
-}
+/* BOTTOM BAR */
+.hd-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(18,20,26,0.97);backdrop-filter:blur(16px);border-top:1px solid rgba(201,169,97,0.12);padding:9px 14px;}
+.hd-bar-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+@media(min-width:480px){.hd-bar{padding:10px 18px;}}
+@media(min-width:768px){.hd-bar{padding:11px 28px;}}
+.bar-title{font-size:clamp(12px,3vw,13.5px);font-weight:700;color:#e8e9eb;margin-bottom:1px;}
+.bar-sub{font-size:clamp(10px,2.5vw,11.5px);color:#8b95a3;}
+.bar-btns{display:flex;gap:7px;flex-shrink:0;}
+.bar-si{padding:7px 12px;border-radius:8px;background:transparent;border:1px solid rgba(201,169,97,0.12);color:#8b95a3;font-size:12px;font-weight:600;}
+.bar-su{padding:7px 13px;border-radius:8px;background:linear-gradient(135deg,#c9a961,#a8863d);border:none;color:#12141a;font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px;}
+@media(min-width:480px){.bar-si,.bar-su{padding:8px 15px;font-size:12.5px;border-radius:9px;}}
 `;
 
-/* ─── Tiny components ────────────────────────────────────────────────────── */
+/* ─── Helpers ─────────────────────────────────────────────────────────────── */
 function ST({ children, action, onAction }) {
   return (
     <div className="sec-title">
@@ -838,40 +722,755 @@ function ST({ children, action, onAction }) {
   );
 }
 
-function SC({ label, value, Icon, bg, color }) {
+function SignInWall({ role, navigate, title, desc }) {
   return (
-    <div className="stat-card">
-      <span className="stat-icon" style={{ background: bg }}>
-        <Icon size={15} style={{ color }} />
-      </span>
-      <div>
-        <p className="stat-val">{value}</p>
-        <p className="stat-lbl">{label}</p>
+    <div className="signin-wall">
+      <div className="signin-wall-icon">
+        <LogIn size={20} style={{ color: C.gold }} />
+      </div>
+      <p className="signin-wall-title">{title || "Sign in to continue"}</p>
+      <p className="signin-wall-sub">
+        {desc || "Create a free account to access this feature"}
+      </p>
+      <div className="signin-wall-btns">
+        <button
+          className="btn-outline sm"
+          onClick={() => navigate(`/auth/${role}/login`)}
+        >
+          Sign In
+        </button>
+        <button
+          className="btn-gold sm"
+          onClick={() => navigate(`/auth/${role}/signup`)}
+        >
+          Get Started Free <ArrowRight size={12} />
+        </button>
       </div>
     </div>
   );
 }
 
-function Nudge({ role, onDismiss, navigate }) {
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(" ");
+  return parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+}
+
+/* ─── Skeletons ──────────────────────────────────────────────────────────── */
+function OppSkeleton() {
+  return Array.from({ length: 3 }).map((_, i) => (
+    <div key={i} className="skel-card">
+      <div className="skel skel-line" style={{ height: 14, width: "60%" }} />
+      <div className="skel skel-line" style={{ height: 11, width: "40%" }} />
+      <div className="skel skel-line" style={{ height: 11, width: "90%" }} />
+      <div
+        className="skel skel-line"
+        style={{ height: 11, width: "75%", marginBottom: 12 }}
+      />
+      <div style={{ display: "flex", gap: 8 }}>
+        <div
+          className="skel skel-line"
+          style={{ height: 11, width: 70, marginBottom: 0 }}
+        />
+        <div
+          className="skel skel-line"
+          style={{ height: 11, width: 70, marginBottom: 0 }}
+        />
+      </div>
+    </div>
+  ));
+}
+
+function ArtistSkeleton() {
+  return Array.from({ length: 4 }).map((_, i) => (
+    <div
+      key={i}
+      className="skel-card"
+      style={{ display: "flex", gap: 12, alignItems: "center" }}
+    >
+      <div
+        className="skel"
+        style={{ width: 48, height: 48, borderRadius: "50%", flexShrink: 0 }}
+      />
+      <div style={{ flex: 1 }}>
+        <div className="skel skel-line" style={{ height: 13, width: "50%" }} />
+        <div className="skel skel-line" style={{ height: 11, width: "35%" }} />
+        <div style={{ display: "flex", gap: 5 }}>
+          <div
+            className="skel skel-line"
+            style={{ height: 20, width: 50, borderRadius: 5, marginBottom: 0 }}
+          />
+          <div
+            className="skel skel-line"
+            style={{ height: 20, width: 50, borderRadius: 5, marginBottom: 0 }}
+          />
+        </div>
+      </div>
+    </div>
+  ));
+}
+
+/* ─── Apply Modal ────────────────────────────────────────────────────────── */
+function ApplyModal({ opp, role, navigate, onClose }) {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    experience: "",
+    bio: "",
+    portfolio: "",
+    rate: "",
+  });
+  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+
   return (
-    <div className="nudge">
-      <div className="nudge-ic">
-        <LogIn size={16} style={{ color: C.gold }} />
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-handle" />
+        <div className="modal-header">
+          <div>
+            <p className="modal-title">Apply for Role</p>
+            <p style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
+              {opp?.title} · {opp?.hirer?.companyName || "Studio"}
+            </p>
+          </div>
+          <button className="modal-close" onClick={onClose}>
+            <X size={14} />
+          </button>
+        </div>
+        {step === 1 ? (
+          <div className="form-stack">
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Full Name *</label>
+                <input
+                  className="form-input"
+                  placeholder="Your name"
+                  value={form.name}
+                  onChange={(e) => set("name")(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email *</label>
+                <input
+                  className="form-input"
+                  type="email"
+                  placeholder="you@email.com"
+                  value={form.email}
+                  onChange={(e) => set("email")(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Phone</label>
+                <input
+                  className="form-input"
+                  placeholder="+91 XXXXX XXXXX"
+                  value={form.phone}
+                  onChange={(e) => set("phone")(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Experience</label>
+                <div className="form-select-wrap">
+                  <select
+                    className="form-select"
+                    value={form.experience}
+                    onChange={(e) => set("experience")(e.target.value)}
+                  >
+                    <option value="">Select</option>
+                    {EXPERIENCE_OPTIONS.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Expected Rate</label>
+              <input
+                className="form-input"
+                placeholder="e.g. ₹30,000 negotiable"
+                value={form.rate}
+                onChange={(e) => set("rate")(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Portfolio / Showreel URL</label>
+              <input
+                className="form-input"
+                placeholder="https://yourportfolio.com"
+                value={form.portfolio}
+                onChange={(e) => set("portfolio")(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Why are you a great fit?</label>
+              <textarea
+                className="form-textarea"
+                placeholder="Tell the hirer about your relevant experience…"
+                value={form.bio}
+                onChange={(e) => set("bio")(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
+              <button
+                className="btn-outline sm"
+                onClick={onClose}
+                style={{ flex: 1, justifyContent: "center" }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-gold"
+                onClick={() => setStep(2)}
+                style={{ flex: 2, justifyContent: "center" }}
+              >
+                <Send size={13} /> Submit Application
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ textAlign: "center", padding: "10px 0 18px" }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  background: "rgba(201,169,97,0.12)",
+                  border: "1px solid rgba(201,169,97,0.25)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 12px",
+                }}
+              >
+                <CheckCircle2 size={22} style={{ color: C.gold }} />
+              </div>
+              <p
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: C.text,
+                  marginBottom: 6,
+                }}
+              >
+                Application Ready!
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: C.muted,
+                  marginBottom: 18,
+                  lineHeight: 1.5,
+                }}
+              >
+                Sign in or create a free account to officially submit your
+                application to{" "}
+                <strong style={{ color: C.text }}>
+                  {opp?.hirer?.companyName || "this studio"}
+                </strong>
+                .
+              </p>
+            </div>
+            <SignInWall
+              role={role}
+              navigate={navigate}
+              title="Sign in to submit"
+              desc="Your application is ready — just sign in to send it."
+            />
+            <button
+              className="btn-outline full"
+              onClick={() => setStep(1)}
+              style={{ marginTop: 12, justifyContent: "center" }}
+            >
+              ← Edit Details
+            </button>
+          </div>
+        )}
       </div>
-      <div className="nudge-body">
-        <p className="nudge-ttl">Sign in to continue</p>
-        <p className="nudge-sub">Create a free account to use this feature</p>
+    </div>
+  );
+}
+
+/* ─── Post Requirement Modal ─────────────────────────────────────────────── */
+function PostRequirementModal({ role, navigate, onClose }) {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    title: "",
+    category: "",
+    projectType: "",
+    budgetMin: "",
+    budgetMax: "",
+    location: "",
+    deadline: "",
+    slots: "1",
+    description: "",
+    requirements: "",
+    contactName: "",
+    contactEmail: "",
+  });
+  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-handle" />
+        <div className="modal-header">
+          <div>
+            <p className="modal-title">Post a Requirement</p>
+            <p style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
+              Find the right talent for your project
+            </p>
+          </div>
+          <button className="modal-close" onClick={onClose}>
+            <X size={14} />
+          </button>
+        </div>
+        {step === 1 ? (
+          <div className="form-stack">
+            <div className="form-group">
+              <label className="form-label">Role / Position Title *</label>
+              <input
+                className="form-input"
+                placeholder="e.g. Lead Actor for Feature Film"
+                value={form.title}
+                onChange={(e) => set("title")(e.target.value)}
+              />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Category *</label>
+                <div className="form-select-wrap">
+                  <select
+                    className="form-select"
+                    value={form.category}
+                    onChange={(e) => set("category")(e.target.value)}
+                  >
+                    <option value="">Select role</option>
+                    {ARTIST_ROLE_OPTS.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Project Type</label>
+                <div className="form-select-wrap">
+                  <select
+                    className="form-select"
+                    value={form.projectType}
+                    onChange={(e) => set("projectType")(e.target.value)}
+                  >
+                    <option value="">Select type</option>
+                    {PROJECT_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Budget Range (₹)</label>
+              <div className="form-row">
+                <input
+                  className="form-input"
+                  placeholder="Min e.g. 20000"
+                  value={form.budgetMin}
+                  onChange={(e) => set("budgetMin")(e.target.value)}
+                />
+                <input
+                  className="form-input"
+                  placeholder="Max e.g. 60000"
+                  value={form.budgetMax}
+                  onChange={(e) => set("budgetMax")(e.target.value)}
+                />
+              </div>
+              <p className="form-hint">Leave blank if negotiable</p>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Location / City</label>
+                <input
+                  className="form-input"
+                  placeholder="e.g. Mumbai or Remote"
+                  value={form.location}
+                  onChange={(e) => set("location")(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Application Deadline</label>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={form.deadline}
+                  onChange={(e) => set("deadline")(e.target.value)}
+                  style={{ colorScheme: "dark" }}
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">No. of Slots</label>
+              <input
+                className="form-input"
+                type="number"
+                min="1"
+                placeholder="1"
+                value={form.slots}
+                onChange={(e) => set("slots")(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Project Description *</label>
+              <textarea
+                className="form-textarea"
+                placeholder="Describe your project, timeline, shoot dates…"
+                value={form.description}
+                onChange={(e) => set("description")(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Specific Requirements</label>
+              <textarea
+                className="form-textarea"
+                placeholder="Must-have skills, equipment, language requirements…"
+                value={form.requirements}
+                onChange={(e) => set("requirements")(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div
+              style={{
+                borderTop: "1px solid rgba(255,255,255,0.05)",
+                paddingTop: 12,
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: C.muted,
+                  marginBottom: 10,
+                }}
+              >
+                Your Contact Details
+              </p>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Your Name *</label>
+                  <input
+                    className="form-input"
+                    placeholder="Full name"
+                    value={form.contactName}
+                    onChange={(e) => set("contactName")(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    className="form-input"
+                    type="email"
+                    placeholder="you@studio.com"
+                    value={form.contactEmail}
+                    onChange={(e) => set("contactEmail")(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
+              <button
+                className="btn-outline sm"
+                onClick={onClose}
+                style={{ flex: 1, justifyContent: "center" }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-gold"
+                onClick={() => setStep(2)}
+                style={{ flex: 2, justifyContent: "center" }}
+              >
+                <Sparkles size={13} /> Preview & Post
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div
+              style={{
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(201,169,97,0.15)",
+                borderRadius: 12,
+                padding: 14,
+                marginBottom: 16,
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: C.text,
+                  marginBottom: 6,
+                }}
+              >
+                {form.title || "Untitled Requirement"}
+              </p>
+              {form.category && (
+                <p style={{ fontSize: 11.5, color: C.muted, marginBottom: 3 }}>
+                  Role: {form.category}
+                </p>
+              )}
+              {(form.budgetMin || form.budgetMax) && (
+                <p style={{ fontSize: 11.5, color: C.muted, marginBottom: 3 }}>
+                  Budget: ₹{form.budgetMin}
+                  {form.budgetMax ? `–₹${form.budgetMax}` : "+"}
+                </p>
+              )}
+              {form.location && (
+                <p style={{ fontSize: 11.5, color: C.muted, marginBottom: 3 }}>
+                  Location: {form.location}
+                </p>
+              )}
+              {form.description && (
+                <p
+                  style={{
+                    fontSize: 11.5,
+                    color: C.muted,
+                    marginTop: 6,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {form.description.slice(0, 120)}
+                  {form.description.length > 120 ? "…" : ""}
+                </p>
+              )}
+            </div>
+            <SignInWall
+              role={role}
+              navigate={navigate}
+              title="Sign in to publish"
+              desc="Your requirement is ready — sign in to post it and start receiving applications."
+            />
+            <button
+              className="btn-outline full"
+              onClick={() => setStep(1)}
+              style={{ marginTop: 12, justifyContent: "center" }}
+            >
+              ← Edit Requirement
+            </button>
+          </div>
+        )}
       </div>
-      <div className="nudge-acts">
-        <button className="n-later" onClick={onDismiss}>
-          Later
-        </button>
-        <button
-          className="n-signup"
-          onClick={() => navigate(`/auth/${role}/signup`)}
-        >
-          Sign Up Free
-        </button>
+    </div>
+  );
+}
+
+/* ─── Contact Artist Modal ───────────────────────────────────────────────── */
+function ContactArtistModal({ artist, role, navigate, onClose }) {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    projectTitle: "",
+    projectType: "",
+    budget: "",
+    startDate: "",
+    message: "",
+  });
+  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-handle" />
+        <div className="modal-header">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              className="a-avatar-placeholder"
+              style={{ width: 40, height: 40, flexShrink: 0 }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>
+                {getInitials(artist?.name)}
+              </span>
+            </div>
+            <div>
+              <p className="modal-title" style={{ fontSize: 17 }}>
+                Contact Artist
+              </p>
+              <p style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
+                {artist?.name} · {artist?.artCategory}
+              </p>
+            </div>
+          </div>
+          <button className="modal-close" onClick={onClose}>
+            <X size={14} />
+          </button>
+        </div>
+        {step === 1 ? (
+          <div className="form-stack">
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Your Name *</label>
+                <input
+                  className="form-input"
+                  placeholder="Full name"
+                  value={form.name}
+                  onChange={(e) => set("name")(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email *</label>
+                <input
+                  className="form-input"
+                  type="email"
+                  placeholder="you@studio.com"
+                  value={form.email}
+                  onChange={(e) => set("email")(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Project Title *</label>
+              <input
+                className="form-input"
+                placeholder="e.g. Brand Campaign for XYZ"
+                value={form.projectTitle}
+                onChange={(e) => set("projectTitle")(e.target.value)}
+              />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Project Type</label>
+                <div className="form-select-wrap">
+                  <select
+                    className="form-select"
+                    value={form.projectType}
+                    onChange={(e) => set("projectType")(e.target.value)}
+                  >
+                    <option value="">Select</option>
+                    {PROJECT_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Budget Offer</label>
+                <input
+                  className="form-input"
+                  placeholder="e.g. ₹50,000"
+                  value={form.budget}
+                  onChange={(e) => set("budget")(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Expected Start Date</label>
+              <input
+                className="form-input"
+                type="date"
+                value={form.startDate}
+                onChange={(e) => set("startDate")(e.target.value)}
+                style={{ colorScheme: "dark" }}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Message to Artist *</label>
+              <textarea
+                className="form-textarea"
+                placeholder={`Hi ${artist?.name}, I'd love to collaborate on…`}
+                value={form.message}
+                onChange={(e) => set("message")(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
+              <button
+                className="btn-outline sm"
+                onClick={onClose}
+                style={{ flex: 1, justifyContent: "center" }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-gold"
+                onClick={() => setStep(2)}
+                style={{ flex: 2, justifyContent: "center" }}
+              >
+                <Send size={13} /> Send Enquiry
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ textAlign: "center", padding: "10px 0 18px" }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  background: "rgba(201,169,97,0.12)",
+                  border: "1px solid rgba(201,169,97,0.25)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 12px",
+                }}
+              >
+                <CheckCircle2 size={22} style={{ color: C.gold }} />
+              </div>
+              <p
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: C.text,
+                  marginBottom: 6,
+                }}
+              >
+                Message Ready!
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: C.muted,
+                  marginBottom: 18,
+                  lineHeight: 1.5,
+                }}
+              >
+                Sign in to send your enquiry to{" "}
+                <strong style={{ color: C.text }}>{artist?.name}</strong>.
+              </p>
+            </div>
+            <SignInWall
+              role={role}
+              navigate={navigate}
+              title="Sign in to send message"
+              desc="Your message is ready — sign in to deliver it instantly."
+            />
+            <button
+              className="btn-outline full"
+              onClick={() => setStep(1)}
+              style={{ marginTop: 12, justifyContent: "center" }}
+            >
+              ← Edit Message
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -880,49 +1479,128 @@ function Nudge({ role, onDismiss, navigate }) {
 /* ═══════════════════════════════════════════════════════════════════════════
    ARTIST VIEW
 ═══════════════════════════════════════════════════════════════════════════ */
-function ArtistView({ g, nav }) {
+function ArtistView({ navigate }) {
   const [cat, setCat] = useState("All");
+  const [search, setSearch] = useState("");
+  const [applyOpp, setApplyOpp] = useState(null);
+  const [opps, setOpps] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+
+  const fetchOpps = useCallback(async (category, searchTerm, pageNum) => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data, totalPages } = await simulateFetch(MOCK_OPPORTUNITIES, {
+        category,
+        search: searchTerm,
+        page: pageNum,
+        limit: 6,
+        categoryKey: "category",
+      });
+      setOpps((prev) => (pageNum === 1 ? data : [...prev, ...data]));
+      setHasMore(pageNum < totalPages);
+    } catch {
+      setError("Could not load opportunities. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPage(1);
+      fetchOpps(cat, search, 1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [cat, search, fetchOpps]);
+
+  const loadMore = () => {
+    const next = page + 1;
+    setPage(next);
+    fetchOpps(cat, search, next);
+  };
+
+  const fmtBudget = (opp) => {
+    if (opp.budgetMin && opp.budgetMax)
+      return `₹${Number(opp.budgetMin).toLocaleString("en-IN")}–₹${Number(opp.budgetMax).toLocaleString("en-IN")}`;
+    if (opp.budgetMin)
+      return `₹${Number(opp.budgetMin).toLocaleString("en-IN")}+`;
+    return "Negotiable";
+  };
+  const fmtDeadline = (opp) => {
+    const d = opp.deadline || opp.endDate;
+    if (!d) return null;
+    return new Date(d).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+    });
+  };
+
   return (
     <div className="view-stack">
-      <div>
-        <h1 className="view-title">Artist Dashboard 🎬</h1>
-        <p className="view-sub">
-          Preview your workspace — sign in to unlock full access
+      <div className="hero-section">
+        <div className="hero-badge">
+          <Sparkles size={11} style={{ color: C.gold }} />
+          <span>Live Opportunities</span>
+        </div>
+        <h1 className="hero-title">
+          Find your next
+          <br />
+          big opportunity 🎬
+        </h1>
+        <p className="hero-sub">
+          Browse live requirements from top production houses, ad agencies, and
+          indie filmmakers across India.
         </p>
+        <div className="hero-actions">
+          <button
+            className="btn-gold"
+            onClick={() => navigate("/auth/artist/signup")}
+          >
+            <Sparkles size={13} /> Join Free & Apply
+          </button>
+          <button
+            className="btn-outline"
+            onClick={() => navigate("/auth/artist/login")}
+          >
+            <LogIn size={13} /> Sign In
+          </button>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="stat-grid">
-        {ARTIST_STATS.map((s) => (
-          <SC
-            key={s.label}
-            label={s.label}
-            value={s.value}
-            Icon={s.Icon}
-            bg={s.bg}
-            color={s.color}
-          />
-        ))}
-      </div>
-
-      {/* Browse Opportunities */}
       <div className="card">
-        <ST action="Browse All" onAction={g}>
-          🔍 Browse Opportunities
+        <ST
+          action="Sign in for full access"
+          onAction={() => navigate("/auth/artist/login")}
+        >
+          🔍 Browse Live Opportunities
         </ST>
         <div className="search-row">
           <div className="search-wrap">
             <Search size={13} className="search-ic" />
-            <div className="search-fake" onClick={g}>
-              Search roles, productions…
-            </div>
+            <input
+              className="form-input"
+              style={{
+                paddingLeft: 30,
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(201,169,97,0.12)",
+                borderRadius: 9,
+                fontSize: 12.5,
+              }}
+              placeholder="Search roles, companies…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-          <button className="filter-btn" onClick={g}>
+          <button className="filter-btn">
             <Filter size={12} /> Filter
           </button>
         </div>
         <div className="chips">
-          {CATEGORIES.map((c) => (
+          {OPP_CATEGORIES.map((c) => (
             <button
               key={c}
               className={`chip${cat === c ? " on" : ""}`}
@@ -933,159 +1611,136 @@ function ArtistView({ g, nav }) {
           ))}
         </div>
         <div className="lst">
-          {REQUIREMENTS.map((r, i) => (
-            <div key={i} className="req-card" onClick={g}>
-              <div className="req-top">
-                <p className="req-title">{r.title}</p>
-                <span className="req-cat">{r.category}</span>
+          {loading && page === 1 && <OppSkeleton />}
+          {!loading && !error && opps.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-icon">
+                <Briefcase size={20} style={{ color: C.muted }} />
               </div>
-              <div className="req-meta">
-                <span className="mi">
-                  <IndianRupee size={10} style={{ color: C.gold }} />
-                  {r.budget}
-                </span>
-                <span className="mi">
-                  <Users size={10} />
-                  {r.apps} applicants
-                </span>
-                <span className="mi">
-                  <Calendar size={10} />
-                  Deadline {r.deadline}
-                </span>
-              </div>
-              <button
-                className="apply-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  g();
-                }}
-              >
-                Apply Now
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Applications */}
-      <div className="card">
-        <ST action="View All" onAction={g}>
-          📋 Active Applications
-        </ST>
-        <div className="lst">
-          {APPLICATIONS.map((a, i) => {
-            const s = STATUS_STYLE[a.status] || STATUS_STYLE.pending;
-            return (
-              <div key={i} className="app-row" onClick={g}>
-                <div className="app-ic">
-                  <Briefcase size={15} style={{ color: C.gold }} />
-                </div>
-                <div className="app-body">
-                  <div className="app-top">
-                    <p className="app-ttl">{a.title}</p>
-                    <span
-                      className="sbadge"
-                      style={{
-                        background: s.bg,
-                        color: s.color,
-                        border: `1px solid ${s.border}`,
-                      }}
-                    >
-                      {a.status.replace("_", " ")}
-                    </span>
-                  </div>
-                  <p className="app-co">{a.company}</p>
-                  <div className="app-meta">
-                    <span className="mi">
-                      <IndianRupee size={9} style={{ color: C.gold }} />
-                      {a.budget}
-                    </span>
-                    <span className="mi">
-                      <Clock size={9} />
-                      {a.time}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Profile + Payments */}
-      <div className="two-col">
-        <div className="card">
-          <ST action="Edit Profile" onAction={g}>
-            ⭐ Profile Strength
-          </ST>
-          <div className="prog-track">
-            <div className="prog-fill" style={{ width: "75%" }} />
-          </div>
-          <p className="prog-pct">75%</p>
-          <p className="card-sub">Complete these to get more opportunities:</p>
-          {[
-            { label: "Add portfolio samples", done: true },
-            { label: "Set availability calendar", done: true },
-            { label: "Add equipment list", done: false },
-            { label: "Get 3 verified reviews", done: false },
-          ].map((item) => (
-            <div key={item.label} className="cl-row">
-              <div className={`cl-dot${item.done ? " done" : ""}`}>
-                {item.done && (
-                  <CheckCircle2 size={9} style={{ color: C.green }} />
-                )}
-              </div>
-              <p className={`cl-lbl${item.done ? " done" : ""}`}>
-                {item.label}
+              <p className="empty-title">No opportunities found</p>
+              <p className="empty-sub">
+                Try a different category or search term
               </p>
             </div>
-          ))}
-          <button
-            className="btn-gold full"
-            onClick={g}
-            style={{ marginTop: 13 }}
-          >
-            Complete Profile
-          </button>
-        </div>
-
-        <div className="card">
-          <ST action="View All" onAction={g}>
-            💰 Recent Payments
-          </ST>
-          {PAYMENTS.map((p, i) => (
-            <div key={i} className="pay-row">
-              <div>
-                <p className="pay-ttl">{p.title}</p>
-                <p className="pay-dt">{p.date}</p>
+          )}
+          {error && (
+            <div className="empty-state">
+              <div className="empty-icon">
+                <AlertCircle size={20} style={{ color: C.red }} />
               </div>
-              <div>
-                <p className="pay-amt">{p.amount}</p>
-                <span
-                  className="pay-st"
-                  style={{
-                    background:
-                      p.status === "Paid"
-                        ? "rgba(52,211,153,0.15)"
-                        : "rgba(251,146,60,0.15)",
-                    color: p.status === "Paid" ? C.green : C.orange,
-                    border: `1px solid ${p.status === "Paid" ? "rgba(52,211,153,0.25)" : "rgba(251,146,60,0.25)"}`,
-                  }}
-                >
-                  {p.status}
+              <p className="empty-title" style={{ color: C.red }}>
+                Failed to load
+              </p>
+              <p className="empty-sub">{error}</p>
+              <button
+                className="btn-outline sm"
+                onClick={() => {
+                  setPage(1);
+                  fetchOpps(cat, search, 1);
+                }}
+                style={{ marginTop: 12 }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {opps.map((opp) => (
+            <div key={opp._id} className="opp-card">
+              <div className="opp-top">
+                <p className="opp-title">{opp.title}</p>
+                <span className="opp-cat">{opp.category}</span>
+              </div>
+              <p className="opp-company">
+                {opp.hirer?.companyName || "Studio"}
+              </p>
+              {opp.description && (
+                <p className="opp-desc">
+                  {opp.description.slice(0, 130)}
+                  {opp.description.length > 130 ? "…" : ""}
+                </p>
+              )}
+              <div className="opp-meta">
+                <span className="mi">
+                  <IndianRupee size={10} style={{ color: C.gold }} />
+                  {fmtBudget(opp)}
                 </span>
+                {opp.applicationCount != null && (
+                  <span className="mi">
+                    <Users size={10} />
+                    {opp.applicationCount} applicants
+                  </span>
+                )}
+                {opp.location && (
+                  <span className="mi">
+                    <MapPin size={10} />
+                    {opp.location}
+                  </span>
+                )}
+                {fmtDeadline(opp) && (
+                  <span className="mi">
+                    <Calendar size={10} />
+                    Deadline {fmtDeadline(opp)}
+                  </span>
+                )}
+              </div>
+              <div className="opp-foot">
+                <span className="mi" style={{ fontSize: 11 }}>
+                  {opp.maxSlots
+                    ? `${opp.maxSlots} slot${opp.maxSlots > 1 ? "s" : ""}`
+                    : "Open"}
+                  {opp.projectType ? ` · ${opp.projectType}` : ""}
+                </span>
+                <button
+                  className="btn-gold sm"
+                  onClick={() => setApplyOpp(opp)}
+                >
+                  Apply Now
+                </button>
               </div>
             </div>
           ))}
+          {loading && page > 1 && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                padding: "12px 0",
+              }}
+            >
+              <Loader2
+                size={20}
+                style={{ color: C.gold, animation: "spin 1s linear infinite" }}
+              />
+            </div>
+          )}
+        </div>
+        {hasMore && !loading && (
           <button
             className="btn-outline full"
-            onClick={g}
-            style={{ marginTop: 13 }}
+            onClick={loadMore}
+            style={{ marginTop: 14, justifyContent: "center" }}
           >
-            View All Payments
+            Load More
           </button>
+        )}
+        <div style={{ marginTop: 16 }}>
+          <SignInWall
+            role="artist"
+            navigate={navigate}
+            title="Sign up to apply instantly"
+            desc="Create a free artist profile and apply to all live opportunities."
+          />
         </div>
       </div>
+
+      {applyOpp && (
+        <ApplyModal
+          opp={applyOpp}
+          role="artist"
+          navigate={navigate}
+          onClose={() => setApplyOpp(null)}
+        />
+      )}
     </div>
   );
 }
@@ -1093,273 +1748,340 @@ function ArtistView({ g, nav }) {
 /* ═══════════════════════════════════════════════════════════════════════════
    HIRER VIEW
 ═══════════════════════════════════════════════════════════════════════════ */
-function HirerView({ g, nav }) {
+function HirerView({ navigate }) {
+  const [cat, setCat] = useState("All");
+  const [search, setSearch] = useState("");
+  const [showPostModal, setShowPostModal] = useState(false);
+  const [contactArtist, setContactArtist] = useState(null);
+  const [artists, setArtists] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+
+  const fetchArtists = useCallback(async (category, searchTerm, pageNum) => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data, totalPages } = await simulateFetch(MOCK_ARTISTS, {
+        category,
+        search: searchTerm,
+        page: pageNum,
+        limit: 8,
+        categoryKey: "artCategory",
+      });
+      setArtists((prev) => (pageNum === 1 ? data : [...prev, ...data]));
+      setHasMore(pageNum < totalPages);
+    } catch {
+      setError("Could not load artists. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPage(1);
+      fetchArtists(cat, search, 1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [cat, search, fetchArtists]);
+
+  const loadMore = () => {
+    const next = page + 1;
+    setPage(next);
+    fetchArtists(cat, search, next);
+  };
+
+  const fmtRate = (a) => {
+    if (a.dailyRate)
+      return `₹${Number(a.dailyRate).toLocaleString("en-IN")}/day`;
+    return null;
+  };
+
   return (
     <div className="view-stack">
-      <div className="hirer-header">
-        <div>
-          <h1 className="view-title">Hirer Dashboard 🎥</h1>
-          <p className="view-sub">
-            Preview your workspace — sign in to manage real projects
-          </p>
+      <div className="hero-section">
+        <div className="hero-badge">
+          <Sparkles size={11} style={{ color: C.gold }} />
+          <span>Hirer Dashboard Preview</span>
         </div>
-        <button className="btn-gold" onClick={g}>
-          <Plus size={13} /> Post Requirement
-        </button>
+        <h1 className="hero-title">
+          Discover & hire India's
+          <br />
+          finest film talent 🎥
+        </h1>
+        <p className="hero-sub">
+          Post requirements, browse verified artists, and manage your entire
+          production workflow — all in one place.
+        </p>
+        <div className="hero-actions">
+          <button className="btn-gold" onClick={() => setShowPostModal(true)}>
+            <Plus size={13} /> Post a Requirement
+          </button>
+          <button
+            className="btn-outline"
+            onClick={() => navigate("/auth/hirer/login")}
+          >
+            <LogIn size={13} /> Sign In
+          </button>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="stat-grid">
-        {HIRER_STATS.map((s) => (
-          <SC
-            key={s.label}
-            label={s.label}
-            value={s.value}
-            Icon={s.Icon}
-            bg={s.bg}
-            color={s.color}
-          />
-        ))}
-      </div>
-
-      {/* Browse Artists */}
       <div className="card">
-        <ST action="Browse All" onAction={g}>
-          🎭 Browse Artists
+        <ST
+          action="Sign in for full access"
+          onAction={() => navigate("/auth/hirer/login")}
+        >
+          🎭 Browse Verified Artists
         </ST>
         <div className="search-row">
           <div className="search-wrap">
             <Search size={13} className="search-ic" />
-            <div className="search-fake" onClick={g}>
-              Search artists by name, skill, city…
-            </div>
+            <input
+              className="form-input"
+              style={{
+                paddingLeft: 30,
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(201,169,97,0.12)",
+                borderRadius: 9,
+                fontSize: 12.5,
+              }}
+              placeholder="Search by name, role, city…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-          <button className="filter-btn" onClick={g}>
+          <button className="filter-btn">
             <Filter size={12} /> Filter
           </button>
         </div>
-        <div className="artist-grid">
-          {BROWSE_ARTISTS.map((a, i) => (
-            <div key={i} className="a-card" onClick={g}>
-              {a.badge && (
-                <span
-                  className="a-badge"
-                  style={{
-                    background:
-                      a.badge === "Top Rated"
-                        ? "rgba(201,169,97,0.2)"
-                        : "rgba(96,165,250,0.2)",
-                    color: a.badge === "Top Rated" ? C.gold : C.blue,
-                    border: `1px solid ${a.badge === "Top Rated" ? "rgba(201,169,97,0.4)" : "rgba(96,165,250,0.3)"}`,
-                  }}
-                >
-                  {a.badge}
-                </span>
-              )}
-              <img src={a.img} alt={a.name} className="a-avatar" />
-              <p className="a-name">{a.name}</p>
-              <p className="a-role">{a.role}</p>
-              <div className="a-rating">
-                <Star size={9} fill={C.gold} style={{ color: C.gold }} />
-                <span>{a.rating}</span>
-              </div>
-              <div className="a-city">
-                <MapPin size={8} style={{ color: C.muted }} />
-                <span>{a.city}</span>
-              </div>
-            </div>
+        <div className="chips">
+          {ARTIST_CATS.map((c) => (
+            <button
+              key={c}
+              className={`chip${cat === c ? " on" : ""}`}
+              onClick={() => setCat(c)}
+            >
+              {c}
+            </button>
           ))}
         </div>
-      </div>
-
-      {/* Task Tracking */}
-      <div className="card">
-        <ST action="View All" onAction={g}>
-          ⚙️ Task Tracking & Payment Release
-        </ST>
         <div className="lst">
-          {TASKS.map((t, i) => {
-            const s = STATUS_STYLE[t.status] || STATUS_STYLE.in_progress;
+          {loading && page === 1 && <ArtistSkeleton />}
+          {!loading && !error && artists.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-icon">
+                <Users size={20} style={{ color: C.muted }} />
+              </div>
+              <p className="empty-title">No artists found</p>
+              <p className="empty-sub">
+                Try a different category or search term
+              </p>
+            </div>
+          )}
+          {error && (
+            <div className="empty-state">
+              <div className="empty-icon">
+                <AlertCircle size={20} style={{ color: C.red }} />
+              </div>
+              <p className="empty-title" style={{ color: C.red }}>
+                Failed to load
+              </p>
+              <p className="empty-sub">{error}</p>
+              <button
+                className="btn-outline sm"
+                onClick={() => {
+                  setPage(1);
+                  fetchArtists(cat, search, 1);
+                }}
+                style={{ marginTop: 12 }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {artists.map((artist) => {
+            const rate = fmtRate(artist);
+            const skills = Array.isArray(artist.skills) ? artist.skills : [];
+            const isTopRated = (artist.rating || 0) >= 4.7;
             return (
-              <div key={i} className="task-card">
-                <div className="task-top">
-                  <div>
-                    <p className="task-proj">{t.project}</p>
-                    <p className="task-sub">
-                      {t.artist} · {t.milestone}
-                    </p>
-                  </div>
-                  <span
-                    className="sbadge"
+              <div
+                key={artist._id}
+                className="artist-row"
+                onClick={() => setContactArtist(artist)}
+              >
+                <div className="a-avatar-placeholder">
+                  <span className="a-initials">{getInitials(artist.name)}</span>
+                </div>
+                <div className="a-body">
+                  <div
                     style={{
-                      background: s.bg,
-                      color: s.color,
-                      border: `1px solid ${s.border}`,
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: 5,
+                      marginBottom: 2,
                     }}
                   >
-                    {t.status.replace("_", " ")}
-                  </span>
-                </div>
-                <div>
-                  <div className="task-prog-hd">
-                    <span>Progress</span>
-                    <span>{t.progress}%</span>
-                  </div>
-                  <div className="prog-track" style={{ marginBottom: 0 }}>
+                    <div>
+                      <p className="a-name">{artist.name}</p>
+                      <p className="a-role">
+                        {artist.artCategory}
+                        {artist.location ? ` · ${artist.location}` : ""}
+                      </p>
+                    </div>
                     <div
-                      className="prog-fill"
-                      style={{ width: `${t.progress}%` }}
-                    />
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        gap: 4,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {artist.rating > 0 && (
+                        <div className="a-rating">
+                          <Star
+                            size={10}
+                            fill={C.gold}
+                            style={{ color: C.gold }}
+                          />
+                          <span>{Number(artist.rating).toFixed(1)}</span>
+                        </div>
+                      )}
+                      {isTopRated && (
+                        <span
+                          className="a-badge"
+                          style={{
+                            background: "rgba(201,169,97,0.15)",
+                            color: C.gold,
+                            border: "1px solid rgba(201,169,97,0.3)",
+                          }}
+                        >
+                          Top Rated
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="task-foot">
-                  <span className="mi">
-                    <IndianRupee size={11} style={{ color: C.gold }} />₹
-                    {t.amount.toLocaleString()}
-                  </span>
-                  {t.status === "submitted" ? (
-                    <button className="btn-gold sm" onClick={g}>
-                      <CheckCircle2 size={11} />
-                      Release Payment
-                    </button>
-                  ) : t.status === "overdue" ? (
-                    <button className="btn-danger" onClick={g}>
-                      <AlertCircle size={11} />
-                      Contact Artist
-                    </button>
-                  ) : (
-                    <button className="btn-outline sm" onClick={g}>
-                      <Eye size={11} />
-                      View Details
-                    </button>
-                  )}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 6,
+                      marginTop: 4,
+                    }}
+                  >
+                    <div className="a-skills">
+                      {skills.slice(0, 3).map((s, i) => (
+                        <span key={i} className="a-skill">
+                          {s}
+                        </span>
+                      ))}
+                      {artist.experience && (
+                        <span className="a-skill">{artist.experience}</span>
+                      )}
+                    </div>
+                    {rate && (
+                      <span
+                        style={{
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          color: C.gold,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {rate}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Requirements + Quick Stats */}
-      <div className="two-col">
-        <div className="card">
-          <ST action="Post New" onAction={g}>
-            📋 My Requirements
-          </ST>
-          {REQUIREMENTS.map((r, i) => (
-            <div key={i} className="rr" onClick={g}>
-              <div className="rr-top">
-                <p className="rr-ttl">{r.title}</p>
-                <span className="rr-apps">{r.apps} apps</span>
-              </div>
-              <div className="rr-meta">
-                <span>{r.budget}</span>
-                <span className="mi">
-                  <Calendar size={9} />
-                  {r.deadline}
-                </span>
-              </div>
+          {loading && page > 1 && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                padding: "12px 0",
+              }}
+            >
+              <Loader2
+                size={20}
+                style={{ color: C.gold, animation: "spin 1s linear infinite" }}
+              />
             </div>
-          ))}
-          <button
-            className="btn-gold full"
-            onClick={g}
-            style={{ marginTop: 13 }}
-          >
-            <Plus size={13} />
-            Post New Requirement
-          </button>
+          )}
         </div>
-
-        <div className="card">
-          <ST>📊 This Month</ST>
-          {[
-            {
-              label: "Requirements Posted",
-              value: "3",
-              Icon: FileText,
-              color: C.gold,
-            },
-            {
-              label: "Applications Received",
-              value: "61",
-              Icon: Users,
-              color: C.blue,
-            },
-            { label: "Artists Hired", value: "4", Icon: Award, color: C.green },
-            {
-              label: "Budget Spent",
-              value: "₹2.8L",
-              Icon: IndianRupee,
-              color: C.orange,
-            },
-          ].map((item) => (
-            <div key={item.label} className="qs-row">
-              <div className="qs-left">
-                <div className="qs-ic">
-                  <item.Icon size={12} style={{ color: item.color }} />
-                </div>
-                <span className="qs-lbl">{item.label}</span>
-              </div>
-              <span className="qs-val">{item.value}</span>
-            </div>
-          ))}
+        {hasMore && !loading && (
           <button
             className="btn-outline full"
-            onClick={g}
-            style={{ marginTop: 13 }}
+            onClick={loadMore}
+            style={{ marginTop: 14, justifyContent: "center" }}
           >
-            <BarChart2 size={13} />
-            View Full Analytics
+            Load More
           </button>
+        )}
+        <div style={{ marginTop: 16 }}>
+          <SignInWall
+            role="hirer"
+            navigate={navigate}
+            title="Access all verified artists"
+            desc="Sign up free to contact artists, post requirements, and manage payments securely."
+          />
         </div>
       </div>
+
+      {showPostModal && (
+        <PostRequirementModal
+          role="hirer"
+          navigate={navigate}
+          onClose={() => setShowPostModal(false)}
+        />
+      )}
+      {contactArtist && (
+        <ContactArtistModal
+          artist={contactArtist}
+          role="hirer"
+          navigate={navigate}
+          onClose={() => setContactArtist(null)}
+        />
+      )}
     </div>
   );
 }
 
-/*
-MAIN
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN
+═══════════════════════════════════════════════════════════════════════════ */
 export default function HomeDummy() {
   const navigate = useNavigate();
   const [role, setRole] = useState(
     () => sessionStorage.getItem("hd_role") || "artist",
   );
-  const [nudge, setNudge] = useState(false);
-  const [timer, setTimer] = useState(null);
 
   const switchRole = (r) => {
     sessionStorage.setItem("hd_role", r);
     setRole(r);
   };
-
-  const guard = () => {
-    setNudge(true);
-    if (timer) clearTimeout(timer);
-    setTimer(setTimeout(() => setNudge(false), 4200));
-  };
-
   const isArtist = role === "artist";
 
   return (
     <div className="hd">
       <style>{CSS}</style>
 
-      {/* ── NAV ── */}
+      {/* NAV */}
       <nav className="hd-nav">
         <div className="hd-nav-inner">
-          {/* Logo */}
           <div className="hd-logo">
             <div className="hd-logo-icon">
               <img src="/logo.jpeg" alt="Flip Logo" className="hd-logo-img" />
             </div>
-            <span className="hd-logo-text">
-              
-            </span>
+            <span className="hd-logo-text"></span>
           </div>
-
-          {/* Role toggle */}
           <div className="hd-toggle">
             {["artist", "hirer"].map((r) => (
               <button
@@ -1379,8 +2101,6 @@ export default function HomeDummy() {
               </button>
             ))}
           </div>
-
-          {/* Auth */}
           <div className="hd-nav-auth">
             <button
               className="hd-nav-signin"
@@ -1398,7 +2118,7 @@ export default function HomeDummy() {
         </div>
       </nav>
 
-      {/* ── SWITCH BANNER ── */}
+      {/* SWITCH BANNER */}
       <div className="hd-banner-wrap">
         <button
           className="hd-banner"
@@ -1453,16 +2173,16 @@ export default function HomeDummy() {
         </button>
       </div>
 
-      {/* ── CONTENT ── */}
+      {/* CONTENT */}
       <div className="hd-content">
         {isArtist ? (
-          <ArtistView g={guard} nav={navigate} />
+          <ArtistView navigate={navigate} />
         ) : (
-          <HirerView g={guard} nav={navigate} />
+          <HirerView navigate={navigate} />
         )}
       </div>
 
-      {/* ── BOTTOM BAR ── */}
+      {/* BOTTOM BAR */}
       <div className="hd-bar">
         <div className="hd-bar-inner">
           <div>
@@ -1489,15 +2209,6 @@ export default function HomeDummy() {
           </div>
         </div>
       </div>
-
-      {/* ── NUDGE ── */}
-      {nudge && (
-        <Nudge
-          role={role}
-          onDismiss={() => setNudge(false)}
-          navigate={navigate}
-        />
-      )}
     </div>
   );
 }
