@@ -31,6 +31,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import { publicAPI } from "../services/api"; // adjust path to match your project structure
 
 /* ─── Tokens ─────────────────────────────────────────────────────────────── */
 const C = {
@@ -47,15 +48,6 @@ const C = {
   blue: "#60a5fa",
   red: "#f87171",
 };
-
-/* ─── API base (reuses same env var as services/api.js) ──────────────────── */
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-async function publicFetch(path) {
-  const res = await fetch(`${BASE_URL}${path}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
 
 /* ─── Static Options ─────────────────────────────────────────────────────── */
 const ARTIST_ROLE_OPTS = [
@@ -1141,10 +1133,12 @@ function ArtistView({ navigate }) {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams({ page: pageNum, limit: 10 });
-      if (category && category !== "All") params.set("category", category);
-      if (searchTerm.trim()) params.set("search", searchTerm.trim());
-      const data = await publicFetch(`/api/public/opportunities?${params}`);
+      const data = await publicAPI.getOpportunities({
+        category,
+        search: searchTerm,
+        page: pageNum,
+        limit: 10,
+      });
       const list = Array.isArray(data)
         ? data
         : data.opportunities || data.data || [];
@@ -1427,10 +1421,12 @@ function HirerView({ navigate }) {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams({ page: pageNum, limit: 12 });
-      if (category && category !== "All") params.set("artCategory", category);
-      if (searchTerm.trim()) params.set("search", searchTerm.trim());
-      const data = await publicFetch(`/api/public/artists?${params}`);
+      const data = await publicAPI.getArtists({
+        artCategory: category,
+        search: searchTerm,
+        page: pageNum,
+        limit: 12,
+      });
       const list = Array.isArray(data) ? data : data.artists || data.data || [];
       const pages = data.totalPages || 1;
       setArtists((prev) => (pageNum === 1 ? list : [...prev, ...list]));
@@ -1766,7 +1762,7 @@ export default function HomeDummy() {
         <div className="hd-nav-inner">
           <div className="hd-logo">
             <div className="hd-logo-icon">
-              <img src="/logo.jpeg" alt="Flip Logo" className="hd-logo-img" />
+              <img src="/logo.png" alt="Flip Logo" className="hd-logo-img" />
             </div>
             <span className="hd-logo-text"></span>
           </div>
