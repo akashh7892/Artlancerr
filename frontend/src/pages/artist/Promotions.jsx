@@ -29,6 +29,43 @@ const COLORS = {
   muted: "#8ba3af",
 };
 
+// ── Coming Soon Overlay ────────────────────────────────────────
+function ComingSoonOverlay() {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(18,20,26,0.75)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
+      }}
+    >
+      <div style={{ textAlign: "center" }}>
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            color: "#c9a961",
+            letterSpacing: "0.12em",
+            marginBottom: 8,
+            textTransform: "uppercase",
+          }}
+        >
+          Coming Soon
+        </p>
+        <p style={{ fontSize: 14, color: "#8ba3af" }}>
+          This feature is under development
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ── Sub-components ─────────────────────────────────────────────
 
 function ImageWithFallback({ src, alt, className }) {
@@ -483,6 +520,9 @@ export default function ArtistPromotions() {
   // ── Render ──
   return (
     <div className="min-h-screen flex" style={{ background: COLORS.bg }}>
+      {/* ── Coming Soon Overlay — sits above everything ── */}
+      <ComingSoonOverlay />
+
       {/* Sidebar manages its own mobile toggle internally */}
       <Sidebar />
 
@@ -590,7 +630,6 @@ export default function ArtistPromotions() {
                       e.currentTarget.style.borderColor = COLORS.border;
                     }}
                   >
-                    {/* Poster */}
                     <div className="w-28 sm:w-36 md:w-40 flex-shrink-0 relative">
                       <ImageWithFallback
                         src={promo.poster}
@@ -605,8 +644,6 @@ export default function ArtistPromotions() {
                         </div>
                       )}
                     </div>
-
-                    {/* Info */}
                     <div className="flex-1 p-3 sm:p-5 flex flex-col justify-between min-w-0">
                       <div>
                         <h3
@@ -717,7 +754,6 @@ export default function ArtistPromotions() {
                         border: `1px solid ${COLORS.border}`,
                       }}
                     >
-                      {/* Poster */}
                       <div className="w-28 sm:w-36 md:w-40 flex-shrink-0 relative">
                         <ImageWithFallback
                           src={promo.poster}
@@ -736,8 +772,6 @@ export default function ArtistPromotions() {
                           </div>
                         </div>
                       </div>
-
-                      {/* Info */}
                       <div className="flex-1 p-3 sm:p-5 min-w-0">
                         <h3
                           className="text-base sm:text-lg font-semibold mb-2"
@@ -1030,7 +1064,6 @@ export default function ArtistPromotions() {
           <p className="text-sm mb-6" style={{ color: COLORS.muted }}>
             Upload a screenshot or provide a link to your Instagram post
           </p>
-
           <div className="space-y-4">
             <div>
               <label
@@ -1054,7 +1087,6 @@ export default function ArtistPromotions() {
                 onBlur={(e) => (e.target.style.borderColor = COLORS.border)}
               />
             </div>
-
             <div>
               <label
                 className="block text-sm mb-1"
@@ -1082,7 +1114,6 @@ export default function ArtistPromotions() {
                 <span className="text-xs">PNG, JPG up to 10MB</span>
               </button>
             </div>
-
             <div className="flex gap-3">
               <button
                 onClick={handleSubmitProof}

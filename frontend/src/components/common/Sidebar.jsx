@@ -291,7 +291,6 @@ export default function Sidebar() {
               src="/logo.png"
               alt="flip logo"
               className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
-              style={{ border: "1.5px solid rgba(201,169,97,0.3)" }}
             />
             <span
               className="text-[22px] leading-none"

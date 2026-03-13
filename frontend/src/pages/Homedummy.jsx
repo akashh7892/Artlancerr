@@ -25,9 +25,7 @@ import {
   LogIn,
   Calendar,
   X,
-  Send,
   Sparkles,
-  CheckCircle2,
   Loader2,
   AlertCircle,
 } from "lucide-react";
@@ -411,202 +409,6 @@ function ArtistSkeleton() {
   ));
 }
 
-/* ─── Apply Modal ────────────────────────────────────────────────────────── */
-function ApplyModal({ opp, role, navigate, onClose }) {
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    experience: "",
-    bio: "",
-    portfolio: "",
-    rate: "",
-  });
-  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
-
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="modal-card-head">
-          <div>
-            <p className="modal-title">Apply for Role</p>
-            <p className="modal-sub">
-              {opp?.title} ·{" "}
-              {opp?.hirer?.companyName || opp?.hirer?.name || "Studio"}
-            </p>
-          </div>
-          <button className="modal-close" onClick={onClose}>
-            <X size={14} />
-          </button>
-        </div>
-
-        {/* Body — scrolls independently, no page scroll needed */}
-        <div className="modal-card-body">
-          {step === 1 ? (
-            <div className="form-stack">
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Full Name *</label>
-                  <input
-                    className="form-input"
-                    placeholder="Your name"
-                    value={form.name}
-                    onChange={(e) => set("name")(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Email *</label>
-                  <input
-                    className="form-input"
-                    type="email"
-                    placeholder="you@email.com"
-                    value={form.email}
-                    onChange={(e) => set("email")(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Phone</label>
-                  <input
-                    className="form-input"
-                    placeholder="+91 XXXXX XXXXX"
-                    value={form.phone}
-                    onChange={(e) => set("phone")(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Experience</label>
-                  <div className="form-select-wrap">
-                    <select
-                      className="form-select"
-                      value={form.experience}
-                      onChange={(e) => set("experience")(e.target.value)}
-                    >
-                      <option value="">Select</option>
-                      {EXPERIENCE_OPTIONS.map((o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Expected Rate</label>
-                <input
-                  className="form-input"
-                  placeholder="e.g. ₹30,000 negotiable"
-                  value={form.rate}
-                  onChange={(e) => set("rate")(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Portfolio / Showreel URL</label>
-                <input
-                  className="form-input"
-                  placeholder="https://yourportfolio.com"
-                  value={form.portfolio}
-                  onChange={(e) => set("portfolio")(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Why are you a great fit?</label>
-                <textarea
-                  className="form-textarea"
-                  placeholder="Tell the hirer about your relevant experience…"
-                  value={form.bio}
-                  onChange={(e) => set("bio")(e.target.value)}
-                  rows={3}
-                />
-              </div>
-              <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
-                <button
-                  className="btn-outline sm"
-                  onClick={onClose}
-                  style={{ flex: 1, justifyContent: "center" }}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="btn-gold"
-                  onClick={() => setStep(2)}
-                  style={{ flex: 2, justifyContent: "center" }}
-                >
-                  <Send size={13} /> Submit Application
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div style={{ textAlign: "center", padding: "12px 0 18px" }}>
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 14,
-                    background: "rgba(201,169,97,0.12)",
-                    border: "1px solid rgba(201,169,97,0.28)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    margin: "0 auto 14px",
-                  }}
-                >
-                  <CheckCircle2 size={24} style={{ color: C.gold }} />
-                </div>
-                <p
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: C.text,
-                    marginBottom: 7,
-                  }}
-                >
-                  Application Ready!
-                </p>
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: C.muted,
-                    lineHeight: 1.6,
-                    marginBottom: 18,
-                  }}
-                >
-                  Sign in or create a free account to officially submit your
-                  application to{" "}
-                  <strong style={{ color: C.text }}>
-                    {opp?.hirer?.companyName ||
-                      opp?.hirer?.name ||
-                      "this studio"}
-                  </strong>
-                  .
-                </p>
-              </div>
-              <SignInWall
-                role={role}
-                navigate={navigate}
-                title="Sign in to submit"
-                desc="Your application is ready — just sign in to send it."
-              />
-              <button
-                className="btn-outline full"
-                onClick={() => setStep(1)}
-                style={{ marginTop: 10, justifyContent: "center" }}
-              >
-                ← Edit Details
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ─── Post Requirement Modal ─────────────────────────────────────────────── */
 function PostRequirementModal({ role, navigate, onClose }) {
   const [step, setStep] = useState(1);
@@ -892,237 +694,12 @@ function PostRequirementModal({ role, navigate, onClose }) {
   );
 }
 
-/* ─── Contact Artist Modal ───────────────────────────────────────────────── */
-function ContactArtistModal({ artist, role, navigate, onClose }) {
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    projectTitle: "",
-    projectType: "",
-    budget: "",
-    startDate: "",
-    message: "",
-  });
-  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
-
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* Header with artist info */}
-        <div className="modal-card-head">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {artist?.avatar ? (
-              <img
-                src={artist.avatar}
-                alt={artist.name}
-                style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  border: "2px solid rgba(201,169,97,0.3)",
-                  flexShrink: 0,
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: "50%",
-                  background: "#22252e",
-                  border: "2px solid rgba(201,169,97,0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <Users size={17} style={{ color: C.muted }} />
-              </div>
-            )}
-            <div>
-              <p className="modal-title" style={{ fontSize: 17 }}>
-                Contact Artist
-              </p>
-              <p className="modal-sub">
-                {artist?.name} · {artist?.artCategory || artist?.role}
-              </p>
-            </div>
-          </div>
-          <button className="modal-close" onClick={onClose}>
-            <X size={14} />
-          </button>
-        </div>
-
-        {/* Scrollable body */}
-        <div className="modal-card-body">
-          {step === 1 ? (
-            <div className="form-stack">
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Your Name *</label>
-                  <input
-                    className="form-input"
-                    placeholder="Full name"
-                    value={form.name}
-                    onChange={(e) => set("name")(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Email *</label>
-                  <input
-                    className="form-input"
-                    type="email"
-                    placeholder="you@studio.com"
-                    value={form.email}
-                    onChange={(e) => set("email")(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Project Title *</label>
-                <input
-                  className="form-input"
-                  placeholder="e.g. Brand Campaign for XYZ"
-                  value={form.projectTitle}
-                  onChange={(e) => set("projectTitle")(e.target.value)}
-                />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Project Type</label>
-                  <div className="form-select-wrap">
-                    <select
-                      className="form-select"
-                      value={form.projectType}
-                      onChange={(e) => set("projectType")(e.target.value)}
-                    >
-                      <option value="">Select</option>
-                      {PROJECT_TYPES.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Budget Offer</label>
-                  <input
-                    className="form-input"
-                    placeholder="e.g. ₹50,000"
-                    value={form.budget}
-                    onChange={(e) => set("budget")(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Expected Start Date</label>
-                <input
-                  className="form-input"
-                  type="date"
-                  value={form.startDate}
-                  onChange={(e) => set("startDate")(e.target.value)}
-                  style={{ colorScheme: "dark" }}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Message to Artist *</label>
-                <textarea
-                  className="form-textarea"
-                  placeholder={`Hi ${artist?.name}, I'd love to collaborate on…`}
-                  value={form.message}
-                  onChange={(e) => set("message")(e.target.value)}
-                  rows={3}
-                />
-              </div>
-              <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
-                <button
-                  className="btn-outline sm"
-                  onClick={onClose}
-                  style={{ flex: 1, justifyContent: "center" }}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="btn-gold"
-                  onClick={() => setStep(2)}
-                  style={{ flex: 2, justifyContent: "center" }}
-                >
-                  <Send size={13} /> Send Enquiry
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div style={{ textAlign: "center", padding: "12px 0 18px" }}>
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 14,
-                    background: "rgba(201,169,97,0.12)",
-                    border: "1px solid rgba(201,169,97,0.28)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    margin: "0 auto 14px",
-                  }}
-                >
-                  <CheckCircle2 size={24} style={{ color: C.gold }} />
-                </div>
-                <p
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: C.text,
-                    marginBottom: 7,
-                  }}
-                >
-                  Message Ready!
-                </p>
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: C.muted,
-                    lineHeight: 1.6,
-                    marginBottom: 18,
-                  }}
-                >
-                  Sign in to send your enquiry to{" "}
-                  <strong style={{ color: C.text }}>{artist?.name}</strong>.
-                </p>
-              </div>
-              <SignInWall
-                role={role}
-                navigate={navigate}
-                title="Sign in to send message"
-                desc="Your message is ready — sign in to deliver it instantly."
-              />
-              <button
-                className="btn-outline full"
-                onClick={() => setStep(1)}
-                style={{ marginTop: 10, justifyContent: "center" }}
-              >
-                ← Edit Message
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════
    ARTIST VIEW — real data from /api/public/opportunities
 ═══════════════════════════════════════════════════════════════════════════ */
 function ArtistView({ navigate }) {
   const [cat, setCat] = useState("All");
   const [search, setSearch] = useState("");
-  const [applyOpp, setApplyOpp] = useState(null);
   const [opps, setOpps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -1347,7 +924,7 @@ function ArtistView({ navigate }) {
                 </span>
                 <button
                   className="btn-gold sm"
-                  onClick={() => setApplyOpp(opp)}
+                  onClick={() => navigate("/auth/artist/login")}
                 >
                   Apply Now
                 </button>
@@ -1390,15 +967,6 @@ function ArtistView({ navigate }) {
           />
         </div>
       </div>
-
-      {applyOpp && (
-        <ApplyModal
-          opp={applyOpp}
-          role="artist"
-          navigate={navigate}
-          onClose={() => setApplyOpp(null)}
-        />
-      )}
     </div>
   );
 }
@@ -1410,7 +978,6 @@ function HirerView({ navigate }) {
   const [cat, setCat] = useState("All");
   const [search, setSearch] = useState("");
   const [showPostModal, setShowPostModal] = useState(false);
-  const [contactArtist, setContactArtist] = useState(null);
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -1574,7 +1141,8 @@ function HirerView({ navigate }) {
               <div
                 key={artist._id}
                 className="artist-row"
-                onClick={() => setContactArtist(artist)}
+                onClick={() => navigate("/auth/hirer/signup")}
+                style={{ cursor: "pointer" }}
               >
                 {artist.avatar ? (
                   <img
@@ -1725,14 +1293,6 @@ function HirerView({ navigate }) {
           onClose={() => setShowPostModal(false)}
         />
       )}
-      {contactArtist && (
-        <ContactArtistModal
-          artist={contactArtist}
-          role="hirer"
-          navigate={navigate}
-          onClose={() => setContactArtist(null)}
-        />
-      )}
     </div>
   );
 }
@@ -1876,7 +1436,7 @@ export default function HomeDummy() {
               {isArtist ? "Ready to get hired?" : "Ready to find talent?"}
             </p>
             <p className="bar-sub">
-              Join 12,000+ {isArtist ? "artists" : "hirers"} on Flip — it's free
+              Join 100+ {isArtist ? "artists" : "hirers"} on Flip — it's free
             </p>
           </div>
           <div className="bar-btns">
