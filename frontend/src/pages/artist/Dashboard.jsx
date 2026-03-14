@@ -133,7 +133,6 @@ export default function Dashboard() {
       budget: opp.budget ? formatCur(opp.budget) : "—",
       time: timeAgo,
       status: (app.status || "pending").toLowerCase(),
-      img: hirer.avatar || "",
     };
   });
   if (loading)
@@ -304,19 +303,13 @@ export default function Dashboard() {
                     return (
                       <div
                         key={_id}
-                        className="app-row flex items-center gap-4 p-4 rounded-xl cursor-pointer"
+                        className="app-row flex flex-col gap-3 p-4 rounded-xl cursor-pointer"
                         style={{
                           background: "rgba(255,255,255,0.018)",
                           border: `1px solid ${C.border}`,
                         }}
                       >
-                        <img
-                          src={img}
-                          alt={title}
-                          className="w-[56px] h-[56px] rounded-xl object-cover flex-shrink-0"
-                          style={{ border: `1px solid ${C.border}` }}
-                        />
-                        <div className="flex-1 min-w-0">
+                        <div className="w-full">
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <p
                               className="text-[14.5px] font-semibold leading-tight truncate"
@@ -331,7 +324,7 @@ export default function Dashboard() {
                                 color: s.color,
                                 border: `1px solid ${s.border}`,
                               }}
-                              >
+                            >
                               {displayStatus}
                             </span>
                           </div>
