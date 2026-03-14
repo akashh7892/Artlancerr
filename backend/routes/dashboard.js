@@ -1,35 +1,40 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Artist = require('../models/Artist');
-const Hirer = require('../models/Hirer');
-const Application = require('../models/Application');
-const Opportunity = require('../models/Opportunity');
-const Task = require('../models/Task');
-const Payment = require('../models/Payment');
-const Message = require('../models/Message');
-const { protect } = require('../middleware/auth');
+const Artist = require("../models/Artist");
+const Hirer = require("../models/Hirer");
+const Application = require("../models/Application");
+const Opportunity = require("../models/Opportunity");
+const Task = require("../models/Task");
+const Payment = require("../models/Payment");
+const Message = require("../models/Message");
+const { protect } = require("../middleware/auth");
+
+// ── ADDED: profile completion utility ────────────────────────────
+const { calcProfileCompletion } = require("../utils/profileCompletion");
+// ─────────────────────────────────────────────────────────────────
 
 // @route   GET /api/dashboard/artist
 // @desc    Get artist dashboard data
 // @access  Private (Artist only)
-router.get('/artist', protect, async (req, res) => {
+router.get("/artist", protect, async (req, res) => {
   try {
-    if (req.userType !== 'Artist') {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (req.userType !== "Artist") {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const artistId = req.user._id;
 
     // Get applications
     const applications = await Application.find({ artist: artistId })
-      .populate('opportunity')
+      .populate("opportunity")
+      .populate("hirer", "name companyName avatar") // ── ADDED: hirer populate for Dashboard cards
       .sort({ createdAt: -1 })
       .limit(5);
 
     // Get tasks
     const tasks = await Task.find({ artist: artistId })
-      .populate('opportunity')
-      .populate('hirer', 'name companyName avatar')
+      .populate("opportunity")
+      .populate("hirer", "name companyName avatar")
       .sort({ createdAt: -1 })
       .limit(5);
 
@@ -40,52 +45,91 @@ router.get('/artist', protect, async (req, res) => {
 
     // Get stats
     const totalEarnings = await Payment.aggregate([
-      { $match: { artist: artistId, status: 'completed' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $match: { artist: artistId, status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
 
     const pendingPayments = await Payment.aggregate([
-      { $match: { artist: artistId, status: { $in: ['pending', 'processing'] } } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      {
+        $match: {
+          artist: artistId,
+          status: { $in: ["pending", "processing"] },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
 
-    const applicationCount = await Application.countDocuments({ artist: artistId });
-    const hiredCount = await Application.countDocuments({ artist: artistId, status: 'hired' });
+    const applicationCount = await Application.countDocuments({
+      artist: artistId,
+    });
+    const hiredCount = await Application.countDocuments({
+      artist: artistId,
+      status: "hired",
+    });
 
     // Get unread messages count
     const unreadMessages = await Message.countDocuments({
       receiver: artistId,
-      receiverModel: 'Artist',
-      isRead: false
+      receiverModel: "Artist",
+      isRead: false,
     });
 
+    // ── ADDED: fetch full artist doc and compute profile completion ─
+    const artist = await Artist.findById(artistId).lean();
+    const { percent } = calcProfileCompletion(artist);
+    // Persist the recomputed percentage back to DB
+    await Artist.findByIdAndUpdate(artistId, { profileCompletion: percent });
+    // ───────────────────────────────────────────────────────────────
+
     res.json({
+      // ── ADDED: profile key — Dashboard.jsx reads this to show live % ──
+      profile: {
+        name: artist.name || "",
+        avatar: artist.avatar || "",
+        bio: artist.bio || "",
+        artCategory: artist.artCategory || "",
+        experience: artist.experience || "",
+        location: artist.location || "",
+        rates: {
+          daily: artist.rates?.daily || "",
+          weekly: artist.rates?.weekly || "",
+          project: artist.rates?.project || "",
+        },
+        availability: {
+          blockedDates: artist.availability?.blockedDates || [],
+          freeDates: artist.availability?.freeDates || [],
+        },
+        equipment: Array.isArray(artist.equipment) ? artist.equipment : [],
+        profileCompletion: percent,
+      },
+      // ─────────────────────────────────────────────────────────────────
       stats: {
         profileViews: req.user.profileViews || 0,
-        activeProjects: tasks.filter(t => t.status === 'in_progress').length,
+        activeProjects: tasks.filter((t) => t.status === "in_progress").length,
         totalEarnings: totalEarnings[0]?.total || 0,
         pendingPayments: pendingPayments[0]?.total || 0,
         applicationCount,
         hiredCount,
-        messages: unreadMessages
+        messages: unreadMessages,
+        profileCompletion: percent, // ── ADDED
       },
       applications,
       tasks,
-      recentPayments: payments
+      recentPayments: payments,
     });
   } catch (error) {
-    console.error('Get artist dashboard error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Get artist dashboard error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 // @route   GET /api/dashboard/hirer
 // @desc    Get hirer dashboard data
 // @access  Private (Hirer only)
-router.get('/hirer', protect, async (req, res) => {
+router.get("/hirer", protect, async (req, res) => {
   try {
-    if (req.userType !== 'Hirer') {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (req.userType !== "Hirer") {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const hirerId = req.user._id;
@@ -97,8 +141,8 @@ router.get('/hirer', protect, async (req, res) => {
 
     // Get tasks
     const tasks = await Task.find({ hirer: hirerId })
-      .populate('opportunity')
-      .populate('artist', 'name username avatar')
+      .populate("opportunity")
+      .populate("artist", "name username avatar")
       .sort({ createdAt: -1 })
       .limit(5);
 
@@ -109,66 +153,78 @@ router.get('/hirer', protect, async (req, res) => {
 
     // Get stats
     const totalSpent = await Payment.aggregate([
-      { $match: { hirer: hirerId, status: 'completed' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $match: { hirer: hirerId, status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
 
     const inEscrow = await Task.aggregate([
-      { $match: { hirer: hirerId, paymentStatus: 'in_escrow' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $match: { hirer: hirerId, paymentStatus: "in_escrow" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
 
-    const opportunityCount = await Opportunity.countDocuments({ hirer: hirerId });
-    const artistsHired = await Application.countDocuments({ hirer: hirerId, status: 'hired' });
+    const opportunityCount = await Opportunity.countDocuments({
+      hirer: hirerId,
+    });
+    const artistsHired = await Application.countDocuments({
+      hirer: hirerId,
+      status: "hired",
+    });
 
     // Get unread messages count
     const unreadMessages = await Message.countDocuments({
       receiver: hirerId,
-      receiverModel: 'Hirer',
-      isRead: false
+      receiverModel: "Hirer",
+      isRead: false,
     });
 
     // Get all applications for this hirer's opportunities
-    const allOppIds = await Opportunity.find({ hirer: hirerId }).distinct('_id');
-    const applicationCount = await Application.countDocuments({ opportunity: { $in: allOppIds } });
+    const allOppIds = await Opportunity.find({ hirer: hirerId }).distinct(
+      "_id",
+    );
+    const applicationCount = await Application.countDocuments({
+      opportunity: { $in: allOppIds },
+    });
 
     res.json({
       stats: {
-        activeProjects: opportunities.filter(o => o.status === 'active').length,
+        activeProjects: opportunities.filter((o) => o.status === "active")
+          .length,
         totalSpent: totalSpent[0]?.total || 0,
         inEscrow: inEscrow[0]?.total || 0,
         artistsHired,
         opportunityCount,
         applicationCount,
-        messages: unreadMessages
+        messages: unreadMessages,
       },
       opportunities,
       tasks,
-      recentPayments: payments
+      recentPayments: payments,
     });
   } catch (error) {
-    console.error('Get hirer dashboard error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Get hirer dashboard error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 // @route   GET /api/dashboard/nearby-artists
 // @desc    Get nearby artists
 // @access  Public
-router.get('/nearby-artists', async (req, res) => {
+router.get("/nearby-artists", async (req, res) => {
   try {
     const { location, page = 1, limit = 20 } = req.query;
-    
+
     const query = { isActive: true };
-    
+
     if (location) {
-      query.location = { $regex: location, $options: 'i' };
+      query.location = { $regex: location, $options: "i" };
     }
 
     const skip = (page - 1) * limit;
 
     const artists = await Artist.find(query)
-      .select('name username avatar location bio artCategory experience rates availability equipment profileViews')
+      .select(
+        "name username avatar location bio artCategory experience rates availability equipment profileViews",
+      )
       .skip(skip)
       .limit(Number(limit));
 
@@ -178,11 +234,11 @@ router.get('/nearby-artists', async (req, res) => {
       artists,
       total,
       page: Number(page),
-      pages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limit),
     });
   } catch (error) {
-    console.error('Get nearby artists error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Get nearby artists error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

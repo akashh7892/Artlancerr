@@ -2,7 +2,24 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
-    <loc>https://theflip.in</loc>
+    <loc>https://theflip.in/</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://www.theflip.in/auth/artist/login</loc>
+  </url>
+
+  <url>
+    <loc>https://www.theflip.in/auth/artist/signup</loc>
+  </url>
+
+  <url>
+    <loc>https://www.theflip.in/auth/hirer/signup</loc>
+  </url>
+
+  <url>
+    <loc>https://www.theflip.in/auth/hirer/login</loc>
   </url>
 
   <url>
