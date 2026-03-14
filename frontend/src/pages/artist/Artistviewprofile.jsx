@@ -200,6 +200,7 @@ export default function ArtistProfileView() {
   const [artist, setArtist] = useState(EMPTY_ARTIST);
   const [activeTab, setActiveTab] = useState("Overview");
   const [showConnect, setShowConnect] = useState(false);
+  const [selectedPortfolio, setSelectedPortfolio] = useState(null);
 
   useEffect(() => {
     if (!id) return;
@@ -252,6 +253,65 @@ export default function ArtistProfileView() {
       <Sidebar />
       {showConnect && (
         <ConnectModal artist={artist} onClose={() => setShowConnect(false)} />
+      )}
+      {selectedPortfolio && (
+        <div
+          className="fixed inset-0 z-[3500] flex items-center justify-center px-4"
+          style={{
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            background: "rgba(10,12,16,0.85)",
+          }}
+          onClick={() => setSelectedPortfolio(null)}
+        >
+          <div
+            className="relative max-w-[90vw] max-h-[85vh] rounded-2xl overflow-hidden flex items-center justify-center"
+            style={{
+              background: "#0a0c10",
+              border: "1px solid rgba(201,169,97,0.15)",
+              boxShadow: "0 32px 64px rgba(0,0,0,0.9)",
+              animation: "modalIn 0.3s cubic-bezier(0.34,1.3,0.64,1) both",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setSelectedPortfolio(null)}
+              className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-full border-0 outline-none cursor-pointer z-10"
+              style={{ background: "rgba(0,0,0,0.6)", color: "#fff" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "rgba(0,0,0,0.8)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "rgba(0,0,0,0.6)")
+              }
+            >
+              <X size={18} strokeWidth={2.5} />
+            </button>
+
+            <img
+              src={selectedPortfolio.img}
+              alt={selectedPortfolio.title}
+              className="max-w-full max-h-full object-contain"
+            />
+
+            {selectedPortfolio.title && (
+              <div
+                className="absolute bottom-0 left-0 right-0 p-5 text-center"
+                style={{
+                  background:
+                    "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)",
+                }}
+              >
+                <p
+                  className="text-[15px] font-semibold"
+                  style={{ color: "#fff" }}
+                >
+                  {selectedPortfolio.title}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       <div
@@ -588,6 +648,7 @@ export default function ArtistProfileView() {
                       key={i}
                       className="rounded-xl overflow-hidden relative group cursor-pointer"
                       style={{ aspectRatio: "4/3" }}
+                      onClick={() => setSelectedPortfolio({ ...item, index: i })}
                     >
                       <img
                         src={item.img}
@@ -595,7 +656,7 @@ export default function ArtistProfileView() {
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div
-                        className="absolute inset-0 flex items-end p-3 transition-opacity"
+                        className="absolute inset-0 flex items-end p-3 transition-opacity opacity-0 group-hover:opacity-100"
                         style={{
                           background:
                             "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 50%)",

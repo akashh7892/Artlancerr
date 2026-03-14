@@ -116,7 +116,11 @@ export default function Dashboard() {
   const applications = data?.applications || [];
   const recentPayments = data?.recentPayments || [];
 
-  // Build profile shape matching Profile.jsx fields exactly
+  // Use the backend-calculated profile completion percentage
+  const profilePct = stats.profileCompletion ?? 0;
+  const theme = strengthTheme(profilePct);
+
+  // Calculate missing fields for display
   const profile = {
     name: data?.profile?.name || "",
     avatar: data?.profile?.avatar || "",
@@ -133,8 +137,7 @@ export default function Dashboard() {
     equipment: data?.profile?.equipment || [],
   };
 
-  const { percent: profilePct, missing } = calcProfileCompletion(profile);
-  const theme = strengthTheme(profilePct);
+  const { missing } = calcProfileCompletion(profile);
 
   // Group missing fields by tab for display
   const missingByTab = missing.reduce((acc, f) => {
