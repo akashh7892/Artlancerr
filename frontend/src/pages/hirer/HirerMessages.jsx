@@ -1,12 +1,11 @@
-import { motion } from "motion/react";
 import {
-  ArrowLeft,
   Send,
   Search,
   Paperclip,
   Check,
   CheckCheck,
   Users,
+  ArrowLeft,
 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router";
@@ -14,23 +13,18 @@ import HirerSidebar from "./HirerSidebar";
 import { getToken, getUser, messagesAPI, uploadFile } from "../../services/api";
 import { connectSocket } from "../../socket";
 
-/* ─── Design tokens (same as HirerDashboard) ───────────────────────────── */
 const C = {
   bg: "#191d25",
   card: "#22252e",
-  cardAlt: "#1e2230",
   border: "rgba(201,169,97,0.12)",
-  borderHover: "rgba(201,169,97,0.28)",
   gold: "#c9a961",
   goldGlow: "rgba(201,169,97,0.18)",
   goldBg: "rgba(201,169,97,0.10)",
   text: "#e8e4d8",
   muted: "#5a6e7d",
-  sub: "#7a8fa0",
   selectedBg: "rgba(201,169,97,0.07)",
 };
 
-/* ─── Helpers ───────────────────────────────────────────────────────────── */
 const formatTime = (date) => {
   const diff = Date.now() - date.getTime();
   const mins = Math.floor(diff / 60000);
@@ -59,7 +53,6 @@ const toInitials = (name = "") =>
     .map((p) => p[0]?.toUpperCase() || "")
     .join("") || "?";
 
-/* ─── Avatar ─────────────────────────────────────────────────────────────── */
 function Avatar({ title, size = 40, src }) {
   const [err, setErr] = useState(false);
   if (src && !err) {
@@ -85,7 +78,8 @@ function Avatar({ title, size = 40, src }) {
         width: size,
         height: size,
         borderRadius: "50%",
-        background: `linear-gradient(135deg,rgba(201,169,97,0.18),rgba(201,169,97,0.06))`,
+        background:
+          "linear-gradient(135deg,rgba(201,169,97,0.18),rgba(201,169,97,0.06))",
         border: `1.5px solid ${C.border}`,
         color: C.gold,
         fontWeight: 700,
@@ -102,7 +96,6 @@ function Avatar({ title, size = 40, src }) {
   );
 }
 
-/* ─── Conversation list item ─────────────────────────────────────────────── */
 function ConvItem({ conv, selected, onClick }) {
   return (
     <button
@@ -195,15 +188,11 @@ function ConvItem({ conv, selected, onClick }) {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   MAIN COMPONENT
-═══════════════════════════════════════════════════════════════════════════ */
 export default function HirerMessages() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-  const threadRef = useRef(null);
   const currentUser = getUser();
   const currentUserId = currentUser?._id;
 
@@ -215,18 +204,39 @@ export default function HirerMessages() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileShowThread, setMobileShowThread] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [inputFocused, setInputFocused] = useState(false);
 
-  /* ── Scroll to bottom ── */
-  const scrollToBottom = () => {
+  const scrollToBottom = () =>
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
   useEffect(scrollToBottom, [selectedId, messagesByConv]);
 
-  /* ── Load conversations ── */
+  /* Auto-focus + scroll when thread opens */
+  useEffect(() => {
+    if (!mobileShowThread || !selectedId) return;
+    const t1 = setTimeout(() => {
+      inputRef.current?.focus();
+      scrollToBottom();
+    }, 80);
+    const t2 = setTimeout(() => {
+      inputRef.current?.focus();
+      scrollToBottom();
+    }, 300);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [mobileShowThread, selectedId]);
+
+  /* Keyboard resize → scroll */
+  useEffect(() => {
+    const onResize = () => scrollToBottom();
+    window.visualViewport?.addEventListener("resize", onResize);
+    return () => window.visualViewport?.removeEventListener("resize", onResize);
+  }, []);
+
+  /* Load conversations */
   useEffect(() => {
     let mounted = true;
-    const load = async () => {
+    (async () => {
       try {
         const data = await messagesAPI.getConversations();
         if (!mounted) return;
@@ -239,7 +249,6 @@ export default function HirerMessages() {
           timestamp: new Date(item.lastMessage?.createdAt || Date.now()),
           unread: item.unreadCount || 0,
         }));
-
         const fromStateId = state?.artist?._id || state?.artist?.id;
         if (fromStateId && !mapped.find((c) => c.id === fromStateId)) {
           mapped.unshift({
@@ -254,20 +263,17 @@ export default function HirerMessages() {
         }
         setConversations(mapped);
         setSelectedId((prev) => prev || fromStateId || mapped[0]?.id || null);
-
-        /* If opened from another page with a userId param, open thread immediately */
         if (fromStateId) setMobileShowThread(true);
       } catch (e) {
         console.error(e);
       }
-    };
-    load();
+    })();
     return () => {
       mounted = false;
     };
   }, [state]);
 
-  /* ── Load thread ── */
+  /* Load thread */
   useEffect(() => {
     if (!selectedId || !currentUserId) return;
     let mounted = true;
@@ -298,18 +304,16 @@ export default function HirerMessages() {
     };
   }, [selectedId, currentUserId]);
 
-  /* ── Socket ── */
+  /* Socket */
   useEffect(() => {
     const token = getToken();
     if (!token || !currentUserId) return;
     const socket = connectSocket(token);
-
     const onNew = (msg) => {
       const senderId = msg.sender?._id;
       const receiverId = msg.receiver?._id;
       const otherId = senderId === currentUserId ? receiverId : senderId;
       if (!otherId) return;
-
       setMessagesByConv((prev) => {
         const list = prev[otherId] || [];
         if (list.some((i) => i.id === msg._id)) return prev;
@@ -328,7 +332,6 @@ export default function HirerMessages() {
           ],
         };
       });
-
       setConversations((prev) => {
         const exists = prev.find((c) => c.id === otherId);
         const meSent = senderId === currentUserId;
@@ -358,7 +361,6 @@ export default function HirerMessages() {
         ];
       });
     };
-
     const onRead = ({ conversationWith, readBy }) => {
       if (readBy === currentUserId || selectedId !== conversationWith) return;
       setMessagesByConv((prev) => ({
@@ -368,7 +370,6 @@ export default function HirerMessages() {
         ),
       }));
     };
-
     socket.on("new_message", onNew);
     socket.on("messages_read", onRead);
     return () => {
@@ -376,31 +377,6 @@ export default function HirerMessages() {
       socket.off("messages_read", onRead);
     };
   }, [currentUserId, selectedId]);
-
-  /* ── Keyboard-aware: scroll thread up when soft keyboard appears ── */
-  useEffect(() => {
-    if (!mobileShowThread) return;
-
-    const onResize = () => {
-      /* visualViewport shrinks when keyboard opens */
-      scrollToBottom();
-    };
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", onResize);
-      return () =>
-        window.visualViewport.removeEventListener("resize", onResize);
-    }
-  }, [mobileShowThread]);
-
-  /* ── Auto-focus input when thread opens on mobile ── */
-  useEffect(() => {
-    if (mobileShowThread && selectedId) {
-      /* slight delay to let layout settle before focusing */
-      const t = setTimeout(() => inputRef.current?.focus(), 120);
-      return () => clearTimeout(t);
-    }
-  }, [mobileShowThread, selectedId]);
 
   const filteredConvs = conversations.filter((c) =>
     c.artistName.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -422,6 +398,7 @@ export default function HirerMessages() {
     setMessageText("");
     const fileToSend = selectedFile;
     setSelectedFile(null);
+    setTimeout(() => inputRef.current?.focus(), 50);
     try {
       let attachment;
       if (fileToSend) {
@@ -456,250 +433,203 @@ export default function HirerMessages() {
     }
   };
 
-  /* Whether to hide the global FAB — hide it when a chat thread is open */
-  const hideFab = mobileShowThread && selectedId;
+  const hideFab = mobileShowThread && !!selectedId;
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
         * { box-sizing: border-box; }
 
-        /* ── Root ── */
+        .hm-hide-fab .sb-fab,
+        .hm-hide-fab .hs-fab { display: none !important; pointer-events: none !important; }
+
         .hm-root {
-          display: flex;
-          min-height: 100dvh;
+          display: flex; height: 100dvh; overflow: hidden;
+          font-family: 'Plus Jakarta Sans',sans-serif;
           background: ${C.bg};
-          font-family: 'Plus Jakarta Sans','Inter','Segoe UI',sans-serif;
         }
 
-        /* ── Main area ── */
         .hm-main {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          height: 100dvh;
-          overflow: hidden;
-          /* On desktop: offset for the fixed sidebar */
-          margin-left: 0;
+          flex: 1; display: flex; flex-direction: column;
+          height: 100dvh; overflow: hidden;
         }
         @media (min-width: 1024px) { .hm-main { margin-left: 242px; } }
 
-        /* ── Top bar ── */
+        /* ───────────────────────────────────────────────────────────────
+           TOP BAR
+           • Mobile, list view  : shown with 56px top pad (clears hamburger)
+           • Mobile, thread view: COMPLETELY HIDDEN — zero gap problem fixed.
+             The thread header has its own 56px top pad that handles spacing.
+           • Tablet+ (≥768px)   : always shown with normal 18px padding.
+        ─────────────────────────────────────────────────────────────── */
         .hm-topbar {
-          padding: 14px clamp(14px, 3vw, 24px);
+          padding: 56px clamp(14px,3vw,24px) 12px;
           border-bottom: 1px solid ${C.border};
           background: ${C.bg};
           flex-shrink: 0;
           display: flex;
           align-items: center;
           gap: 12px;
-          /* On mobile: give room for the hamburger button top-left */
-          padding-top: 56px;
         }
-        @media (min-width: 640px)  { .hm-topbar { padding-top: 18px; } }
-        @media (min-width: 1024px) { .hm-topbar { padding-top: 18px; } }
-
-        /* ── Body row (list + thread) ── */
-        .hm-body {
-          flex: 1;
-          display: flex;
-          overflow: hidden;
-          /* Mobile: full height for chat, use visual viewport */
-          height: 0;
-        }
-
-        /* ── Conversation list panel ── */
-        .hm-list {
-          width: 100%;
-          flex-shrink: 0;
-          display: flex;
-          flex-direction: column;
-          border-right: 1px solid ${C.border};
-          background: ${C.bg};
-          overflow: hidden;
-        }
-        /* Desktop: fixed width side panel */
+        /* Hide topbar on mobile when thread is open → removes the gap */
+        .hm-topbar.hm-topbar-thread { display: none; }
         @media (min-width: 768px) {
-          .hm-list {
-            width: clamp(240px, 28%, 300px);
-          }
+          .hm-topbar { padding: 18px clamp(14px,3vw,24px); }
+          .hm-topbar.hm-topbar-thread { display: flex; }
         }
-        /* Mobile: hide when thread is open */
-        .hm-list.hm-hidden-mobile { display: none; }
-        @media (min-width: 768px) { .hm-list.hm-hidden-mobile { display: flex; } }
+        @media (min-width: 1024px) { .hm-topbar { padding: 20px clamp(14px,3vw,28px); } }
 
-        /* ── Thread panel ── */
+        .hm-body { flex: 1; display: flex; overflow: hidden; height: 0; }
+
+        /* Conversation list */
+        .hm-list {
+          width: 100%; flex-shrink: 0;
+          display: flex; flex-direction: column;
+          border-right: 1px solid ${C.border};
+          background: ${C.bg}; overflow: hidden;
+        }
+        @media (min-width: 768px) { .hm-list { width: clamp(240px,28%,300px); } }
+        .hm-list.hm-hidden { display: none; }
+        @media (min-width: 768px) { .hm-list.hm-hidden { display: flex; } }
+
+        /* Thread panel */
         .hm-thread {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          min-width: 0;
-          /* Use visual viewport height so keyboard doesn't overlap input */
-          height: 100%;
+          flex: 1; display: flex; flex-direction: column;
+          overflow: hidden; min-width: 0; height: 100%;
         }
-        .hm-thread.hm-hidden-mobile { display: none; }
-        @media (min-width: 768px) { .hm-thread.hm-hidden-mobile { display: flex; } }
+        .hm-thread.hm-hidden { display: none; }
+        @media (min-width: 768px) { .hm-thread.hm-hidden { display: flex; } }
 
-        /* ── Message scroll area ── */
+        /* ───────────────────────────────────────────────────────────────
+           THREAD HEADER
+           • Mobile : 56px top pad so the back arrow clears the hamburger.
+             (Topbar is hidden on mobile thread view, so this is the only
+              element that needs the extra top space.)
+           • Tablet+: normal 13px top.
+        ─────────────────────────────────────────────────────────────── */
+        .hm-thread-header {
+          display: flex; align-items: center; gap: 11px;
+          padding: 56px clamp(14px,2.5vw,22px) 13px;
+          border-bottom: 1px solid ${C.border};
+          flex-shrink: 0; background: ${C.bg};
+        }
+        @media (min-width: 768px) {
+          .hm-thread-header { padding: 13px clamp(14px,2.5vw,22px); }
+        }
+
+        /* Back button — gold, goes to conversation list */
+        .hm-back {
+          display: flex; align-items: center; justify-content: center;
+          width: 34px; height: 34px; border-radius: 9px;
+          border: 1px solid rgba(201,169,97,0.22);
+          background: rgba(255,255,255,0.04); color: ${C.gold};
+          cursor: pointer; outline: none; flex-shrink: 0;
+          transition: background 0.14s, border-color 0.14s, transform 0.14s;
+        }
+        .hm-back:hover  { background: ${C.goldBg}; border-color: rgba(201,169,97,0.45); transform: translateX(-2px); }
+        .hm-back:active { transform: scale(0.94); }
+
+        /* Desktop-only back → browse artists */
+        .hm-back-desktop {
+          display: none; align-items: center; justify-content: center;
+          width: 34px; height: 34px; border-radius: 9px;
+          border: 1px solid ${C.border}; background: transparent;
+          color: ${C.text}; cursor: pointer; outline: none; flex-shrink: 0;
+          transition: border-color 0.14s, background 0.14s;
+        }
+        @media (min-width: 1024px) { .hm-back-desktop { display: flex; } }
+        .hm-back-desktop:hover { border-color: ${C.gold}; background: ${C.goldBg}; }
+
+        /* Messages scroll */
         .hm-messages {
-          flex: 1;
-          overflow-y: auto;
-          padding: 16px clamp(14px, 2.5vw, 24px);
-          -webkit-overflow-scrolling: touch;
-          overscroll-behavior: contain;
+          flex: 1; overflow-y: auto;
+          padding: 16px clamp(14px,2.5vw,24px);
+          -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
         }
 
-        /* ── Input bar ── */
+        /* Input bar */
         .hm-input-bar {
-          padding: 10px clamp(12px, 2vw, 20px);
+          padding: 10px clamp(12px,2vw,20px);
           border-top: 1px solid ${C.border};
-          display: flex;
-          gap: 7px;
-          align-items: flex-end;
-          flex-shrink: 0;
-          background: ${C.bg};
-          /* Stick to bottom above keyboard */
-          position: sticky;
-          bottom: 0;
+          display: flex; gap: 7px; align-items: flex-end;
+          flex-shrink: 0; background: ${C.bg};
+          position: sticky; bottom: 0;
         }
 
-        /* ── Conv item ── */
+        /* Conv item */
         .hm-conv-item {
-          width: 100%;
-          padding: 11px 12px;
-          display: flex;
-          gap: 11px;
-          align-items: flex-start;
-          border-radius: 10px;
-          cursor: pointer;
-          text-align: left;
-          margin-bottom: 3px;
-          outline: none;
-          transition: background 0.15s;
+          width: 100%; padding: 11px 12px;
+          display: flex; gap: 11px; align-items: flex-start;
+          border-radius: 10px; cursor: pointer;
+          text-align: left; margin-bottom: 3px;
+          outline: none; transition: background 0.15s;
         }
         .hm-conv-item:hover { background: ${C.selectedBg} !important; }
 
-        /* ── Scrollbars ── */
+        /* Scrollbar */
         .hm-scroll::-webkit-scrollbar { width: 3px; }
-        .hm-scroll::-webkit-scrollbar-track { background: transparent; }
         .hm-scroll::-webkit-scrollbar-thumb { background: rgba(201,169,97,0.18); border-radius: 4px; }
 
-        /* ── FAB override: hide when thread is open on mobile ── */
-        .hm-hide-fab .sb-fab,
-        .hm-hide-fab .hs-fab { display: none !important; }
-
-        /* ── Back button ── */
-        .hm-back-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 34px; height: 34px;
-          border-radius: 9px;
-          border: 1px solid ${C.border};
-          background: transparent;
-          color: ${C.text};
-          cursor: pointer;
-          outline: none;
-          flex-shrink: 0;
-          transition: border-color 0.15s, background 0.15s;
-        }
-        .hm-back-btn:hover { border-color: ${C.gold}; background: ${C.goldBg}; }
-
-        /* ── Input field ── */
+        /* Textarea */
         .hm-textarea {
-          flex: 1;
-          padding: 10px 13px;
-          background: ${C.card};
-          border: 1px solid ${C.border};
-          border-radius: 11px;
-          color: ${C.text};
-          font-size: 13.5px;
-          outline: none;
-          resize: none;
-          line-height: 1.5;
-          font-family: 'Plus Jakarta Sans',sans-serif;
-          transition: border-color 0.15s, box-shadow 0.15s;
-          max-height: 120px;
+          flex: 1; padding: 10px 13px;
+          background: ${C.card}; border: 1px solid ${C.border};
+          border-radius: 11px; color: ${C.text};
+          font-size: 13.5px; outline: none; resize: none;
+          line-height: 1.5; font-family: 'Plus Jakarta Sans',sans-serif;
+          transition: border-color 0.15s, box-shadow 0.15s; max-height: 120px;
         }
         .hm-textarea:focus { border-color: ${C.gold}; box-shadow: 0 0 0 2px ${C.goldGlow}; }
         .hm-textarea::placeholder { color: ${C.muted}; }
 
-        /* ── Send button ── */
-        .hm-send {
-          padding: 10px 13px;
-          border: none;
-          border-radius: 11px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          outline: none;
-          transition: opacity 0.15s, transform 0.15s;
-          flex-shrink: 0;
-        }
-        .hm-send:not(:disabled):hover { opacity: 0.88; transform: translateY(-1px); }
-        .hm-send:disabled { cursor: not-allowed; }
-
-        /* ── Attach button ── */
+        /* Attach */
         .hm-attach {
-          padding: 10px;
-          background: transparent;
-          border: 1px solid ${C.border};
-          border-radius: 10px;
-          color: ${C.muted};
-          display: flex;
-          align-items: center;
-          cursor: pointer;
-          outline: none;
-          flex-shrink: 0;
+          padding: 10px; background: transparent;
+          border: 1px solid ${C.border}; border-radius: 10px;
+          color: ${C.muted}; display: flex; align-items: center;
+          cursor: pointer; outline: none; flex-shrink: 0;
           transition: border-color 0.15s, color 0.15s;
         }
         .hm-attach:hover { border-color: ${C.gold}; color: ${C.gold}; }
 
-        /* ── Search input ── */
+        /* Send */
+        .hm-send {
+          padding: 10px 13px; border: none; border-radius: 11px;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; outline: none; flex-shrink: 0;
+          transition: opacity 0.15s, transform 0.15s;
+        }
+        .hm-send:not(:disabled):hover { opacity: 0.88; transform: translateY(-1px); }
+        .hm-send:disabled { cursor: not-allowed; }
+
+        /* Search */
         .hm-search {
-          width: 100%;
-          padding: 9px 12px 9px 33px;
-          background: ${C.card};
-          border: 1px solid ${C.border};
-          border-radius: 9px;
-          color: ${C.text};
-          font-size: 13px;
-          outline: none;
-          font-family: 'Plus Jakarta Sans',sans-serif;
+          width: 100%; padding: 9px 12px 9px 33px;
+          background: ${C.card}; border: 1px solid ${C.border};
+          border-radius: 9px; color: ${C.text}; font-size: 13px;
+          outline: none; font-family: 'Plus Jakarta Sans',sans-serif;
           transition: border-color 0.15s;
         }
         .hm-search:focus { border-color: ${C.gold}; }
         .hm-search::placeholder { color: ${C.muted}; }
       `}</style>
 
-      {/* Wrapper — adds class to hide FAB when thread is open */}
       <div className={`hm-root${hideFab ? " hm-hide-fab" : ""}`}>
         <HirerSidebar />
 
         <div className="hm-main">
-          {/* ── Top bar ── */}
-          <div className="hm-topbar">
-            {/* Back button: on mobile shows when thread is open */}
-            {mobileShowThread && (
-              <button
-                className="hm-back-btn md:hidden"
-                onClick={() => setMobileShowThread(false)}
-              >
-                <ArrowLeft size={17} />
-              </button>
-            )}
-            {/* Desktop back to browse */}
+          {/* TOP BAR — hidden on mobile when thread is open */}
+          <div
+            className={`hm-topbar${mobileShowThread ? " hm-topbar-thread" : ""}`}
+          >
             <button
-              className="hm-back-btn hidden lg:flex"
+              className="hm-back-desktop"
               onClick={() => navigate("/hirer/browse-artists")}
+              aria-label="Browse artists"
             >
-              <ArrowLeft size={17} />
+              <ArrowLeft size={17} strokeWidth={2.1} />
             </button>
-
             <div style={{ flex: 1, minWidth: 0 }}>
               <h1
                 style={{
@@ -707,31 +637,22 @@ export default function HirerMessages() {
                   fontSize: "clamp(17px,3.5vw,21px)",
                   fontWeight: 700,
                   color: C.text,
-                  fontFamily: "'Plus Jakarta Sans',sans-serif",
                 }}
               >
-                {mobileShowThread && selected
-                  ? selected.artistName
-                  : "Messages"}
+                Messages
               </h1>
-              {(!mobileShowThread || !selected) && (
-                <p style={{ margin: 0, fontSize: 12.5, color: C.muted }}>
-                  Connect with talented artists
-                </p>
-              )}
+              <p style={{ margin: 0, fontSize: 12.5, color: C.muted }}>
+                Connect with talented artists
+              </p>
             </div>
           </div>
 
-          {/* ── Body ── */}
           <div className="hm-body">
-            {/* ── Conversation list ── */}
-            <div
-              className={`hm-list${mobileShowThread ? " hm-hidden-mobile" : ""}`}
-            >
-              {/* Search */}
+            {/* CONVERSATION LIST */}
+            <div className={`hm-list${mobileShowThread ? " hm-hidden" : ""}`}>
               <div
                 style={{
-                  padding: "11px 11px",
+                  padding: "11px",
                   borderBottom: `1px solid ${C.border}`,
                   flexShrink: 0,
                 }}
@@ -758,11 +679,9 @@ export default function HirerMessages() {
                   />
                 </div>
               </div>
-
-              {/* List */}
               <div
                 className="hm-scroll"
-                style={{ flex: 1, overflowY: "auto", padding: "8px 8px" }}
+                style={{ flex: 1, overflowY: "auto", padding: "8px" }}
               >
                 {filteredConvs.length === 0 ? (
                   <p
@@ -788,44 +707,48 @@ export default function HirerMessages() {
               </div>
             </div>
 
-            {/* ── Chat thread ── */}
+            {/* CHAT THREAD */}
             <div
-              className={`hm-thread${!mobileShowThread ? " hm-hidden-mobile" : ""}`}
+              className={`hm-thread${!mobileShowThread ? " hm-hidden" : ""}`}
             >
               {selected ? (
                 <>
-                  {/* Thread header */}
-                  <div
-                    style={{
-                      padding: "12px clamp(14px,2.5vw,22px)",
-                      borderBottom: `1px solid ${C.border}`,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 11,
-                      flexShrink: 0,
-                    }}
-                  >
+                  {/* Thread header — back arrow returns to list, NOT navigate(-1) */}
+                  <div className="hm-thread-header">
+                    <button
+                      className="hm-back"
+                      onClick={() => setMobileShowThread(false)}
+                      aria-label="Back to messages"
+                    >
+                      <ArrowLeft size={17} strokeWidth={2.2} />
+                    </button>
                     <Avatar
                       title={selected.initials}
                       size={36}
                       src={selected.avatar}
                     />
-                    <div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <p
                         style={{
                           margin: 0,
                           fontSize: 14,
                           fontWeight: 700,
                           color: C.text,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {selected.artistName}
+                      </p>
+                      <p style={{ margin: 0, fontSize: 11.5, color: C.muted }}>
+                        Messages
                       </p>
                     </div>
                   </div>
 
                   {/* Messages */}
-                  <div ref={threadRef} className="hm-messages hm-scroll">
+                  <div className="hm-messages hm-scroll">
                     {currentMessages.length === 0 ? (
                       <div
                         style={{
@@ -838,7 +761,6 @@ export default function HirerMessages() {
                           size={40}
                           style={{
                             opacity: 0.25,
-                            marginBottom: 12,
                             display: "block",
                             margin: "0 auto 12px",
                           }}
@@ -938,7 +860,6 @@ export default function HirerMessages() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* Attached file preview */}
                   {selectedFile && (
                     <div
                       style={{
@@ -967,7 +888,7 @@ export default function HirerMessages() {
                     </div>
                   )}
 
-                  {/* ── Input bar — keyboard-aware via sticky bottom ── */}
+                  {/* Input bar */}
                   <div className="hm-input-bar">
                     <button
                       type="button"
@@ -994,21 +915,17 @@ export default function HirerMessages() {
                       value={messageText}
                       onChange={(e) => {
                         setMessageText(e.target.value);
-                        /* Auto-grow */
                         e.target.style.height = "auto";
                         e.target.style.height =
                           Math.min(e.target.scrollHeight, 120) + "px";
                       }}
                       onKeyDown={handleKeyDown}
-                      onFocus={() => {
-                        setInputFocused(true);
-                        /* Scroll to bottom when keyboard opens */
-                        setTimeout(scrollToBottom, 200);
-                      }}
-                      onBlur={() => setInputFocused(false)}
+                      onFocus={() => setTimeout(scrollToBottom, 200)}
                       placeholder="Type your message…"
                       rows={1}
                       className="hm-textarea"
+                      enterKeyHint="send"
+                      autoComplete="off"
                     />
 
                     <button

@@ -1452,7 +1452,7 @@ export default function Profile() {
             <button
               onClick={() => navigate("/artist/dashboard")}
               className="flex items-center gap-1 mb-3 border-0 bg-transparent outline-none cursor-pointer transition-all"
-              style={{ color: C.lightText }}
+              style={{ color: C.lightText, marginTop: "22px" }}
             >
               <ChevronLeft size={16} strokeWidth={2} />
             </button>

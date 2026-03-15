@@ -11,7 +11,7 @@ const Landing = () => {
             <img
               src="/logo.png"
               alt="Logo"
-              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16"
+              className="w-24 h-24 sm:w-20 sm:h-20 md:w-24 md:h-24"
             />
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal text-[#e8e9eb] tracking-tight text-center"></h1>
           </div>

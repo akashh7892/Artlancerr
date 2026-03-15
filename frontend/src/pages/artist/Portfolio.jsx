@@ -175,6 +175,7 @@ export default function Portfolio() {
               style={{
                 background: "rgba(255,255,255,0.04)",
                 color: C.darkText,
+                marginTop: "18px",
               }}
             >
               <ArrowLeft size={18} strokeWidth={2} />
@@ -186,6 +187,7 @@ export default function Portfolio() {
                 style={{
                   color: C.darkText,
                   fontFamily: "'Playfair Display', serif",
+                  marginTop: "18px",
                 }}
               >
                 Portfolio

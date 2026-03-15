@@ -179,6 +179,7 @@ export default function Dashboard() {
       icon: MessageSquare,
       iconBg: "rgba(251,191,36,0.12)",
       iconColor: "#fbbf24",
+      path: "/artist/message",
     },
   ];
 
@@ -509,7 +510,7 @@ export default function Dashboard() {
                   style={{ color: C.lightText }}
                 >
                   {profilePct === 100
-                    ? "🎉 Your profile is complete!"
+                    ? "Your profile is complete!"
                     : profilePct >= 80
                       ? "Almost there! A few fields left."
                       : profilePct >= 50

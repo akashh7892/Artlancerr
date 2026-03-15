@@ -135,12 +135,12 @@ p{margin:0;}img{display:block;max-width:100%;}
 
 /* NAV */
 .hd-nav{position:sticky;top:0;z-index:200;background:rgba(18,20,26,0.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(201,169,97,0.12);}
-.hd-nav-inner{max-width:1280px;margin:0 auto;height:52px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
-@media(min-width:480px){.hd-nav-inner{height:56px;padding:0 18px;}}
-@media(min-width:768px){.hd-nav-inner{height:60px;padding:0 28px;gap:14px;}}
+.hd-nav-inner{max-width:1280px;margin:0 auto;height:72px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+@media(min-width:480px){.hd-nav-inner{height:78px;padding:0 18px;}}
+@media(min-width:768px){.hd-nav-inner{height:84px;padding:0 28px;gap:14px;}}
 @media(min-width:1024px){.hd-nav-inner{padding:0 40px;}}
 .hd-logo{display:flex;align-items:center;gap:7px;flex-shrink:0;}
-.hd-logo-icon{width:28px;height:28px;border-radius:7px;flex-shrink:0;background:transparent;display:flex;align-items:center;justify-content:center;}
+.hd-logo-icon{width:48px;height:32px;border-radius:7px;flex-shrink:0;background:transparent;display:flex;align-items:center;justify-content:center;}
 .hd-logo-img{width:100%;height:100%;object-fit:contain;border-radius:inherit;}
 .hd-logo-text{font-size:15px;font-weight:800;color:#e8e9eb;font-family:'Playfair Display',serif;letter-spacing:-0.01em;white-space:nowrap;}
 @media(min-width:768px){.hd-logo-icon{width:32px;height:32px;}.hd-logo-text{font-size:17px;}}
@@ -612,7 +612,7 @@ function PostRequirementModal({ role, navigate, onClose }) {
                   onClick={() => setStep(2)}
                   style={{ flex: 2, justifyContent: "center" }}
                 >
-                Preview & Post
+                  Preview & Post
                 </button>
               </div>
             </div>
@@ -780,7 +780,7 @@ function ArtistView({ navigate }) {
             className="btn-gold"
             onClick={() => navigate("/auth/artist/signup")}
           >
-          Join Free & Apply
+            Join Free & Apply
           </button>
           <button
             className="btn-outline"
@@ -1057,7 +1057,7 @@ function HirerView({ navigate }) {
           action="Sign in for full access"
           onAction={() => navigate("/auth/hirer/login")}
         >
-          🎭 Browse Verified Artists
+          Browse Verified Artists
         </ST>
 
         <div className="search-row">
@@ -1324,7 +1324,7 @@ export default function HomeDummy() {
                 src="/logo.png"
                 alt="Flip Logo"
                 className="hd-logo-img"
-                style={{ width: "60px", height: "60px" }}
+                style={{ width: "75px", height: "48px" }}
               />
             </div>
             <span className="hd-logo-text"></span>
@@ -1344,7 +1344,7 @@ export default function HomeDummy() {
                   color: role === r ? "#12141a" : C.muted,
                 }}
               >
-                {r === "artist" ? <Star size={10} /> : <Briefcase size={10} />}
+                {r === "artist"}
                 {r.charAt(0).toUpperCase() + r.slice(1)}
               </button>
             ))}

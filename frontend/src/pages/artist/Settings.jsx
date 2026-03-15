@@ -19,6 +19,7 @@ import {
   Mail,
   Phone,
   Shield,
+  LogOut,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 import {
@@ -29,9 +30,8 @@ import {
   uploadFile,
 } from "../../services/api";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const COLORS = {
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const C = {
   bg: "#1a1d24",
   card: "#20242d",
   border: "#2e3340",
@@ -138,9 +138,6 @@ const SOCIAL_LINKS = [
   { key: "website", label: "Personal Website", icon: Globe, prefix: "" },
 ];
 
-const RECENT_TRANSACTIONS = [];
-const ACTIVE_SESSIONS = [];
-
 const ART_CATEGORIES = [
   "Film Director",
   "Actor / Actress",
@@ -183,18 +180,13 @@ const PASSWORD_FIELDS = [
   },
 ];
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
+// ─── Small components ─────────────────────────────────────────────────────────
 function Toggle({ enabled, onChange }) {
   return (
     <button
       onClick={() => onChange(!enabled)}
-      className="relative inline-flex items-center rounded-full transition-all duration-300 focus:outline-none flex-shrink-0"
-      style={{
-        width: 44,
-        height: 24,
-        background: enabled ? COLORS.gold : COLORS.border,
-      }}
+      className="relative inline-flex items-center rounded-full focus:outline-none flex-shrink-0 transition-all duration-300"
+      style={{ width: 44, height: 24, background: enabled ? C.gold : C.border }}
     >
       <span
         className="inline-block rounded-full transition-transform duration-300"
@@ -209,7 +201,7 @@ function Toggle({ enabled, onChange }) {
   );
 }
 
-function FieldInput({
+function Field({
   label,
   value,
   onChange,
@@ -220,15 +212,15 @@ function FieldInput({
   return (
     <div>
       {label && (
-        <label className="block text-sm mb-1.5" style={{ color: COLORS.light }}>
+        <label className="block text-sm mb-1.5" style={{ color: C.light }}>
           {label}
         </label>
       )}
       <div className="relative">
         {Icon && (
           <span
-            className="absolute left-3 top-1/2 -translate-y-1/2"
-            style={{ color: COLORS.muted }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ color: C.muted }}
           >
             <Icon size={16} />
           </span>
@@ -238,45 +230,42 @@ function FieldInput({
           value={value}
           onChange={(e) => onChange && onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full py-2.5 rounded-lg text-sm outline-none transition-all"
+          className="w-full py-[11px] rounded-lg text-sm outline-none transition-all"
           style={{
             paddingLeft: Icon ? 36 : 14,
             paddingRight: 14,
-            background: COLORS.bg,
-            border: `1px solid ${COLORS.border}`,
-            color: COLORS.light,
-            caretColor: COLORS.gold,
+            background: C.bg,
+            border: `1px solid ${C.border}`,
+            color: C.light,
+            caretColor: C.gold,
           }}
-          onFocus={(e) => (e.target.style.borderColor = COLORS.gold)}
-          onBlur={(e) => (e.target.style.borderColor = COLORS.border)}
+          onFocus={(e) => (e.target.style.borderColor = C.gold)}
+          onBlur={(e) => (e.target.style.borderColor = C.border)}
         />
       </div>
     </div>
   );
 }
 
-function SectionCard({ title, description, icon: Icon, children }) {
+function Card({ title, description, icon: Icon, children }) {
   return (
     <div
       className="rounded-xl p-4 sm:p-6"
-      style={{ background: COLORS.card, border: `1px solid ${COLORS.border}` }}
+      style={{ background: C.card, border: `1px solid ${C.border}` }}
     >
       <div className="flex items-center gap-3 mb-5">
         <div
           className="p-2 rounded-lg flex-shrink-0"
-          style={{ background: `${COLORS.gold}18` }}
+          style={{ background: `${C.gold}18` }}
         >
-          <Icon size={18} style={{ color: COLORS.gold }} />
+          <Icon size={18} style={{ color: C.gold }} />
         </div>
         <div className="min-w-0">
-          <h3
-            className="font-semibold text-base"
-            style={{ color: COLORS.light }}
-          >
+          <h3 className="font-semibold text-base" style={{ color: C.light }}>
             {title}
           </h3>
           {description && (
-            <p className="text-xs mt-0.5" style={{ color: COLORS.muted }}>
+            <p className="text-xs mt-0.5" style={{ color: C.muted }}>
               {description}
             </p>
           )}
@@ -287,18 +276,20 @@ function SectionCard({ title, description, icon: Icon, children }) {
   );
 }
 
-function Toast({ message, visible }) {
+function SaveToast({ message, visible }) {
   return (
     <div
-      className="fixed bottom-4 right-4 left-4 sm:left-auto sm:right-6 sm:bottom-6 flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium z-50 transition-all duration-300"
+      className="fixed z-50 flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300"
       style={{
-        background: COLORS.gold,
+        bottom: 20,
+        left: 16,
+        right: 16,
+        background: C.gold,
         color: "#1a1d24",
-        transform: visible ? "translateY(0)" : "translateY(120px)",
+        transform: visible ? "translateY(0)" : "translateY(140px)",
         opacity: visible ? 1 : 0,
-        boxShadow: "0 4px 24px rgba(201,169,97,0.3)",
+        boxShadow: "0 6px 28px rgba(201,169,97,0.35)",
         pointerEvents: visible ? "auto" : "none",
-        maxWidth: "calc(100vw - 32px)",
       }}
     >
       <Check size={16} className="flex-shrink-0" />
@@ -307,14 +298,15 @@ function Toast({ message, visible }) {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-
+// ─── Main component ───────────────────────────────────────────────────────────
 export default function ArtistSettings() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState("profile");
   const [toast, setToast] = useState({ visible: false, message: "" });
+  const [twoFA, setTwoFA] = useState(false);
+  const [loginAlerts, setLoginAlerts] = useState(true);
 
   const [profile, setProfile] = useState({
     name: "",
@@ -331,8 +323,9 @@ export default function ArtistSettings() {
     artCategory: "Film Director",
     experience: "0-1 year",
   });
+  const setP = (k, v) => setProfile((p) => ({ ...p, [k]: v }));
 
-  const [notifications, setNotifications] = useState({
+  const [notifs, setNotifs] = useState({
     emailPromos: true,
     emailMessages: true,
     emailPayments: true,
@@ -347,19 +340,12 @@ export default function ArtistSettings() {
     marketingEmails: false,
   });
 
-  const [passwords, setPasswords] = useState({
-    current: "",
-    newPass: "",
-    confirm: "",
-  });
-  const [showPasswords, setShowPasswords] = useState({
+  const [pw, setPw] = useState({ current: "", newPass: "", confirm: "" });
+  const [showPw, setShowPw] = useState({
     current: false,
     newPass: false,
     confirm: false,
   });
-  const [twoFA, setTwoFA] = useState(false);
-  const [loginAlerts, setLoginAlerts] = useState(true);
-
   const [payment, setPayment] = useState({
     method: "paypal",
     paypalEmail: "",
@@ -370,102 +356,80 @@ export default function ArtistSettings() {
     minimumPayout: "500",
     payoutSchedule: "Weekly (every Friday)",
   });
+  const setPay = (k, v) => setPayment((p) => ({ ...p, [k]: v }));
 
   useEffect(() => {
-    const localUser = getUser();
-    if (localUser) {
-      setProfile((prev) => ({
-        ...prev,
-        name: localUser.name || prev.name,
-        email: localUser.email || prev.email,
+    const lu = getUser();
+    if (lu)
+      setProfile((p) => ({
+        ...p,
+        name: lu.name || p.name,
+        email: lu.email || p.email,
       }));
-    }
     (async () => {
       try {
-        const data = await artistAPI.getProfile();
-        setProfile((prev) => ({
-          ...prev,
-          name: data.name || prev.name,
-          username: data.username || prev.username,
-          email: data.email || prev.email,
-          phone: data.phone || "",
-          location: data.location || "",
-          bio: data.bio || "",
-          website: data.website || "",
-          instagram: data.instagram || "",
-          twitter: data.twitter || "",
-          youtube: data.youtube || "",
-          avatar: data.avatar || null,
-          artCategory: data.artCategory || prev.artCategory,
-          experience: data.experience || prev.experience,
+        const d = await artistAPI.getProfile();
+        setProfile((p) => ({
+          ...p,
+          name: d.name || p.name,
+          username: d.username || p.username,
+          email: d.email || p.email,
+          phone: d.phone || "",
+          location: d.location || "",
+          bio: d.bio || "",
+          website: d.website || "",
+          instagram: d.instagram || "",
+          twitter: d.twitter || "",
+          youtube: d.youtube || "",
+          avatar: d.avatar || null,
+          artCategory: d.artCategory || p.artCategory,
+          experience: d.experience || p.experience,
         }));
-        if (data.notifications)
-          setNotifications((prev) => ({ ...prev, ...data.notifications }));
-      } catch (error) {
-        console.error("Failed to load artist profile", error);
+        if (d.notifications) setNotifs((p) => ({ ...p, ...d.notifications }));
+      } catch (e) {
+        console.error(e);
       }
     })();
   }, []);
 
-  const showToast = (msg) => {
+  const flash = (msg) => {
     setToast({ visible: true, message: msg });
     setTimeout(() => setToast({ visible: false, message: "" }), 3000);
   };
 
-  const handleUpdateProfile = (k, v) => setProfile((p) => ({ ...p, [k]: v }));
-  const handleToggleNotif = (k) =>
-    setNotifications((p) => ({ ...p, [k]: !p[k] }));
-  const handleUpdatePassword = (k, v) =>
-    setPasswords((p) => ({ ...p, [k]: v }));
-  const handleToggleShowPw = (k) =>
-    setShowPasswords((p) => ({ ...p, [k]: !p[k] }));
-  const handleUpdatePayment = (k, v) => setPayment((p) => ({ ...p, [k]: v }));
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+  };
 
-  const handleAvatarChange = async (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    if (!String(file.type || "").startsWith("image/")) {
-      showToast("Please select an image file");
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !file.type.startsWith("image/")) {
+      flash("Please select an image file");
       return;
     }
-
     try {
-      const uploaded = await uploadFile(file, {
+      const up = await uploadFile(file, {
         bucket: "profile-images",
         type: "profile",
         fieldName: "file",
       });
-      const updated = await artistAPI.updateProfile({ avatar: uploaded.url });
-      setProfile((prev) => ({ ...prev, avatar: updated.avatar || uploaded.url }));
-
-      const localUser = getUser();
-      if (localUser) {
-        setUser({ ...localUser, avatar: updated.avatar || uploaded.url });
-      }
-
-      showToast("Profile photo updated");
-    } catch (error) {
-      showToast(error.message || "Failed to upload profile photo");
+      const upd = await artistAPI.updateProfile({ avatar: up.url });
+      setP("avatar", upd.avatar || up.url);
+      const lu = getUser();
+      if (lu) setUser({ ...lu, avatar: upd.avatar || up.url });
+      flash("Profile photo updated");
+    } catch (e) {
+      flash(e.message || "Failed to upload photo");
     }
   };
 
-  const handlePasswordSave = () => {
-    (async () => {
-      try {
-        await authAPI.changePassword(passwords.current, passwords.newPass);
-        showToast("Password updated successfully");
-        setPasswords({ current: "", newPass: "", confirm: "" });
-      } catch (error) {
-        showToast(error.message || "Could not update password");
-      }
-    })();
-  };
-
-  const handleSaveChanges = async () => {
+  const handleSave = async () => {
     try {
       if (activeTab === "profile") {
-        const updated = await artistAPI.updateProfile({
+        const upd = await artistAPI.updateProfile({
           name: profile.name,
           username: profile.username,
           phone: profile.phone,
@@ -478,278 +442,418 @@ export default function ArtistSettings() {
           artCategory: profile.artCategory,
           experience: profile.experience,
         });
-        const localUser = getUser();
-        if (localUser)
+        const lu = getUser();
+        if (lu)
           setUser({
-            ...localUser,
-            name: updated?.name || profile.name,
-            email: updated?.email || localUser.email,
+            ...lu,
+            name: upd?.name || profile.name,
+            email: upd?.email || lu.email,
           });
       } else if (activeTab === "notifications") {
-        await artistAPI.updateProfile({ notifications });
+        await artistAPI.updateProfile({ notifications: notifs });
       }
-      showToast("Settings saved successfully");
-    } catch (error) {
-      showToast(error.message || "Failed to save settings");
+      flash("Settings saved successfully");
+    } catch (e) {
+      flash(e.message || "Failed to save settings");
     }
   };
 
-  const isPasswordSaveDisabled =
-    !passwords.current ||
-    !passwords.newPass ||
-    passwords.newPass !== passwords.confirm;
+  const handlePasswordSave = async () => {
+    try {
+      await authAPI.changePassword(pw.current, pw.newPass);
+      flash("Password updated successfully");
+      setPw({ current: "", newPass: "", confirm: "" });
+    } catch (e) {
+      flash(e.message || "Could not update password");
+    }
+  };
 
-  const passwordStrength = (() => {
-    const len = passwords.newPass.length;
-    if (len === 0) return { bars: 0, label: "", color: COLORS.border };
-    if (len < 6) return { bars: 1, label: "Too short", color: "#f87171" };
-    if (len < 9) return { bars: 2, label: "Fair", color: COLORS.gold };
-    if (len < 12) return { bars: 3, label: "Good", color: COLORS.gold };
+  const pwDisabled = !pw.current || !pw.newPass || pw.newPass !== pw.confirm;
+  const pwStrength = (() => {
+    const n = pw.newPass.length;
+    if (n === 0) return { bars: 0, label: "", color: C.border };
+    if (n < 6) return { bars: 1, label: "Too short", color: "#f87171" };
+    if (n < 9) return { bars: 2, label: "Fair", color: C.gold };
+    if (n < 12) return { bars: 3, label: "Good", color: C.gold };
     return { bars: 4, label: "Strong", color: "#4ade80" };
   })();
 
-  const selectStyle = {
-    background: COLORS.bg,
-    border: `1px solid ${COLORS.border}`,
-    color: COLORS.light,
+  const selSt = {
+    background: C.bg,
+    border: `1px solid ${C.border}`,
+    color: C.light,
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
-
   return (
-    <div className="min-h-screen flex" style={{ background: COLORS.bg }}>
-      {/*
-        Sidebar is fully self-contained:
-        - Renders its own hamburger toggle button (fixed top-4 left-4) on mobile
-        - Renders its own backdrop overlay when open
-        - Manages its own open/close state internally
-        No wrapper, no external state needed here.
-      */}
-      <Sidebar />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        * { box-sizing: border-box; }
+        .st-wrap { font-family:'Plus Jakarta Sans',sans-serif; }
 
-      {/* Main content — offset by Sidebar's w-[248px] on desktop */}
-      <div className="flex-1 min-w-0 lg:ml-[248px] flex flex-col">
-        <div className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-          {/* Header — pt-14 on mobile clears the Sidebar's floating hamburger button */}
-          <div className="flex items-center gap-3 mb-5 lg:mb-8 pt-14 lg:pt-0">
-            <button
-              onClick={() => navigate("/artist/dashboard")}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
-              style={{ color: COLORS.light }}
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <div>
-              <h1
-                className="text-xl sm:text-3xl font-semibold"
-                style={{ color: COLORS.light }}
+        /* ───────────────────────────────────────────
+           TAB BAR
+           Mobile : horizontal scrollable pill strip
+           Desktop: hidden (side nav takes over)
+        ─────────────────────────────────────────── */
+        .st-tab-strip {
+          display: flex;
+          gap: 6px;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          padding-bottom: 3px;
+          margin-bottom: 18px;
+        }
+        .st-tab-strip::-webkit-scrollbar { display: none; }
+
+        .st-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          border-radius: 10px;
+          font-size: 13px;
+          font-weight: 500;
+          white-space: nowrap;
+          flex-shrink: 0;
+          cursor: pointer;
+          outline: none;
+          border: 1px solid transparent;
+          transition: background 0.13s, color 0.13s, border-color 0.13s;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* ───────────────────────────────────────────
+           SIDE NAV — desktop only
+        ─────────────────────────────────────────── */
+        .st-sidenav   { display: none; }
+        @media (min-width: 1024px) {
+          .st-sidenav    { display: block; }
+          .st-tab-strip  { display: none;  }
+        }
+
+        /* ───────────────────────────────────────────
+           HEADER — top padding on mobile clears the
+           floating hamburger button (≈ 56px)
+        ─────────────────────────────────────────── */
+        .st-hdr { padding-top: 56px; }
+        @media (min-width: 1024px) { .st-hdr { padding-top: 0; } }
+
+        /* ───────────────────────────────────────────
+           LOGOUT BUTTON (mobile bottom / desktop nav)
+        ─────────────────────────────────────────── */
+        .st-logout {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
+          width: 100%;
+          padding: 12px 16px;
+          border-radius: 11px;
+          border: 1px solid rgba(248,113,113,0.25);
+          background: rgba(248,113,113,0.07);
+          color: #f87171;
+          font-size: 13.5px;
+          font-weight: 600;
+          cursor: pointer;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          transition: background 0.14s, border-color 0.14s;
+        }
+        .st-logout:hover {
+          background: rgba(248,113,113,0.14);
+          border-color: rgba(248,113,113,0.5);
+        }
+
+        /* Mobile logout wrapper — hidden on desktop */
+        .st-logout-mobile { display: block; }
+        @media (min-width: 1024px) { .st-logout-mobile { display: none; } }
+
+        /* Select options */
+        select option { background: #20242d; color: #e8e9eb; }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+      `}</style>
+
+      <div className="min-h-screen flex st-wrap" style={{ background: C.bg }}>
+        <Sidebar />
+
+        <div className="flex-1 min-w-0 lg:ml-[248px]">
+          <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+            {/* ── Header ── */}
+            <div className="st-hdr flex items-center gap-3 mb-5 lg:mb-7">
+              <button
+                onClick={() => navigate("/artist/dashboard")}
+                className="p-2 rounded-lg flex-shrink-0 transition-colors"
+                style={{ color: C.light, background: "rgba(255,255,255,0.04)" }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "rgba(255,255,255,0.09)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "rgba(255,255,255,0.04)")
+                }
               >
-                Settings
-              </h1>
-              <p
-                className="text-xs sm:text-sm mt-0.5"
-                style={{ color: COLORS.muted }}
-              >
-                Manage your account preferences
-              </p>
+                <ArrowLeft size={20} />
+              </button>
+              <div>
+                <h1
+                  className="text-xl sm:text-2xl font-semibold"
+                  style={{ color: C.light }}
+                >
+                  Settings
+                </h1>
+                <p
+                  className="text-xs sm:text-sm mt-0.5"
+                  style={{ color: C.muted }}
+                >
+                  Manage your account preferences
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* Layout */}
-          <div className="flex gap-5 lg:gap-6">
-            {/* Desktop settings nav */}
-            <div className="hidden lg:block w-48 xl:w-52 flex-shrink-0">
-              <nav
-                className="rounded-xl p-2 sticky top-8"
-                style={{
-                  background: COLORS.card,
-                  border: `1px solid ${COLORS.border}`,
-                }}
-              >
-                {TABS.map(({ id, label, icon: Icon }) => {
-                  const isActive = activeTab === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => setActiveTab(id)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all mb-1 last:mb-0"
-                      style={{
-                        background: isActive
-                          ? `${COLORS.gold}18`
-                          : "transparent",
-                        color: isActive ? COLORS.gold : COLORS.muted,
-                        fontWeight: isActive ? 600 : 400,
-                      }}
-                    >
-                      <Icon size={16} />
-                      {label}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-
-            {/* Tab Content */}
-            <div className="flex-1 min-w-0 space-y-5">
-              {/* ════ PROFILE ════ */}
-              {activeTab === "profile" && (
-                <>
-                  {/* Avatar card */}
-                  <div
-                    className="rounded-xl p-6"
+            {/* ── Mobile tab strip ── */}
+            <div className="st-tab-strip">
+              {TABS.map(({ id, label, icon: Icon }) => {
+                const a = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    className="st-pill"
                     style={{
-                      background: COLORS.card,
-                      border: `1px solid ${COLORS.border}`,
+                      background: a ? `${C.gold}18` : C.card,
+                      borderColor: a ? C.gold : C.border,
+                      color: a ? C.gold : C.muted,
+                      fontWeight: a ? 600 : 400,
                     }}
                   >
-                    <div className="flex items-center gap-5">
-                      <div className="relative">
-                        <div
-                          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold"
-                          style={{
-                            background: `${COLORS.gold}25`,
-                            color: COLORS.gold,
-                            border: `2px solid ${COLORS.gold}40`,
-                          }}
-                        >
-                          {profile.avatar ? (
-                            <img
-                              src={profile.avatar}
-                              alt="Avatar"
-                              className="w-full h-full rounded-full object-cover"
-                            />
-                          ) : (
-                            profile.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                          )}
+                    <Icon size={14} />
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* ── Layout ── */}
+            <div className="flex gap-5 lg:gap-6 items-start">
+              {/* Desktop side nav */}
+              <div className="st-sidenav w-48 xl:w-52 flex-shrink-0 sticky top-8">
+                <nav
+                  className="rounded-xl p-2"
+                  style={{
+                    background: C.card,
+                    border: `1px solid ${C.border}`,
+                  }}
+                >
+                  {TABS.map(({ id, label, icon: Icon }) => {
+                    const a = activeTab === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => setActiveTab(id)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all mb-1 last:mb-0"
+                        style={{
+                          background: a ? `${C.gold}18` : "transparent",
+                          color: a ? C.gold : C.muted,
+                          fontWeight: a ? 600 : 400,
+                        }}
+                      >
+                        <Icon size={16} />
+                        {label}
+                      </button>
+                    );
+                  })}
+                  {/* Logout inside desktop nav */}
+                  <div
+                    style={{
+                      borderTop: `1px solid ${C.border}`,
+                      marginTop: 8,
+                      paddingTop: 8,
+                    }}
+                  >
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all"
+                      style={{
+                        color: "#f87171",
+                        background: "transparent",
+                        fontFamily: "'Plus Jakarta Sans',sans-serif",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background =
+                          "rgba(248,113,113,0.09)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background = "transparent")
+                      }
+                    >
+                      <LogOut size={16} /> Log Out
+                    </button>
+                  </div>
+                </nav>
+              </div>
+
+              {/* ── Content ── */}
+              <div className="flex-1 min-w-0 space-y-4 sm:space-y-5">
+                {/* ════════════ PROFILE ════════════ */}
+                {activeTab === "profile" && (
+                  <>
+                    {/* Avatar */}
+                    <div
+                      className="rounded-xl p-4 sm:p-6"
+                      style={{
+                        background: C.card,
+                        border: `1px solid ${C.border}`,
+                      }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="relative flex-shrink-0">
+                          <div
+                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden flex items-center justify-center text-xl sm:text-2xl font-bold"
+                            style={{
+                              background: `${C.gold}25`,
+                              color: C.gold,
+                              border: `2px solid ${C.gold}40`,
+                            }}
+                          >
+                            {profile.avatar ? (
+                              <img
+                                src={profile.avatar}
+                                alt="avatar"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              (profile.name || "?")
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                            )}
+                          </div>
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                            style={{ background: C.gold }}
+                          >
+                            <Camera size={13} style={{ color: "#1a1d24" }} />
+                          </button>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarChange}
+                            className="hidden"
+                          />
                         </div>
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center hover:scale-110 transition-all"
-                          style={{ background: COLORS.gold }}
-                        >
-                          <Camera size={13} style={{ color: "#1a1d24" }} />
-                        </button>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleAvatarChange}
-                          className="hidden"
-                        />
-                      </div>
-                      <div>
-                        <h3
-                          className="font-semibold text-base"
-                          style={{ color: COLORS.light }}
-                        >
-                          {profile.name}
-                        </h3>
-                        <p className="text-sm" style={{ color: COLORS.muted }}>
-                          @{profile.username} · {profile.artCategory}
-                        </p>
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="mt-2 text-xs px-3 py-1 rounded-lg hover:opacity-80 transition-all"
-                          style={{
-                            background: `${COLORS.gold}18`,
-                            color: COLORS.gold,
-                            border: `1px solid ${COLORS.gold}33`,
-                          }}
-                        >
-                          Change Photo
-                        </button>
+                        <div>
+                          <h3
+                            className="font-semibold text-sm sm:text-base"
+                            style={{ color: C.light }}
+                          >
+                            {profile.name || "Your Name"}
+                          </h3>
+                          <p
+                            className="text-xs sm:text-sm mt-0.5"
+                            style={{ color: C.muted }}
+                          >
+                            @{profile.username || "username"} ·{" "}
+                            {profile.artCategory}
+                          </p>
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="mt-2 text-xs px-3 py-1 rounded-lg transition-all hover:opacity-80"
+                            style={{
+                              background: `${C.gold}18`,
+                              color: C.gold,
+                              border: `1px solid ${C.gold}33`,
+                            }}
+                          >
+                            Change Photo
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                    {/* Personal Info */}
-                    <SectionCard
+                    {/* Personal info */}
+                    <Card
                       title="Personal Information"
                       description="Update your basic profile details"
                       icon={User}
                     >
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FieldInput
+                        <Field
                           label="Full Name"
                           value={profile.name}
-                          onChange={(v) => handleUpdateProfile("name", v)}
+                          onChange={(v) => setP("name", v)}
                           placeholder="Your full name"
                         />
-                        <FieldInput
+                        <Field
                           label="Username"
                           value={profile.username}
-                          onChange={(v) => handleUpdateProfile("username", v)}
+                          onChange={(v) => setP("username", v)}
                           placeholder="username"
                         />
-                        <FieldInput
+                        <Field
                           label="Email Address"
                           value={profile.email}
-                          onChange={(v) => handleUpdateProfile("email", v)}
+                          onChange={(v) => setP("email", v)}
                           type="email"
                           icon={Mail}
                         />
-                        <FieldInput
+                        <Field
                           label="Phone Number"
                           value={profile.phone}
-                          onChange={(v) => handleUpdateProfile("phone", v)}
+                          onChange={(v) => setP("phone", v)}
                           icon={Phone}
                         />
-                        <FieldInput
+                        <Field
                           label="Location"
                           value={profile.location}
-                          onChange={(v) => handleUpdateProfile("location", v)}
+                          onChange={(v) => setP("location", v)}
                           icon={MapPin}
                         />
-                        <FieldInput
+                        <Field
                           label="Website"
                           value={profile.website}
-                          onChange={(v) => handleUpdateProfile("website", v)}
+                          onChange={(v) => setP("website", v)}
                           icon={Globe}
                         />
                       </div>
                       <div className="mt-4">
                         <label
                           className="block text-sm mb-1.5"
-                          style={{ color: COLORS.light }}
+                          style={{ color: C.light }}
                         >
                           Bio
                         </label>
                         <textarea
                           value={profile.bio}
-                          onChange={(e) =>
-                            handleUpdateProfile("bio", e.target.value)
-                          }
+                          onChange={(e) => setP("bio", e.target.value)}
                           rows={3}
                           maxLength={300}
                           placeholder="Tell others about yourself..."
                           className="w-full px-4 py-2.5 rounded-lg text-sm outline-none resize-none transition-all"
                           style={{
-                            background: COLORS.bg,
-                            border: `1px solid ${COLORS.border}`,
-                            color: COLORS.light,
-                            caretColor: COLORS.gold,
+                            background: C.bg,
+                            border: `1px solid ${C.border}`,
+                            color: C.light,
+                            caretColor: C.gold,
                           }}
-                          onFocus={(e) =>
-                            (e.target.style.borderColor = COLORS.gold)
-                          }
+                          onFocus={(e) => (e.target.style.borderColor = C.gold)}
                           onBlur={(e) =>
-                            (e.target.style.borderColor = COLORS.border)
+                            (e.target.style.borderColor = C.border)
                           }
                         />
                         <p
                           className="text-xs mt-1 text-right"
-                          style={{ color: COLORS.muted }}
+                          style={{ color: C.muted }}
                         >
                           {profile.bio.length}/300
                         </p>
                       </div>
-                    </SectionCard>
+                    </Card>
 
-                    {/* Artist Details */}
-                    <SectionCard
+                    {/* Artist details */}
+                    <Card
                       title="Artist Details"
                       description="Your professional information"
                       icon={Globe}
@@ -770,17 +874,15 @@ export default function ArtistSettings() {
                           <div key={key}>
                             <label
                               className="block text-sm mb-1.5"
-                              style={{ color: COLORS.light }}
+                              style={{ color: C.light }}
                             >
                               {label}
                             </label>
                             <select
                               value={profile[key]}
-                              onChange={(e) =>
-                                handleUpdateProfile(key, e.target.value)
-                              }
-                              className="w-full px-4 py-2.5 rounded-lg text-sm outline-none appearance-none"
-                              style={selectStyle}
+                              onChange={(e) => setP(key, e.target.value)}
+                              className="w-full px-4 py-[11px] rounded-lg text-sm outline-none appearance-none"
+                              style={selSt}
                             >
                               {options.map((o) => (
                                 <option key={o}>{o}</option>
@@ -789,10 +891,10 @@ export default function ArtistSettings() {
                           </div>
                         ))}
                       </div>
-                    </SectionCard>
+                    </Card>
 
-                    {/* Social Links */}
-                    <SectionCard
+                    {/* Social links */}
+                    <Card
                       title="Social Media Links"
                       description="Connect your social profiles"
                       icon={Globe}
@@ -803,45 +905,43 @@ export default function ArtistSettings() {
                             <div key={key}>
                               <label
                                 className="block text-sm mb-1.5"
-                                style={{ color: COLORS.light }}
+                                style={{ color: C.light }}
                               >
                                 {label}
                               </label>
                               <div className="relative">
                                 <span
-                                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                                  style={{ color: COLORS.muted }}
+                                  className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                                  style={{ color: C.muted }}
                                 >
                                   <Icon size={16} />
                                 </span>
                                 {prefix && (
                                   <span
-                                    className="absolute top-1/2 -translate-y-1/2 text-sm"
-                                    style={{ left: 36, color: COLORS.muted }}
+                                    className="absolute top-1/2 -translate-y-1/2 text-sm pointer-events-none"
+                                    style={{ left: 36, color: C.muted }}
                                   >
                                     {prefix}
                                   </span>
                                 )}
                                 <input
                                   value={profile[key] || ""}
-                                  onChange={(e) =>
-                                    handleUpdateProfile(key, e.target.value)
-                                  }
+                                  onChange={(e) => setP(key, e.target.value)}
                                   placeholder={`Your ${label.toLowerCase()}`}
-                                  className="w-full py-2.5 rounded-lg text-sm outline-none transition-all"
+                                  className="w-full py-[11px] rounded-lg text-sm outline-none transition-all"
                                   style={{
                                     paddingLeft: prefix ? 48 : 36,
                                     paddingRight: 14,
-                                    background: COLORS.bg,
-                                    border: `1px solid ${COLORS.border}`,
-                                    color: COLORS.light,
-                                    caretColor: COLORS.gold,
+                                    background: C.bg,
+                                    border: `1px solid ${C.border}`,
+                                    color: C.light,
+                                    caretColor: C.gold,
                                   }}
                                   onFocus={(e) =>
-                                    (e.target.style.borderColor = COLORS.gold)
+                                    (e.target.style.borderColor = C.gold)
                                   }
                                   onBlur={(e) =>
-                                    (e.target.style.borderColor = COLORS.border)
+                                    (e.target.style.borderColor = C.border)
                                   }
                                 />
                               </div>
@@ -849,21 +949,21 @@ export default function ArtistSettings() {
                           ),
                         )}
                       </div>
-                    </SectionCard>
+                    </Card>
                   </>
                 )}
 
-                {/* ════ NOTIFICATIONS ════ */}
+                {/* ════════════ NOTIFICATIONS ════════════ */}
                 {activeTab === "notifications" &&
-                  NOTIFICATION_SECTIONS.map((section) => (
-                    <SectionCard
-                      key={section.title}
-                      title={section.title}
-                      description={section.description}
-                      icon={section.icon}
+                  NOTIFICATION_SECTIONS.map((sec) => (
+                    <Card
+                      key={sec.title}
+                      title={sec.title}
+                      description={sec.description}
+                      icon={sec.icon}
                     >
                       <div className="space-y-4">
-                        {section.items.map(({ key, label, desc }) => (
+                        {sec.items.map(({ key, label, desc }) => (
                           <div
                             key={key}
                             className="flex items-center justify-between gap-4"
@@ -871,31 +971,33 @@ export default function ArtistSettings() {
                             <div className="min-w-0 flex-1">
                               <p
                                 className="text-sm font-medium"
-                                style={{ color: COLORS.light }}
+                                style={{ color: C.light }}
                               >
                                 {label}
                               </p>
                               <p
                                 className="text-xs mt-0.5"
-                                style={{ color: COLORS.muted }}
+                                style={{ color: C.muted }}
                               >
                                 {desc}
                               </p>
                             </div>
                             <Toggle
-                              enabled={notifications[key]}
-                              onChange={() => handleToggleNotif(key)}
+                              enabled={notifs[key]}
+                              onChange={() =>
+                                setNotifs((p) => ({ ...p, [key]: !p[key] }))
+                              }
                             />
                           </div>
                         ))}
                       </div>
-                    </SectionCard>
+                    </Card>
                   ))}
 
-                {/* ════ SECURITY ════ */}
+                {/* ════════════ SECURITY ════════════ */}
                 {activeTab === "security" && (
                   <>
-                    <SectionCard
+                    <Card
                       title="Change Password"
                       description="Update your account password"
                       icon={Lock}
@@ -905,38 +1007,43 @@ export default function ArtistSettings() {
                           <div key={key}>
                             <label
                               className="block text-sm mb-1.5"
-                              style={{ color: COLORS.light }}
+                              style={{ color: C.light }}
                             >
                               {label}
                             </label>
                             <div className="relative">
                               <input
-                                type={showPasswords[key] ? "text" : "password"}
-                                value={passwords[key]}
+                                type={showPw[key] ? "text" : "password"}
+                                value={pw[key]}
                                 onChange={(e) =>
-                                  handleUpdatePassword(key, e.target.value)
+                                  setPw((p) => ({
+                                    ...p,
+                                    [key]: e.target.value,
+                                  }))
                                 }
                                 placeholder={placeholder}
-                                className="w-full px-4 py-2.5 pr-10 rounded-lg text-sm outline-none transition-all"
+                                className="w-full px-4 py-[11px] pr-11 rounded-lg text-sm outline-none transition-all"
                                 style={{
-                                  background: COLORS.bg,
-                                  border: `1px solid ${COLORS.border}`,
-                                  color: COLORS.light,
-                                  caretColor: COLORS.gold,
+                                  background: C.bg,
+                                  border: `1px solid ${C.border}`,
+                                  color: C.light,
+                                  caretColor: C.gold,
                                 }}
                                 onFocus={(e) =>
-                                  (e.target.style.borderColor = COLORS.gold)
+                                  (e.target.style.borderColor = C.gold)
                                 }
                                 onBlur={(e) =>
-                                  (e.target.style.borderColor = COLORS.border)
+                                  (e.target.style.borderColor = C.border)
                                 }
                               />
                               <button
-                                onClick={() => handleToggleShowPw(key)}
+                                onClick={() =>
+                                  setShowPw((p) => ({ ...p, [key]: !p[key] }))
+                                }
                                 className="absolute right-3 top-1/2 -translate-y-1/2"
-                                style={{ color: COLORS.muted }}
+                                style={{ color: C.muted }}
                               >
-                                {showPasswords[key] ? (
+                                {showPw[key] ? (
                                   <EyeOff size={16} />
                                 ) : (
                                   <Eye size={16} />
@@ -945,12 +1052,11 @@ export default function ArtistSettings() {
                             </div>
                           </div>
                         ))}
-
-                        {passwords.newPass && (
+                        {pw.newPass && (
                           <div>
                             <p
                               className="text-xs mb-1.5"
-                              style={{ color: COLORS.muted }}
+                              style={{ color: C.muted }}
                             >
                               Password strength
                             </p>
@@ -961,34 +1067,33 @@ export default function ArtistSettings() {
                                   className="h-1 flex-1 rounded-full transition-all"
                                   style={{
                                     background:
-                                      i <= passwordStrength.bars
-                                        ? passwordStrength.color
-                                        : COLORS.border,
+                                      i <= pwStrength.bars
+                                        ? pwStrength.color
+                                        : C.border,
                                   }}
                                 />
                               ))}
                             </div>
                             <p
                               className="text-xs mt-1"
-                              style={{ color: passwordStrength.color }}
+                              style={{ color: pwStrength.color }}
                             >
-                              {passwordStrength.label}
+                              {pwStrength.label}
                             </p>
                           </div>
                         )}
-
                         <button
                           onClick={handlePasswordSave}
-                          disabled={isPasswordSaveDisabled}
+                          disabled={pwDisabled}
                           className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-                          style={{ background: COLORS.gold, color: "#1a1d24" }}
+                          style={{ background: C.gold, color: "#1a1d24" }}
                         >
                           Update Password
                         </button>
                       </div>
-                    </SectionCard>
+                    </Card>
 
-                    <SectionCard
+                    <Card
                       title="Two-Factor Authentication"
                       description="Add an extra layer of security"
                       icon={Shield}
@@ -997,16 +1102,13 @@ export default function ArtistSettings() {
                         <div className="min-w-0 flex-1">
                           <p
                             className="text-sm font-medium mb-1"
-                            style={{ color: COLORS.light }}
+                            style={{ color: C.light }}
                           >
                             Authenticator App (2FA)
                           </p>
-                          <p
-                            className="text-xs"
-                            style={{ color: COLORS.muted }}
-                          >
-                            Use Google Authenticator or Authy to generate
-                            time-based one-time passwords.
+                          <p className="text-xs" style={{ color: C.muted }}>
+                            Use Google Authenticator or Authy for time-based
+                            one-time passwords.
                           </p>
                         </div>
                         <Toggle enabled={twoFA} onChange={setTwoFA} />
@@ -1015,34 +1117,28 @@ export default function ArtistSettings() {
                         <div
                           className="rounded-lg p-4 mb-4"
                           style={{
-                            background: `${COLORS.gold}10`,
-                            border: `1px solid ${COLORS.gold}30`,
+                            background: `${C.gold}10`,
+                            border: `1px solid ${C.gold}30`,
                           }}
                         >
-                          <p
-                            className="text-xs"
-                            style={{ color: COLORS.muted }}
-                          >
-                            2FA is enabled. Your account is now protected with
-                            an additional verification step.
+                          <p className="text-xs" style={{ color: C.muted }}>
+                            2FA is enabled. Your account has an additional
+                            verification step.
                           </p>
                         </div>
                       )}
                       <div
                         className="flex items-start justify-between gap-4 pt-4"
-                        style={{ borderTop: `1px solid ${COLORS.border}` }}
+                        style={{ borderTop: `1px solid ${C.border}` }}
                       >
                         <div className="min-w-0 flex-1">
                           <p
                             className="text-sm font-medium mb-1"
-                            style={{ color: COLORS.light }}
+                            style={{ color: C.light }}
                           >
                             Login Alerts
                           </p>
-                          <p
-                            className="text-xs"
-                            style={{ color: COLORS.muted }}
-                          >
+                          <p className="text-xs" style={{ color: C.muted }}>
                             Receive alerts when someone logs in from a new
                             device
                           </p>
@@ -1052,81 +1148,20 @@ export default function ArtistSettings() {
                           onChange={setLoginAlerts}
                         />
                       </div>
-                    </SectionCard>
-
-                    <SectionCard
-                      title="Active Sessions"
-                      description="Manage devices logged into your account"
-                      icon={Shield}
-                    >
-                      {ACTIVE_SESSIONS.length === 0 ? (
-                        <p
-                          className="text-sm text-center py-6"
-                          style={{ color: COLORS.muted }}
-                        >
-                          No active sessions found.
-                        </p>
-                      ) : (
-                        <div className="space-y-3">
-                          {ACTIVE_SESSIONS.map((session, i) => (
-                            <div
-                              key={i}
-                              className="flex items-center justify-between gap-3 p-3 rounded-lg"
-                              style={{ background: COLORS.bg }}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <p
-                                    className="text-sm font-medium"
-                                    style={{ color: COLORS.light }}
-                                  >
-                                    {session.device}
-                                  </p>
-                                  {session.active && (
-                                    <span
-                                      className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
-                                      style={{
-                                        background: "rgba(74,222,128,0.15)",
-                                        color: "#4ade80",
-                                      }}
-                                    >
-                                      Active
-                                    </span>
-                                  )}
-                                </div>
-                                <p
-                                  className="text-xs mt-0.5 truncate"
-                                  style={{ color: COLORS.muted }}
-                                >
-                                  {session.location} · {session.time}
-                                </p>
-                              </div>
-                              {!session.active && (
-                                <button
-                                  className="text-xs px-3 py-1 rounded-lg transition-all hover:bg-red-500/20 flex-shrink-0"
-                                  style={{ color: "#f87171" }}
-                                >
-                                  Revoke
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </SectionCard>
+                    </Card>
 
                     {/* Danger Zone */}
                     <div
                       className="rounded-xl p-4 sm:p-6"
                       style={{
-                        background: COLORS.card,
-                        border: "1px solid rgba(248,113,113,0.3)",
+                        background: C.card,
+                        border: "1px solid rgba(248,113,113,0.28)",
                       }}
                     >
                       <div className="flex items-center gap-3 mb-4">
                         <div
                           className="p-2 rounded-lg flex-shrink-0"
-                          style={{ background: "rgba(248,113,113,0.1)" }}
+                          style={{ background: "rgba(248,113,113,0.10)" }}
                         >
                           <Trash size={18} style={{ color: "#f87171" }} />
                         </div>
@@ -1139,7 +1174,7 @@ export default function ArtistSettings() {
                           </h3>
                           <p
                             className="text-xs mt-0.5"
-                            style={{ color: COLORS.muted }}
+                            style={{ color: C.muted }}
                           >
                             Irreversible account actions
                           </p>
@@ -1149,24 +1184,31 @@ export default function ArtistSettings() {
                         <div className="min-w-0">
                           <p
                             className="text-sm font-medium"
-                            style={{ color: COLORS.light }}
+                            style={{ color: C.light }}
                           >
                             Delete Account
                           </p>
                           <p
                             className="text-xs mt-0.5"
-                            style={{ color: COLORS.muted }}
+                            style={{ color: C.muted }}
                           >
                             Permanently delete your account and all associated
                             data
                           </p>
                         </div>
                         <button
-                          className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-red-500/20 self-start sm:self-auto"
+                          className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all self-start sm:self-auto"
                           style={{
-                            border: "1px solid rgba(248,113,113,0.5)",
+                            border: "1px solid rgba(248,113,113,0.45)",
                             color: "#f87171",
                           }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.background =
+                              "rgba(248,113,113,0.10)")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.background = "transparent")
+                          }
                         >
                           Delete Account
                         </button>
@@ -1175,28 +1217,26 @@ export default function ArtistSettings() {
                   </>
                 )}
 
-                {/* ════ PAYMENTS ════ */}
+                {/* ════════════ PAYMENTS ════════════ */}
                 {activeTab === "payments" && (
                   <>
-                    <SectionCard
+                    <Card
                       title="Payout Method"
                       description="Choose how you want to receive your earnings"
                       icon={CreditCard}
                     >
-                      <div className="flex gap-2 sm:gap-3 mb-5 flex-wrap">
+                      <div className="flex gap-2 mb-5 flex-wrap">
                         {PAYOUT_METHODS.map(({ id, label }) => {
-                          const isSelected = payment.method === id;
+                          const sel = payment.method === id;
                           return (
                             <button
                               key={id}
-                              onClick={() => handleUpdatePayment("method", id)}
-                              className="flex-1 min-w-[80px] py-2.5 rounded-lg text-sm font-medium transition-all"
+                              onClick={() => setPay("method", id)}
+                              className="flex-1 min-w-[76px] py-2.5 rounded-lg text-sm font-medium transition-all"
                               style={{
-                                background: isSelected
-                                  ? `${COLORS.gold}20`
-                                  : COLORS.bg,
-                                border: `1px solid ${isSelected ? COLORS.gold : COLORS.border}`,
-                                color: isSelected ? COLORS.gold : COLORS.muted,
+                                background: sel ? `${C.gold}20` : C.bg,
+                                border: `1px solid ${sel ? C.gold : C.border}`,
+                                color: sel ? C.gold : C.muted,
                               }}
                             >
                               {label}
@@ -1204,14 +1244,11 @@ export default function ArtistSettings() {
                           );
                         })}
                       </div>
-
                       {payment.method === "paypal" && (
-                        <FieldInput
+                        <Field
                           label="PayPal Email"
                           value={payment.paypalEmail}
-                          onChange={(v) =>
-                            handleUpdatePayment("paypalEmail", v)
-                          }
+                          onChange={(v) => setPay("paypalEmail", v)}
                           icon={Mail}
                           type="email"
                           placeholder="your@paypal.com"
@@ -1219,41 +1256,37 @@ export default function ArtistSettings() {
                       )}
                       {payment.method === "bank" && (
                         <div className="space-y-4">
-                          <FieldInput
+                          <Field
                             label="Bank Name"
                             value={payment.bankName}
-                            onChange={(v) => handleUpdatePayment("bankName", v)}
+                            onChange={(v) => setPay("bankName", v)}
                             placeholder="e.g. SBI, HDFC"
                           />
-                          <FieldInput
+                          <Field
                             label="Account Number"
                             value={payment.accountNumber}
-                            onChange={(v) =>
-                              handleUpdatePayment("accountNumber", v)
-                            }
+                            onChange={(v) => setPay("accountNumber", v)}
                             placeholder="Account number"
                           />
-                          <FieldInput
+                          <Field
                             label="IFSC Code"
                             value={payment.routingNumber}
-                            onChange={(v) =>
-                              handleUpdatePayment("routingNumber", v)
-                            }
+                            onChange={(v) => setPay("routingNumber", v)}
                             placeholder="e.g. SBIN0001234"
                           />
                         </div>
                       )}
                       {payment.method === "upi" && (
-                        <FieldInput
+                        <Field
                           label="UPI ID"
                           value={payment.upiId}
-                          onChange={(v) => handleUpdatePayment("upiId", v)}
+                          onChange={(v) => setPay("upiId", v)}
                           placeholder="yourname@upi"
                         />
                       )}
-                    </SectionCard>
+                    </Card>
 
-                    <SectionCard
+                    <Card
                       title="Payout Preferences"
                       description="Configure when and how much you get paid"
                       icon={CreditCard}
@@ -1262,14 +1295,14 @@ export default function ArtistSettings() {
                         <div>
                           <label
                             className="block text-sm mb-1.5"
-                            style={{ color: COLORS.light }}
+                            style={{ color: C.light }}
                           >
                             Minimum Payout Amount
                           </label>
                           <div className="relative">
                             <span
-                              className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
-                              style={{ color: COLORS.muted }}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none"
+                              style={{ color: C.muted }}
                             >
                               ₹
                             </span>
@@ -1278,28 +1311,25 @@ export default function ArtistSettings() {
                               min="100"
                               value={payment.minimumPayout}
                               onChange={(e) =>
-                                handleUpdatePayment(
-                                  "minimumPayout",
-                                  e.target.value,
-                                )
+                                setPay("minimumPayout", e.target.value)
                               }
-                              className="w-full pl-7 pr-4 py-2.5 rounded-lg text-sm outline-none transition-all"
+                              className="w-full pl-7 pr-4 py-[11px] rounded-lg text-sm outline-none transition-all"
                               style={{
-                                background: COLORS.bg,
-                                border: `1px solid ${COLORS.border}`,
-                                color: COLORS.light,
+                                background: C.bg,
+                                border: `1px solid ${C.border}`,
+                                color: C.light,
                               }}
                               onFocus={(e) =>
-                                (e.target.style.borderColor = COLORS.gold)
+                                (e.target.style.borderColor = C.gold)
                               }
                               onBlur={(e) =>
-                                (e.target.style.borderColor = COLORS.border)
+                                (e.target.style.borderColor = C.border)
                               }
                             />
                           </div>
                           <p
                             className="text-xs mt-1"
-                            style={{ color: COLORS.muted }}
+                            style={{ color: C.muted }}
                           >
                             Minimum ₹100. Payouts process when your balance
                             reaches this amount.
@@ -1308,20 +1338,17 @@ export default function ArtistSettings() {
                         <div>
                           <label
                             className="block text-sm mb-1.5"
-                            style={{ color: COLORS.light }}
+                            style={{ color: C.light }}
                           >
                             Payout Schedule
                           </label>
                           <select
                             value={payment.payoutSchedule}
                             onChange={(e) =>
-                              handleUpdatePayment(
-                                "payoutSchedule",
-                                e.target.value,
-                              )
+                              setPay("payoutSchedule", e.target.value)
                             }
-                            className="w-full px-4 py-2.5 rounded-lg text-sm outline-none appearance-none"
-                            style={selectStyle}
+                            className="w-full px-4 py-[11px] rounded-lg text-sm outline-none appearance-none"
+                            style={selSt}
                           >
                             {PAYOUT_SCHEDULES.map((o) => (
                               <option key={o}>{o}</option>
@@ -1329,23 +1356,23 @@ export default function ArtistSettings() {
                           </select>
                         </div>
                       </div>
-                    </SectionCard>
+                    </Card>
 
-                    {/* Earnings Overview */}
+                    {/* Earnings overview */}
                     <div
                       className="rounded-xl p-4 sm:p-6"
                       style={{
-                        background: COLORS.card,
-                        border: `1px solid ${COLORS.border}`,
+                        background: C.card,
+                        border: `1px solid ${C.border}`,
                       }}
                     >
                       <h3
                         className="font-semibold text-base mb-4"
-                        style={{ color: COLORS.light }}
+                        style={{ color: C.light }}
                       >
                         Earnings Overview
                       </h3>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-3 gap-2 sm:gap-3">
                         {[
                           {
                             label: "Total Earned",
@@ -1365,24 +1392,24 @@ export default function ArtistSettings() {
                         ].map(({ label, value, sub }) => (
                           <div
                             key={label}
-                            className="rounded-lg p-3 sm:p-4"
-                            style={{ background: COLORS.bg }}
+                            className="rounded-lg p-3"
+                            style={{ background: C.bg }}
                           >
                             <p
                               className="text-xs mb-1"
-                              style={{ color: COLORS.muted }}
+                              style={{ color: C.muted }}
                             >
                               {label}
                             </p>
                             <p
-                              className="text-xl font-bold"
-                              style={{ color: COLORS.gold }}
+                              className="text-lg sm:text-xl font-bold"
+                              style={{ color: C.gold }}
                             >
                               {value}
                             </p>
                             <p
                               className="text-xs mt-1"
-                              style={{ color: COLORS.muted }}
+                              style={{ color: C.muted }}
                             >
                               {sub}
                             </p>
@@ -1390,79 +1417,16 @@ export default function ArtistSettings() {
                         ))}
                       </div>
                     </div>
-
-                    <SectionCard
-                      title="Recent Transactions"
-                      description="Your recent payout history"
-                      icon={CreditCard}
-                    >
-                      {RECENT_TRANSACTIONS.length === 0 ? (
-                        <p
-                          className="text-sm text-center py-6"
-                          style={{ color: COLORS.muted }}
-                        >
-                          No transactions yet.
-                        </p>
-                      ) : (
-                        <div className="space-y-3">
-                          {RECENT_TRANSACTIONS.map((tx, i) => (
-                            <div
-                              key={i}
-                              className="flex items-center justify-between gap-3 p-3 rounded-lg"
-                              style={{ background: COLORS.bg }}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <p
-                                  className="text-sm font-medium truncate"
-                                  style={{ color: COLORS.light }}
-                                >
-                                  {tx.project}
-                                </p>
-                                <p
-                                  className="text-xs mt-0.5 truncate"
-                                  style={{ color: COLORS.muted }}
-                                >
-                                  {tx.type} · {tx.date}
-                                </p>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                <p
-                                  className="text-sm font-bold"
-                                  style={{ color: COLORS.gold }}
-                                >
-                                  {tx.amount}
-                                </p>
-                                <span
-                                  className="text-xs px-2 py-0.5 rounded-full"
-                                  style={{
-                                    background:
-                                      tx.status === "Paid"
-                                        ? "rgba(74,222,128,0.15)"
-                                        : "rgba(250,204,21,0.15)",
-                                    color:
-                                      tx.status === "Paid"
-                                        ? "#4ade80"
-                                        : "#facc15",
-                                  }}
-                                >
-                                  {tx.status}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </SectionCard>
                   </>
                 )}
 
-                {/* Save Button */}
+                {/* ── Save button (not on security tab) ── */}
                 {activeTab !== "security" && (
-                  <div className="flex justify-end pt-2 pb-6 sm:pb-8">
+                  <div className="flex justify-end pt-1 pb-2">
                     <button
-                      onClick={handleSaveChanges}
+                      onClick={handleSave}
                       className="w-full sm:w-auto px-6 sm:px-8 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
-                      style={{ background: COLORS.gold, color: "#1a1d24" }}
+                      style={{ background: C.gold, color: "#1a1d24" }}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.boxShadow =
                           "0 4px 20px rgba(201,169,97,0.4)")
@@ -1475,11 +1439,26 @@ export default function ArtistSettings() {
                     </button>
                   </div>
                 )}
+
+                {/* ── Mobile logout button ──
+                    Shown at the very bottom on mobile only.
+                    On desktop, logout lives inside the side nav.
+                ── */}
+                <div className="st-logout-mobile pb-10 pt-1">
+                  <button onClick={handleLogout} className="st-logout">
+                    <LogOut size={17} />
+                    Log Out of Account
+                  </button>
+                </div>
               </div>
+              {/* end content */}
             </div>
+            {/* end layout */}
           </div>
         </div>
-      <Toast message={toast.message} visible={toast.visible} />
-    </div>
+      </div>
+
+      <SaveToast message={toast.message} visible={toast.visible} />
+    </>
   );
 }
