@@ -46,17 +46,31 @@ const resolveBucket = (inputs = {}) => {
 const REGION = process.env.AWS_REGION;
 const BUCKET = process.env.AWS_S3_BUCKET;
 
-const PUBLIC_BASE_URL =
-  process.env.AWS_S3_PUBLIC_BASE_URL ||
-  `https://${BUCKET}.s3.${REGION}.amazonaws.com`;
+const normalizeBaseUrl = (value) => {
+  if (!value) return null;
+  return String(value).trim().replace(/\/+$/, "");
+};
 
-const s3 = new S3Client({
+const PUBLIC_BASE_URL =
+  normalizeBaseUrl(process.env.AWS_S3_PUBLIC_BASE_URL) ||
+  (BUCKET && REGION ? `https://${BUCKET}.s3.${REGION}.amazonaws.com` : null);
+
+const hasStaticCredentials =
+  process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY;
+
+const s3Config = {
   region: REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+  ...(hasStaticCredentials
+    ? {
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        },
+      }
+    : {}),
+};
+
+const s3 = new S3Client(s3Config);
 
 const bucketToPrefix = (bucket) => {
   if (bucket === "profile-images") return "profile";
@@ -68,6 +82,12 @@ const bucketToPrefix = (bucket) => {
 const uploadFile = async (bucket, file) => {
   if (!file || !file.buffer) {
     throw new Error("Missing file buffer for upload");
+  }
+  if (!REGION || !BUCKET) {
+    throw new Error("AWS S3 is not configured (missing AWS_REGION/AWS_S3_BUCKET)");
+  }
+  if (!PUBLIC_BASE_URL) {
+    throw new Error("AWS S3 public base URL is not configured");
   }
 
   const safeName = String(file.originalname || "file").replace(/[^\w.\-]/g, "_");
