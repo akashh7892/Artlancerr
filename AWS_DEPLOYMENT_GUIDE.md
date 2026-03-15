@@ -24,7 +24,10 @@ The backend is deployed as a containerized service to **AWS App Runner**, pullin
      - `MONGODB_URI`: (Atlas Connection String)
      - `JWT_SECRET`: `hfyewvvyhewvfwen`
      - `FRONTEND_URL`: `https://dqbi6srkzrwad.cloudfront.net` (CloudFront URL)
-     - `SUPABASE_URL` / `SUPABASE_KEY`
+     - `AWS_REGION`
+     - `AWS_S3_BUCKET`
+     - `AWS_S3_PUBLIC_BASE_URL` (Optional: defaults to `https://{bucket}.s3.{region}.amazonaws.com`)
+     - `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (or an App Runner IAM role with S3 access)
      - `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`
      - `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` (Optional)
 
@@ -70,7 +73,7 @@ To enable this, you must add the following secrets to your GitHub repository (**
 - **Database**: MongoDB (via Mongoose)
 - **Authentication**: JWT (JSON Web Tokens) & Bcryptjs
 - **Communications**: Nodemailer (SMTP via Brevo)
-- **Object Storage**: Supabase (via @supabase/supabase-js)
+- **Object Storage**: AWS S3 (via @aws-sdk/client-s3)
 - **Payments**: Razorpay (Integration ready, optional)
 - **Security**: CORS (Whitelist based), express-mongo-sanitize, express-rate-limit
 

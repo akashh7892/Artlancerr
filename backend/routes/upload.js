@@ -37,7 +37,12 @@ router.post(
       });
     } catch (error) {
       console.error("Upload error:", error);
-      return res.status(500).json({ message: "Upload failed" });
+      const message =
+        error?.message &&
+        /AWS S3|S3 public base URL|Missing file buffer/i.test(error.message)
+          ? error.message
+          : "Upload failed";
+      return res.status(500).json({ message });
     }
   }
 );
