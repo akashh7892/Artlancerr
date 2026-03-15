@@ -2437,11 +2437,12 @@ export default function BrowseArtist() {
                     alignItems: "center",
                     flexShrink: 0,
                     touchAction: "manipulation",
+                    marginTop: 26,
                   }}
                 >
                   <ArrowLeft size={17} />
                 </motion.button>
-                <div style={{ minWidth: 0 }}>
+                <div style={{ minWidth: 0, marginTop: 26 }}>
                   <h1 className="ba-title">Browse Artists</h1>
                   <p style={{ margin: 0, color: C.muted, fontSize: 13 }}>
                     {isLoading
@@ -2469,6 +2470,7 @@ export default function BrowseArtist() {
                   touchAction: "manipulation",
                   transition: "all .2s",
                   fontFamily: "inherit",
+                  marginTop: 26,
                 }}
               >
                 <SlidersHorizontal size={15} />
@@ -2482,6 +2484,7 @@ export default function BrowseArtist() {
                       fontSize: 10.5,
                       fontWeight: 700,
                       padding: "1px 7px",
+                      marginTop: 26,
                     }}
                   >
                     {filterCount}

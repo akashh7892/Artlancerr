@@ -595,7 +595,7 @@ export default function ArtistNearby() {
                 background: "rgba(255,255,255,0.04)",
                 color: C.darkText,
                 transition: "background 0.15s",
-                marginTop: "20px",
+                marginTop: "24px",
               }}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.background = "rgba(255,255,255,0.08)")
@@ -613,7 +613,7 @@ export default function ArtistNearby() {
                   color: C.darkText,
                   fontFamily: "'Playfair Display',serif",
                   fontSize: "clamp(18px,5vw,26px)",
-                  marginTop: "20px",
+                  marginTop: "24px",
                 }}
               >
                 Nearby Artists
@@ -634,7 +634,7 @@ export default function ArtistNearby() {
                   background: C.card,
                   border: `1px solid ${C.inputBorder}`,
                   color: C.darkText,
-                  marginTop: "20px",
+                  marginTop: "24px",
                 }}
               >
                 <Filter size={14} /> Filters
@@ -647,7 +647,7 @@ export default function ArtistNearby() {
                   border: `1px solid ${C.inputBorder}`,
                   color: C.darkText,
                   fontSize: "12.5px",
-                  marginTop: "20px",
+                  marginTop: "24px",
                 }}
               >
                 <Settings size={14} />

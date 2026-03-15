@@ -1464,15 +1464,28 @@ export default function PostRequirement() {
                   display: "flex",
                   alignItems: "center",
                   flexShrink: 0,
-                  marginTop: "3px",
+                  marginTop: "30px",
                   touchAction: "manipulation",
                 }}
               >
                 <ArrowLeft size={16} />
               </motion.button>
               <div>
-                <h1 className="pr-title">Post a Requirement</h1>
-                <p style={{ margin: 0, color: C.muted, fontSize: "13.5px" }}>
+                <h1
+                  style={{
+                    color: C.muted,
+                    marginTop: "30px",
+                  }}
+                  className="pr-title"
+                >
+                  Post a Requirement
+                </h1>
+                <p
+                  style={{
+                    color: C.muted,
+                    fontSize: "13.5px",
+                  }}
+                >
                   Find the perfect talent for your project
                 </p>
               </div>

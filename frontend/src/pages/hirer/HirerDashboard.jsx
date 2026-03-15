@@ -346,7 +346,7 @@ export default function HirerDashboard() {
                       color: "#e8e4d8",
                       fontFamily: "'Playfair Display', serif",
                       lineHeight: 1.2,
-                      marginTop:18,
+                      marginTop:20,
                     }}
                   >
                     Dashboard
