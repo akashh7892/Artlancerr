@@ -32,7 +32,7 @@ import {
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// ─── Design tokens ─────────────────────────────────────────────────────────
+// ─── Design tokens ──────────────────────────────────────────────────────────
 const C = {
   bg: "#1a1d24",
   card: "#2d3139",
@@ -58,7 +58,6 @@ const C = {
   infoBg: "rgba(147,197,253,0.12)",
 };
 
-// ─── Equipment category colours (mirrors ArtistProfile.jsx) ────────────────
 const CAT_COLORS = {
   Camera: "#60a5fa",
   Lens: "#a78bfa",
@@ -76,24 +75,50 @@ const CAT_ICONS = {
   Other: Package,
 };
 
-// ─── Status config ──────────────────────────────────────────────────────────
 const STATUS_CFG = {
-  pending: { bg: C.warnBg, color: C.warn, label: "Pending" },
-  hired: { bg: C.successBg, color: C.success, label: "Accepted" },
-  accepted: { bg: C.successBg, color: C.success, label: "Accepted" },
-  rejected: { bg: C.dangerBg, color: C.danger, label: "Rejected" },
-  shortlisted: { bg: C.infoBg, color: C.info, label: "Shortlisted" },
+  pending: { bg: C.warnBg, color: C.warn, label: "Pending", icon: Clock3 },
+  hired: {
+    bg: C.successBg,
+    color: C.success,
+    label: "Accepted",
+    icon: CheckCircle2,
+  },
+  accepted: {
+    bg: C.successBg,
+    color: C.success,
+    label: "Accepted",
+    icon: CheckCircle2,
+  },
+  rejected: {
+    bg: C.dangerBg,
+    color: C.danger,
+    label: "Rejected",
+    icon: XCircle,
+  },
+  shortlisted: {
+    bg: C.infoBg,
+    color: C.info,
+    label: "Shortlisted",
+    icon: Star,
+  },
   in_review: {
     bg: "rgba(196,181,253,0.12)",
     color: "#c4b5fd",
     label: "In Review",
+    icon: Eye,
   },
 };
 const sCfg = (s) =>
   STATUS_CFG[String(s || "pending").toLowerCase()] || STATUS_CFG.pending;
 const labelForStatus = (s) => sCfg(s).label;
 
-// ─── Tiny helpers ───────────────────────────────────────────────────────────
+/* A status is considered "actioned" (not the default pending) when it has
+   been explicitly set by the hirer — so all three action buttons collapse. */
+const isActioned = (s) => {
+  const v = String(s || "pending").toLowerCase();
+  return v === "hired" || v === "accepted" || v === "rejected";
+};
+
 const fmt = (v) => (v && String(v).trim() ? String(v).trim() : null);
 const money = (v) => {
   if (!v) return null;
@@ -117,7 +142,6 @@ const dateSh = (iso) =>
       })
     : null;
 
-// ─── Section heading ────────────────────────────────────────────────────────
 const SLabel = ({ children, noGap }) => (
   <p
     style={{
@@ -133,7 +157,6 @@ const SLabel = ({ children, noGap }) => (
   </p>
 );
 
-// ─── Structured info row ────────────────────────────────────────────────────
 function InfoRow({ icon: Icon, label, value, gold, href }) {
   if (!value) return null;
   const inner = (
@@ -207,7 +230,6 @@ function InfoRow({ icon: Icon, label, value, gold, href }) {
   return inner;
 }
 
-// ─── Rate tile ──────────────────────────────────────────────────────────────
 function RateTile({ label, value }) {
   const d = money(value) || value;
   if (!d) return null;
@@ -241,7 +263,6 @@ function RateTile({ label, value }) {
   );
 }
 
-// ─── Social link row ────────────────────────────────────────────────────────
 function SocialLink({ icon: Icon, color, href, label }) {
   if (!href) return null;
   return (
@@ -268,15 +289,14 @@ function SocialLink({ icon: Icon, color, href, label }) {
   );
 }
 
-// ─── Mini availability calendar (mirrors ArtistProfile.jsx exactly) ─────────
 function MiniCalendar({ blockedDates = [], freeDates = [] }) {
   const today = new Date();
   const year = today.getFullYear(),
     month = today.getMonth();
   const total = new Date(year, month + 1, 0).getDate();
   const start = new Date(year, month, 1).getDay();
-  const bSet = new Set(blockedDates);
-  const fSet = new Set(freeDates);
+  const bSet = new Set(blockedDates),
+    fSet = new Set(freeDates);
   const DLBL = ["S", "M", "T", "W", "T", "F", "S"];
   const MLBL = [
     "Jan",
@@ -298,7 +318,6 @@ function MiniCalendar({ blockedDates = [], freeDates = [] }) {
     i < start ? null : i - start + 1,
   );
   while (cells.length % 7 !== 0) cells.push(null);
-
   return (
     <div>
       <p
@@ -404,7 +423,6 @@ function MiniCalendar({ blockedDates = [], freeDates = [] }) {
   );
 }
 
-// ─── Portfolio thumbnail ─────────────────────────────────────────────────────
 function PortfolioThumb({ item }) {
   const [err, setErr] = useState(false);
   const thumb = item?.thumbnailUrl || item?.mediaUrl || item?.imageUrl || null;
@@ -510,8 +528,6 @@ function PortfolioThumb({ item }) {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ARTIST DETAIL PANEL
-// Mirrors every section in ArtistProfile.jsx across 6 tabs.
-// All hooks are declared unconditionally at the top.
 // ═══════════════════════════════════════════════════════════════════════════
 function ArtistDetailPanel({
   app,
@@ -520,7 +536,6 @@ function ArtistDetailPanel({
   busyId,
   onNavigateToProfile,
 }) {
-  // ── ALL hooks first — no early returns before this block ─────────────────
   const [activeTab, setActiveTab] = useState("overview");
   const [avatarErr, setAvatarErr] = useState(false);
   const [coverErr, setCoverErr] = useState(false);
@@ -530,7 +545,6 @@ function ArtistDetailPanel({
     setAvatarErr(false);
     setCoverErr(false);
   }, [app?._id]);
-  // ─────────────────────────────────────────────────────────────────────────
 
   if (!app) return null;
 
@@ -539,8 +553,8 @@ function ArtistDetailPanel({
   const status = String(app.status || "pending").toLowerCase();
   const isBusy = busyId === app._id;
   const cfg = sCfg(status);
+  const acted = isActioned(status);
 
-  // Extract every field from the artist object
   const name =
     fmt(artist.name || artist.fullName || artist.username) || "Artist";
   const email = fmt(artist.email || app.email);
@@ -554,12 +568,10 @@ function ArtistDetailPanel({
   const responseTime = fmt(artist.responseTime);
   const coverNote = fmt(app.coverLetter || app.note || app.message);
 
-  // Rates
   const dailyRate = money(artist?.rates?.daily || app?.rates?.daily);
   const weeklyRate = money(artist?.rates?.weekly || app?.rates?.weekly);
   const projectRate = fmt(artist?.rates?.project || app?.rates?.project);
 
-  // Social
   const portfolioStr =
     typeof artist.portfolio === "string" ? artist.portfolio : null;
   const portfolioUrl = fmt(
@@ -570,31 +582,22 @@ function ArtistDetailPanel({
   const website = fmt(artist.website || artist.websiteUrl);
   const twitter = fmt(artist.twitter || artist.twitterUrl);
 
-  // Skills (unique, non-empty)
   const skills = [
     ...(role ? [role] : []),
     ...(Array.isArray(artist.skills) ? artist.skills : []),
   ].filter((v, i, a) => v && a.indexOf(v) === i);
-
-  // Portfolio items
   const portfolioItems = Array.isArray(artist.portfolio)
     ? artist.portfolio
     : Array.isArray(app.portfolio)
       ? app.portfolio
       : [];
-
-  // Availability
   const blockedDates = Array.isArray(artist?.availability?.blockedDates)
     ? artist.availability.blockedDates
     : [];
   const freeDates = Array.isArray(artist?.availability?.freeDates)
     ? artist.availability.freeDates
     : [];
-
-  // Equipment
   const equipment = Array.isArray(artist.equipment) ? artist.equipment : [];
-
-  // Reviews
   const reviews = Array.isArray(artist.reviews) ? artist.reviews : [];
   const reviewCount = reviews.length;
   const avgRating =
@@ -606,7 +609,6 @@ function ArtistDetailPanel({
           ).toFixed(1),
         )
       : null;
-
   const appliedLong = dateIN(app.createdAt);
 
   const TABS = [
@@ -620,7 +622,6 @@ function ArtistDetailPanel({
 
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={onClose}
         style={{
@@ -631,10 +632,7 @@ function ArtistDetailPanel({
           backdropFilter: "blur(4px)",
         }}
       />
-
-      {/* Panel */}
       <div className="adp-panel">
-        {/* Gold accent bar */}
         <div
           style={{
             height: 3,
@@ -642,8 +640,6 @@ function ArtistDetailPanel({
             flexShrink: 0,
           }}
         />
-
-        {/* Drag handle (mobile) */}
         <div className="adp-handle">
           <div
             style={{
@@ -655,7 +651,7 @@ function ArtistDetailPanel({
           />
         </div>
 
-        {/* ── Cover strip ── */}
+        {/* Cover */}
         <div
           style={{
             position: "relative",
@@ -688,7 +684,6 @@ function ArtistDetailPanel({
                 "linear-gradient(to bottom,transparent 25%,#22252e 100%)",
             }}
           />
-          {/* Close */}
           <button
             onClick={onClose}
             style={{
@@ -706,14 +701,13 @@ function ArtistDetailPanel({
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
-              touchAction: "manipulation",
             }}
           >
             <X size={15} />
           </button>
         </div>
 
-        {/* ── Avatar + name (overlaps cover) ── */}
+        {/* Avatar + name */}
         <div
           style={{
             padding: "0 20px 14px",
@@ -730,7 +724,6 @@ function ArtistDetailPanel({
               gap: 10,
             }}
           >
-            {/* AVATAR — click → full ArtistProfile page */}
             <div
               onClick={onNavigateToProfile}
               title="Open full artist profile"
@@ -754,13 +747,6 @@ function ArtistDetailPanel({
                     border: `3px solid ${C.gold}`,
                     display: "block",
                     boxShadow: `0 0 0 4px ${C.goldGlow}`,
-                    transition: "transform .2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.07)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
                   }}
                 />
               ) : (
@@ -789,7 +775,6 @@ function ArtistDetailPanel({
                   fontWeight: 700,
                   color: C.gold,
                   whiteSpace: "nowrap",
-                  pointerEvents: "none",
                   background: "rgba(26,29,36,0.85)",
                   padding: "2px 6px",
                   borderRadius: 4,
@@ -799,8 +784,6 @@ function ArtistDetailPanel({
                 VIEW PROFILE
               </div>
             </div>
-
-            {/* Status */}
             <span
               style={{
                 padding: "5px 13px",
@@ -817,7 +800,6 @@ function ArtistDetailPanel({
               {labelForStatus(status)}
             </span>
           </div>
-
           <h2
             style={{
               margin: "18px 0 3px",
@@ -871,7 +853,7 @@ function ArtistDetailPanel({
           </div>
         </div>
 
-        {/* Applied-for strip */}
+        {/* Applied strip */}
         <div
           style={{
             padding: "9px 20px",
@@ -919,7 +901,7 @@ function ArtistDetailPanel({
           )}
         </div>
 
-        {/* ── Tab strip ── */}
+        {/* Tabs */}
         <div className="adp-tabs">
           {TABS.map((t) => (
             <button
@@ -932,7 +914,7 @@ function ArtistDetailPanel({
           ))}
         </div>
 
-        {/* ══ Scrollable body ══ */}
+        {/* Body */}
         <div
           style={{
             flex: 1,
@@ -941,10 +923,8 @@ function ArtistDetailPanel({
             WebkitOverflowScrolling: "touch",
           }}
         >
-          {/* ─── OVERVIEW ─── */}
           {activeTab === "overview" && (
             <div>
-              {/* Quick rate row */}
               {(dailyRate || weeklyRate || projectRate) && (
                 <div
                   style={{
@@ -959,8 +939,6 @@ function ArtistDetailPanel({
                   <RateTile label="Project" value={projectRate} />
                 </div>
               )}
-
-              {/* Bio */}
               {bio && (
                 <div style={{ marginBottom: 18 }}>
                   <SLabel>About</SLabel>
@@ -981,8 +959,6 @@ function ArtistDetailPanel({
                   </p>
                 </div>
               )}
-
-              {/* Skills */}
               {skills.length > 0 && (
                 <div style={{ marginBottom: 18 }}>
                   <SLabel>Skills &amp; Category</SLabel>
@@ -1006,8 +982,6 @@ function ArtistDetailPanel({
                   </div>
                 </div>
               )}
-
-              {/* Info rows */}
               <div style={{ marginBottom: 18 }}>
                 <InfoRow icon={UserCircle} label="Full Name" value={name} />
                 <InfoRow icon={Film} label="Primary Role" value={role} gold />
@@ -1018,8 +992,6 @@ function ArtistDetailPanel({
                 />
                 <InfoRow icon={MapPin} label="Location" value={location} />
               </div>
-
-              {/* Contact */}
               {(email || phone) && (
                 <div style={{ marginBottom: 18 }}>
                   <SLabel>Contact</SLabel>
@@ -1040,9 +1012,6 @@ function ArtistDetailPanel({
                           color: C.text,
                           textDecoration: "none",
                           fontSize: 13,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
                         }}
                       >
                         <Mail
@@ -1078,8 +1047,6 @@ function ArtistDetailPanel({
                   </div>
                 </div>
               )}
-
-              {/* Social & links */}
               {(portfolioUrl || instagram || youtube || twitter || website) && (
                 <div style={{ marginBottom: 18 }}>
                   <SLabel>Links &amp; Social</SLabel>
@@ -1119,8 +1086,6 @@ function ArtistDetailPanel({
                   </div>
                 </div>
               )}
-
-              {/* Response time */}
               {responseTime && (
                 <div style={{ marginBottom: 18 }}>
                   <SLabel>Response Time</SLabel>
@@ -1142,8 +1107,6 @@ function ArtistDetailPanel({
                   </div>
                 </div>
               )}
-
-              {/* Cover note */}
               {coverNote && (
                 <div style={{ marginBottom: 18 }}>
                   <SLabel>Cover Note</SLabel>
@@ -1163,30 +1126,9 @@ function ArtistDetailPanel({
                   </p>
                 </div>
               )}
-
-              {/* Empty */}
-              {!bio &&
-                !coverNote &&
-                skills.length === 0 &&
-                !email &&
-                !phone &&
-                !portfolioUrl &&
-                portfolioItems.length === 0 && (
-                  <p
-                    style={{
-                      color: C.muted,
-                      fontSize: 13,
-                      textAlign: "center",
-                      padding: "28px 0",
-                    }}
-                  >
-                    No additional details available for this applicant.
-                  </p>
-                )}
             </div>
           )}
 
-          {/* ─── RATES ─── */}
           {activeTab === "rates" && (
             <div>
               <SLabel>Pricing</SLabel>
@@ -1249,22 +1191,9 @@ function ArtistDetailPanel({
                   No rate information provided.
                 </p>
               )}
-              <p
-                style={{
-                  margin: "14px 0 0",
-                  fontSize: 12,
-                  color: C.dim,
-                  lineHeight: 1.5,
-                  textAlign: "center",
-                }}
-              >
-                Rates are indicative — final pricing is subject to project
-                scope.
-              </p>
             </div>
           )}
 
-          {/* ─── AVAILABILITY ─── */}
           {activeTab === "availability" && (
             <div>
               <SLabel>Availability This Month</SLabel>
@@ -1282,85 +1211,9 @@ function ArtistDetailPanel({
                   freeDates={freeDates}
                 />
               </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {freeDates.length > 0 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "6px 14px",
-                      background: C.successBg,
-                      border: `1px solid ${C.successBdr}`,
-                      borderRadius: 20,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: "50%",
-                        background: C.success,
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: C.success,
-                      }}
-                    >
-                      {freeDates.length} free day
-                      {freeDates.length !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                )}
-                {blockedDates.length > 0 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "6px 14px",
-                      background: C.dangerBg,
-                      border: `1px solid ${C.dangerBdr}`,
-                      borderRadius: 20,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: "50%",
-                        background: C.danger,
-                      }}
-                    />
-                    <span
-                      style={{ fontSize: 12, fontWeight: 600, color: C.danger }}
-                    >
-                      {blockedDates.length} booked date
-                      {blockedDates.length !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                )}
-                {freeDates.length === 0 && blockedDates.length === 0 && (
-                  <p
-                    style={{
-                      color: C.muted,
-                      fontSize: 13,
-                      textAlign: "center",
-                      padding: "18px 0",
-                      width: "100%",
-                    }}
-                  >
-                    No availability data provided yet.
-                  </p>
-                )}
-              </div>
             </div>
           )}
 
-          {/* ─── PORTFOLIO ─── */}
           {activeTab === "portfolio" && (
             <div>
               <SLabel>Portfolio Work</SLabel>
@@ -1417,7 +1270,6 @@ function ArtistDetailPanel({
             </div>
           )}
 
-          {/* ─── EQUIPMENT ─── */}
           {activeTab === "equipment" && (
             <div>
               <SLabel>Equipment &amp; Gear</SLabel>
@@ -1436,221 +1288,164 @@ function ArtistDetailPanel({
                   </p>
                 </div>
               ) : (
-                <>
-                  {/* availability count badge */}
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "5px 12px",
-                      marginBottom: 14,
-                      background: C.goldBg,
-                      border: `1px solid ${C.border}`,
-                      borderRadius: 20,
-                    }}
-                  >
-                    <Package size={12} style={{ color: C.gold }} />
-                    <span
-                      style={{ fontSize: 12, fontWeight: 600, color: C.gold }}
-                    >
-                      {equipment.filter((e) => e.rentalOn !== false).length} of{" "}
-                      {equipment.length} items available
-                    </span>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 10,
-                    }}
-                  >
-                    {equipment.map((eq, i) => {
-                      const avail = eq.rentalOn !== false;
-                      const catColor = CAT_COLORS[eq.category] || C.gold;
-                      const CatIcon = CAT_ICONS[eq.category] || Package;
-                      return (
-                        <div
-                          key={eq._id || i}
-                          style={{
-                            display: "flex",
-                            gap: 12,
-                            padding: 12,
-                            background: "rgba(255,255,255,0.03)",
-                            border: `1px solid ${avail ? C.border : "rgba(255,255,255,0.04)"}`,
-                            borderRadius: 12,
-                            alignItems: "center",
-                            opacity: avail ? 1 : 0.45,
-                          }}
-                        >
-                          {eq.img ? (
-                            <img
-                              src={eq.img}
-                              alt={eq.name}
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 10 }}
+                >
+                  {equipment.map((eq, i) => {
+                    const avail = eq.rentalOn !== false;
+                    const catColor = CAT_COLORS[eq.category] || C.gold;
+                    const CatIcon = CAT_ICONS[eq.category] || Package;
+                    return (
+                      <div
+                        key={eq._id || i}
+                        style={{
+                          display: "flex",
+                          gap: 12,
+                          padding: 12,
+                          background: "rgba(255,255,255,0.03)",
+                          border: `1px solid ${avail ? C.border : "rgba(255,255,255,0.04)"}`,
+                          borderRadius: 12,
+                          alignItems: "center",
+                          opacity: avail ? 1 : 0.45,
+                        }}
+                      >
+                        {eq.img ? (
+                          <img
+                            src={eq.img}
+                            alt={eq.name}
+                            style={{
+                              width: 54,
+                              height: 54,
+                              borderRadius: 8,
+                              objectFit: "cover",
+                              flexShrink: 0,
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: 54,
+                              height: 54,
+                              borderRadius: 8,
+                              background: "rgba(255,255,255,0.05)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <CatIcon size={22} style={{ color: C.muted }} />
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 6,
+                              marginBottom: 3,
+                            }}
+                          >
+                            <p
                               style={{
-                                width: 54,
-                                height: 54,
-                                borderRadius: 8,
-                                objectFit: "cover",
-                                flexShrink: 0,
-                                border: `1px solid ${C.border}`,
+                                margin: 0,
+                                fontSize: 13.5,
+                                fontWeight: 600,
+                                color: C.text,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
                               }}
-                            />
-                          ) : (
-                            <div
+                            >
+                              {eq.name || "Equipment"}
+                            </p>
+                            <span
                               style={{
-                                width: 54,
-                                height: 54,
-                                borderRadius: 8,
-                                background: "rgba(255,255,255,0.05)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
+                                fontSize: 10,
+                                fontWeight: 700,
+                                padding: "2px 7px",
+                                borderRadius: 20,
+                                background: `${catColor}18`,
+                                color: catColor,
+                                border: `1px solid ${catColor}30`,
                                 flexShrink: 0,
                               }}
                             >
-                              <CatIcon size={22} style={{ color: C.muted }} />
-                            </div>
+                              {eq.category || "Other"}
+                            </span>
+                          </div>
+                          {eq.model && (
+                            <p
+                              style={{
+                                margin: "0 0 4px",
+                                fontSize: 12,
+                                color: C.muted,
+                              }}
+                            >
+                              {eq.model}
+                            </p>
                           )}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                gap: 6,
-                                marginBottom: 3,
-                              }}
-                            >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            {eq.rental ? (
                               <p
                                 style={{
                                   margin: 0,
-                                  fontSize: 13.5,
+                                  fontSize: 13,
                                   fontWeight: 600,
-                                  color: C.text,
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
+                                  color: C.gold,
                                 }}
                               >
-                                {eq.name || "Equipment"}
+                                ₹{eq.rental}/day
                               </p>
-                              <span
-                                style={{
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  padding: "2px 7px",
-                                  borderRadius: 20,
-                                  background: `${catColor}18`,
-                                  color: catColor,
-                                  border: `1px solid ${catColor}30`,
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {eq.category || "Other"}
-                              </span>
-                            </div>
-                            {eq.model && (
-                              <p
-                                style={{
-                                  margin: "0 0 4px",
-                                  fontSize: 12,
-                                  color: C.muted,
-                                }}
-                              >
-                                {eq.model}
-                              </p>
+                            ) : (
+                              <span />
                             )}
                             <div
                               style={{
                                 display: "flex",
                                 alignItems: "center",
-                                justifyContent: "space-between",
+                                gap: 4,
+                                padding: "3px 9px",
+                                borderRadius: 20,
+                                background: avail ? C.successBg : C.dangerBg,
+                                border: `1px solid ${avail ? C.successBdr : C.dangerBdr}`,
                               }}
                             >
-                              {eq.rental ? (
-                                <p
-                                  style={{
-                                    margin: 0,
-                                    fontSize: 13,
-                                    fontWeight: 600,
-                                    color: C.gold,
-                                  }}
-                                >
-                                  ₹{eq.rental}/day
-                                </p>
-                              ) : (
-                                <span />
-                              )}
                               <div
                                 style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 4,
-                                  padding: "3px 9px",
-                                  borderRadius: 20,
-                                  background: avail ? C.successBg : C.dangerBg,
-                                  border: `1px solid ${avail ? C.successBdr : C.dangerBdr}`,
+                                  width: 5,
+                                  height: 5,
+                                  borderRadius: "50%",
+                                  background: avail ? C.success : C.danger,
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 600,
+                                  color: avail ? C.success : C.danger,
                                 }}
                               >
-                                <div
-                                  style={{
-                                    width: 5,
-                                    height: 5,
-                                    borderRadius: "50%",
-                                    background: avail ? C.success : C.danger,
-                                  }}
-                                />
-                                <span
-                                  style={{
-                                    fontSize: 10,
-                                    fontWeight: 600,
-                                    color: avail ? C.success : C.danger,
-                                  }}
-                                >
-                                  {avail ? "Available" : "Booked"}
-                                </span>
-                              </div>
+                                {avail ? "Available" : "Booked"}
+                              </span>
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Note — mirrors ArtistProfile.jsx */}
-                  <div
-                    style={{
-                      marginTop: 14,
-                      padding: "12px 16px",
-                      background: C.goldBg,
-                      border: `1px solid ${C.border}`,
-                      borderRadius: 10,
-                    }}
-                  >
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 12.5,
-                        color: C.muted,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      <span style={{ fontWeight: 700, color: C.gold }}>
-                        Note:{" "}
-                      </span>
-                      Equipment rates are in addition to the artist's service
-                      rate. Selected items will be included in your booking
-                      request.
-                    </p>
-                  </div>
-                </>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
 
-          {/* ─── REVIEWS ─── */}
           {activeTab === "reviews" && (
             <div>
               <div
@@ -1686,7 +1481,6 @@ function ArtistDetailPanel({
                   </div>
                 )}
               </div>
-
               {reviews.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "28px 0" }}>
                   <Star
@@ -1780,9 +1574,12 @@ function ArtistDetailPanel({
             </div>
           )}
         </div>
-        {/* ══ end body ══ */}
 
-        {/* ── Footer actions ── */}
+        {/* ── Footer actions ──
+            If the application has been actioned (accepted/rejected),
+            show only the status chip — no buttons.
+            Otherwise show all three action buttons.
+        ── */}
         <div
           style={{
             padding: "12px 20px 14px",
@@ -1794,7 +1591,7 @@ function ArtistDetailPanel({
             flexWrap: "wrap",
           }}
         >
-          {/* Navigate to full ArtistProfile page */}
+          {/* Full profile button — always visible */}
           <button
             onClick={onNavigateToProfile}
             style={{
@@ -1811,84 +1608,102 @@ function ArtistDetailPanel({
               fontSize: 12.5,
               fontWeight: 700,
               cursor: "pointer",
-              touchAction: "manipulation",
             }}
           >
             <UserCircle size={14} /> Full Profile
           </button>
 
-          <button
-            disabled={isBusy || status === "hired" || status === "accepted"}
-            onClick={() => onUpdateStatus(app._id, "hired")}
-            style={{
-              flex: "1 1 68px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 5,
-              padding: "10px",
-              borderRadius: 9,
-              border: "none",
-              background: C.successBg,
-              color: C.success,
-              fontSize: 12.5,
-              fontWeight: 600,
-              cursor: "pointer",
-              touchAction: "manipulation",
-              opacity:
-                isBusy || status === "hired" || status === "accepted" ? 0.5 : 1,
-            }}
-          >
-            <CheckCircle2 size={13} /> Accept
-          </button>
-
-          <button
-            disabled={isBusy || status === "rejected"}
-            onClick={() => onUpdateStatus(app._id, "rejected")}
-            style={{
-              flex: "1 1 68px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 5,
-              padding: "10px",
-              borderRadius: 9,
-              border: "none",
-              background: C.dangerBg,
-              color: C.danger,
-              fontSize: 12.5,
-              fontWeight: 600,
-              cursor: "pointer",
-              touchAction: "manipulation",
-              opacity: isBusy || status === "rejected" ? 0.5 : 1,
-            }}
-          >
-            <XCircle size={13} /> Reject
-          </button>
-
-          <button
-            disabled={isBusy || status === "pending"}
-            onClick={() => onUpdateStatus(app._id, "pending")}
-            style={{
-              flex: "1 1 68px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 5,
-              padding: "10px",
-              borderRadius: 9,
-              border: "none",
-              background: C.warnBg,
-              color: C.warn,
-              fontSize: 12.5,
-              fontWeight: 600,
-              cursor: "pointer",
-              touchAction: "manipulation",
-              opacity: isBusy || status === "pending" ? 0.5 : 1,
-            }}
-          >
-            <Clock3 size={13} /> Pending
-          </button>
+          {acted ? (
+            /* Status already set — show pill only, no action buttons */
+            <div
+              style={{
+                flex: "3 1 160px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "10px 14px",
+                borderRadius: 9,
+                background: cfg.bg,
+                border: `1px solid ${cfg.color}28`,
+              }}
+            >
+              <cfg.icon size={15} style={{ color: cfg.color }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color }}>
+                {labelForStatus(status)}
+              </span>
+            </div>
+          ) : (
+            /* Pending — show all three action buttons */
+            <>
+              <button
+                disabled={isBusy}
+                onClick={() => onUpdateStatus(app._id, "hired")}
+                style={{
+                  flex: "1 1 68px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 5,
+                  padding: "10px",
+                  borderRadius: 9,
+                  border: "none",
+                  background: C.successBg,
+                  color: C.success,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  opacity: isBusy ? 0.5 : 1,
+                }}
+              >
+                <CheckCircle2 size={13} /> Accept
+              </button>
+              <button
+                disabled={isBusy}
+                onClick={() => onUpdateStatus(app._id, "rejected")}
+                style={{
+                  flex: "1 1 68px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 5,
+                  padding: "10px",
+                  borderRadius: 9,
+                  border: "none",
+                  background: C.dangerBg,
+                  color: C.danger,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  opacity: isBusy ? 0.5 : 1,
+                }}
+              >
+                <XCircle size={13} /> Reject
+              </button>
+              <button
+                disabled={isBusy}
+                onClick={() => onUpdateStatus(app._id, "pending")}
+                style={{
+                  flex: "1 1 68px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 5,
+                  padding: "10px",
+                  borderRadius: 9,
+                  border: "none",
+                  background: C.warnBg,
+                  color: C.warn,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  opacity: isBusy ? 0.5 : 1,
+                }}
+              >
+                <Clock3 size={13} /> Pending
+              </button>
+            </>
+          )}
         </div>
       </div>
     </>
@@ -1896,7 +1711,7 @@ function ArtistDetailPanel({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// APPLICATION CARD (list row)
+// APPLICATION CARD
 // ═══════════════════════════════════════════════════════════════════════════
 function AppCard({
   app,
@@ -1911,8 +1726,10 @@ function AppCard({
 
   const status = String(app.status || "pending").toLowerCase();
   const cfg = sCfg(status);
+  const acted = isActioned(status);
   const artist = app.artist || {};
   const opp = app.opportunity || {};
+
   const name = artist.name || artist.username || "Artist";
   const location = artist.location || "";
   const role = artist.artCategory || artist.role || "";
@@ -1949,7 +1766,6 @@ function AppCard({
           marginBottom: 10,
         }}
       >
-        {/* AVATAR — click → full ArtistProfile page */}
         <div
           onClick={onNavigateToProfile}
           title="View full profile"
@@ -1966,10 +1782,7 @@ function AppCard({
               alt={name}
               onError={() => setAvatarErr(true)}
               className="card-avatar"
-              style={{
-                border: `2px solid ${C.border}`,
-                transition: "border-color .2s,transform .2s",
-              }}
+              style={{ border: `2px solid ${C.border}` }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = C.gold;
                 e.currentTarget.style.transform = "scale(1.07)";
@@ -1997,7 +1810,6 @@ function AppCard({
               background: "rgba(26,29,36,0.85)",
               padding: "1px 5px",
               borderRadius: 4,
-              pointerEvents: "none",
               letterSpacing: "0.04em",
             }}
           >
@@ -2023,7 +1835,6 @@ function AppCard({
               {labelForStatus(status)}
             </span>
           </div>
-
           {role && (
             <p
               style={{
@@ -2036,7 +1847,6 @@ function AppCard({
               {role}
             </p>
           )}
-
           {showOpp && (opp.title || app.opportunityTitle) && (
             <p className="card-opp">
               <Briefcase
@@ -2046,7 +1856,6 @@ function AppCard({
               {opp.title || app.opportunityTitle}
             </p>
           )}
-
           <div
             style={{
               display: "flex",
@@ -2075,7 +1884,6 @@ function AppCard({
             )}
             {appliedAt && <span className="meta-chip">{appliedAt}</span>}
           </div>
-
           {skills.length > 0 && (
             <div
               style={{
@@ -2108,12 +1916,15 @@ function AppCard({
               )}
             </div>
           )}
-
           {note && <p className="card-note">{note}</p>}
         </div>
       </div>
 
-      {/* Action row */}
+      {/* ── Action row ──
+          • Always show the Details toggle button
+          • If actioned → show status pill only (no Accept/Reject/Pending buttons)
+          • If pending  → show all three action buttons
+      ── */}
       <div className="card-actions">
         <button
           onClick={onToggleDetail}
@@ -2126,42 +1937,67 @@ function AppCard({
         >
           <Eye size={13} /> {isOpen ? "Hide" : "Details"}
         </button>
-        <button
-          disabled={isBusy}
-          onClick={() => onUpdateStatus(app._id, "hired")}
-          className="btn-status"
-          style={{
-            background: C.successBg,
-            color: C.success,
-            opacity: isBusy ? 0.6 : 1,
-          }}
-        >
-          <CheckCircle2 size={13} /> Accept
-        </button>
-        <button
-          disabled={isBusy}
-          onClick={() => onUpdateStatus(app._id, "rejected")}
-          className="btn-status"
-          style={{
-            background: C.dangerBg,
-            color: C.danger,
-            opacity: isBusy ? 0.6 : 1,
-          }}
-        >
-          <XCircle size={13} /> Reject
-        </button>
-        <button
-          disabled={isBusy}
-          onClick={() => onUpdateStatus(app._id, "pending")}
-          className="btn-status"
-          style={{
-            background: C.warnBg,
-            color: C.warn,
-            opacity: isBusy ? 0.6 : 1,
-          }}
-        >
-          <Clock3 size={13} /> Pending
-        </button>
+
+        {acted ? (
+          /* Already actioned — show only the current status, no buttons */
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "8px 14px",
+              borderRadius: 8,
+              background: cfg.bg,
+              flex: "1 1 auto",
+              justifyContent: "center",
+            }}
+          >
+            <cfg.icon size={13} style={{ color: cfg.color }} />
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: cfg.color }}>
+              {labelForStatus(status)}
+            </span>
+          </div>
+        ) : (
+          /* Pending — show all action buttons */
+          <>
+            <button
+              disabled={isBusy}
+              onClick={() => onUpdateStatus(app._id, "hired")}
+              className="btn-status"
+              style={{
+                background: C.successBg,
+                color: C.success,
+                opacity: isBusy ? 0.6 : 1,
+              }}
+            >
+              <CheckCircle2 size={13} /> Accept
+            </button>
+            <button
+              disabled={isBusy}
+              onClick={() => onUpdateStatus(app._id, "rejected")}
+              className="btn-status"
+              style={{
+                background: C.dangerBg,
+                color: C.danger,
+                opacity: isBusy ? 0.6 : 1,
+              }}
+            >
+              <XCircle size={13} /> Reject
+            </button>
+            <button
+              disabled={isBusy}
+              onClick={() => onUpdateStatus(app._id, "pending")}
+              className="btn-status"
+              style={{
+                background: C.warnBg,
+                color: C.warn,
+                opacity: isBusy ? 0.6 : 1,
+              }}
+            >
+              <Clock3 size={13} /> Pending
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -2210,20 +2046,19 @@ export default function Applications() {
 
   const filtered = useMemo(() => {
     let list = items;
-    if (selOppId) {
-      list = list.filter((a) => {
-        const id = a.opportunityId || a.opportunity?._id || a.opportunity;
-        return String(id) === String(selOppId);
-      });
-    }
-    if (filter !== "all") {
+    if (selOppId)
+      list = list.filter(
+        (a) =>
+          String(a.opportunityId || a.opportunity?._id || a.opportunity) ===
+          String(selOppId),
+      );
+    if (filter !== "all")
       list = list.filter((a) => {
         const s = String(a.status || "pending").toLowerCase();
         return filter === "hired"
           ? s === "hired" || s === "accepted"
           : s === filter;
       });
-    }
     return list;
   }, [items, selOppId, filter]);
 
@@ -2265,7 +2100,6 @@ export default function Applications() {
     }
   };
 
-  // Navigate to the ArtistProfile page
   const navigateToProfile = (app) => {
     const artist = app.artist || app.applicant || {};
     const artistId = artist._id || artist.id || app.artistId;
@@ -2282,14 +2116,14 @@ export default function Applications() {
         display: "flex",
         minHeight: "100vh",
         backgroundColor: C.bg,
-        fontFamily: "'Inter','Segoe UI',sans-serif",
+        fontFamily: "'Plus Jakarta Sans','Inter','Segoe UI',sans-serif",
       }}
     >
       <HirerSidebar />
 
       <div className="apps-wrap">
         <div className="apps-inner">
-          {/* Header */}
+          {/* ── Header — margin-top ensures it clears the mobile hamburger ── */}
           <div style={{ marginBottom: 20 }}>
             <h1 className="page-title">Applications</h1>
             <p className="page-sub">
@@ -2430,7 +2264,6 @@ export default function Applications() {
         </div>
       </div>
 
-      {/* Full detail panel */}
       {detailApp && (
         <ArtistDetailPanel
           app={detailApp}
@@ -2442,120 +2275,74 @@ export default function Applications() {
       )}
 
       <style>{`
-        /* Layout */
-        .apps-wrap  { flex:1; overflow-x:hidden; padding:20px 14px 60px; }
-        .apps-inner { max-width:860px; margin:0 auto; }
-        @media(min-width:480px)  { .apps-wrap { padding:22px 20px 64px; } }
-        @media(min-width:640px)  { .apps-wrap { padding:24px 24px 64px; } }
-        @media(min-width:1024px) { .apps-wrap { margin-left:288px; padding:28px 32px 64px; } }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-        /* Typography */
-        .page-title { font-size:clamp(20px,4vw,24px); font-weight:700; color:#fff; margin:0 0 4px; }
+        /* ── Layout ── */
+        .apps-wrap  { flex:1; overflow-x:hidden; padding:60px 14px 60px; }
+        .apps-inner { max-width:860px; margin:0 auto; }
+        @media(min-width:480px)  { .apps-wrap { padding:64px 20px 64px; } }
+        @media(min-width:640px)  { .apps-wrap { padding:32px 24px 64px; } }
+        @media(min-width:1024px) { .apps-wrap { margin-left:242px; padding:32px 32px 64px; } }
+
+        /* ── Typography ── */
+        .page-title { font-size:clamp(20px,4vw,24px); font-weight:700; color:#fff; margin:0 0 4px; font-family:'Plus Jakarta Sans',sans-serif; }
         .page-sub   { font-size:13.5px; color:${C.muted}; margin:0; line-height:1.5; }
 
-        /* Post selector */
-        .post-select { width:100%; padding:10px 36px 10px 34px; background:${C.card};
-          border:1px solid ${C.border}; border-radius:10px; color:${C.text};
-          font-size:13.5px; appearance:none; -webkit-appearance:none;
-          cursor:pointer; outline:none; font-family:inherit; }
+        /* ── Post selector ── */
+        .post-select { width:100%; padding:10px 36px 10px 34px; background:${C.card}; border:1px solid ${C.border}; border-radius:10px; color:${C.text}; font-size:13.5px; appearance:none; -webkit-appearance:none; cursor:pointer; outline:none; font-family:inherit; }
         .post-select option { background:${C.card}; color:#fff; }
 
-        /* Status tabs */
-        .tabs-row { display:flex; gap:6px; margin-bottom:18px; overflow-x:auto;
-          -webkit-overflow-scrolling:touch; padding-bottom:2px; scrollbar-width:none; }
+        /* ── Tabs ── */
+        .tabs-row { display:flex; gap:6px; margin-bottom:18px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; scrollbar-width:none; }
         .tabs-row::-webkit-scrollbar { display:none; }
-        .tab-btn { padding:7px 12px; border-radius:8px; border:none; cursor:pointer;
-          flex-shrink:0; background:rgba(255,255,255,0.06); color:${C.text};
-          font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px;
-          -webkit-tap-highlight-color:transparent; touch-action:manipulation;
-          transition:background .15s,color .15s; font-family:inherit; }
-        .tab-btn.tab-active { background:${C.goldDim}; color:${C.gold};
-          outline:1px solid rgba(201,169,97,0.2); }
-        .tab-count { background:rgba(255,255,255,0.08); color:${C.muted};
-          font-size:11px; font-weight:700; border-radius:10px; padding:1px 7px; }
+        .tab-btn { padding:7px 12px; border-radius:8px; border:none; cursor:pointer; flex-shrink:0; background:rgba(255,255,255,0.06); color:${C.text}; font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px; touch-action:manipulation; transition:background .15s,color .15s; font-family:inherit; }
+        .tab-btn.tab-active { background:${C.goldDim}; color:${C.gold}; outline:1px solid rgba(201,169,97,0.2); }
+        .tab-count { background:rgba(255,255,255,0.08); color:${C.muted}; font-size:11px; font-weight:700; border-radius:10px; padding:1px 7px; }
         .tab-count.tab-count-active { background:rgba(201,169,97,0.22); color:${C.gold}; }
 
-        /* Empty */
-        .empty-state { border-radius:12px; padding:40px 20px; text-align:center;
-          background:${C.card}; border:1px solid ${C.border}; }
+        /* ── Empty ── */
+        .empty-state { border-radius:12px; padding:40px 20px; text-align:center; background:${C.card}; border:1px solid ${C.border}; }
 
-        /* App card */
-        .app-card { border-radius:12px; padding:14px 14px 12px;
-          background:${C.card}; transition:border-color .2s; }
+        /* ── App card ── */
+        .app-card { border-radius:12px; padding:14px 14px 12px; background:${C.card}; transition:border-color .2s; }
         @media(min-width:480px) { .app-card { padding:16px 18px 14px; } }
 
-        .card-avatar    { width:44px; height:44px; border-radius:50%;
-          object-fit:cover; flex-shrink:0; display:block; }
-        .card-avatar-ph { width:44px; height:44px; border-radius:50%; flex-shrink:0;
-          background:linear-gradient(135deg,${C.gold},#a8863d);
-          display:flex; align-items:center; justify-content:center; }
-        .card-name  { margin:0; font-size:14px; font-weight:600; color:#fff;
-          overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-          max-width:calc(100% - 96px); }
-        .card-opp   { display:flex; align-items:center; margin:2px 0 0; font-size:12px;
-          color:${C.gold}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .card-note  { margin:7px 0 0; font-size:12px; color:${C.muted}; line-height:1.45;
-          overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-        .meta-chip  { display:inline-flex; align-items:center; gap:3px;
-          font-size:11.5px; color:${C.muted}; }
-        .status-badge { display:inline-flex; align-items:center; padding:3px 9px;
-          border-radius:20px; font-size:11.5px; font-weight:600;
-          white-space:nowrap; flex-shrink:0; }
+        .card-avatar    { width:44px; height:44px; border-radius:50%; object-fit:cover; flex-shrink:0; display:block; transition:border-color .2s,transform .2s; }
+        .card-avatar-ph { width:44px; height:44px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,${C.gold},#a8863d); display:flex; align-items:center; justify-content:center; }
+        .card-name      { margin:0; font-size:14px; font-weight:600; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:calc(100% - 96px); }
+        .card-opp       { display:flex; align-items:center; margin:2px 0 0; font-size:12px; color:${C.gold}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .card-note      { margin:7px 0 0; font-size:12px; color:${C.muted}; line-height:1.45; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+        .meta-chip      { display:inline-flex; align-items:center; gap:3px; font-size:11.5px; color:${C.muted}; }
+        .status-badge   { display:inline-flex; align-items:center; padding:3px 9px; border-radius:20px; font-size:11.5px; font-weight:600; white-space:nowrap; flex-shrink:0; }
 
-        /* Card buttons */
+        /* ── Card buttons ── */
         .card-actions { display:flex; flex-wrap:wrap; gap:6px; }
-        .btn-details  { display:flex; align-items:center; gap:5px; padding:8px 13px;
-          border-radius:8px; border:1px solid; font-size:12.5px; font-weight:500;
-          cursor:pointer; flex:1 1 auto; justify-content:center; min-width:80px;
-          touch-action:manipulation; font-family:inherit;
-          transition:background .15s,border-color .15s,color .15s; }
-        .btn-status   { display:flex; align-items:center; gap:5px; padding:8px 13px;
-          border-radius:8px; border:none; font-size:12.5px; font-weight:600;
-          cursor:pointer; flex:1 1 auto; justify-content:center; min-width:68px;
-          touch-action:manipulation; font-family:inherit; }
+        .btn-details  { display:flex; align-items:center; gap:5px; padding:8px 13px; border-radius:8px; border:1px solid; font-size:12.5px; font-weight:500; cursor:pointer; flex:1 1 auto; justify-content:center; min-width:80px; touch-action:manipulation; font-family:inherit; transition:background .15s,border-color .15s,color .15s; }
+        .btn-status   { display:flex; align-items:center; gap:5px; padding:8px 13px; border-radius:8px; border:none; font-size:12.5px; font-weight:600; cursor:pointer; flex:1 1 auto; justify-content:center; min-width:68px; touch-action:manipulation; font-family:inherit; }
         .btn-status:disabled { opacity:.55; cursor:default; }
 
-        /* Detail panel — mobile bottom sheet */
-        .adp-panel {
-          position:fixed; left:0; right:0; bottom:0; z-index:1001;
-          height:93vh; background:${C.cardDeep};
-          border-radius:18px 18px 0 0; border:1px solid ${C.border};
-          box-shadow:0 -10px 56px rgba(0,0,0,0.65);
-          display:flex; flex-direction:column; overflow:hidden;
-          animation:adp-up .28s cubic-bezier(.4,0,.2,1);
-        }
-        /* Detail panel — desktop right drawer */
+        /* ── Detail panel ── */
+        .adp-panel { position:fixed; left:0; right:0; bottom:0; z-index:1001; height:93vh; background:${C.cardDeep}; border-radius:18px 18px 0 0; border:1px solid ${C.border}; box-shadow:0 -10px 56px rgba(0,0,0,0.65); display:flex; flex-direction:column; overflow:hidden; animation:adp-up .28s cubic-bezier(.4,0,.2,1); }
         @media(min-width:768px) {
-          .adp-panel {
-            left:auto; top:0; right:0; bottom:0; height:100vh;
-            width:clamp(360px,44vw,520px); border-radius:0;
-            border-left:1px solid ${C.border};
-            border-top:none; border-bottom:none; border-right:none;
-            animation:adp-right .28s cubic-bezier(.4,0,.2,1);
-          }
+          .adp-panel { left:auto; top:0; right:0; bottom:0; height:100vh; width:clamp(360px,44vw,520px); border-radius:0; border-left:1px solid ${C.border}; border-top:none; border-bottom:none; border-right:none; animation:adp-right .28s cubic-bezier(.4,0,.2,1); }
         }
 
-        /* Tabs inside detail panel */
-        .adp-tabs { display:flex; border-bottom:1px solid ${C.border}; flex-shrink:0;
-          overflow-x:auto; scrollbar-width:none; padding:0 20px; }
+        /* ── Detail tabs ── */
+        .adp-tabs { display:flex; border-bottom:1px solid ${C.border}; flex-shrink:0; overflow-x:auto; scrollbar-width:none; padding:0 20px; }
         .adp-tabs::-webkit-scrollbar { display:none; }
-        .adp-tab { padding:10px 14px; font-size:12.5px; font-weight:600; border:none;
-          background:transparent; cursor:pointer; white-space:nowrap; flex-shrink:0;
-          color:${C.muted}; border-bottom:2px solid transparent;
-          transition:color .2s; margin-bottom:-1px;
-          touch-action:manipulation; font-family:inherit; }
+        .adp-tab { padding:10px 14px; font-size:12.5px; font-weight:600; border:none; background:transparent; cursor:pointer; white-space:nowrap; flex-shrink:0; color:${C.muted}; border-bottom:2px solid transparent; transition:color .2s; margin-bottom:-1px; touch-action:manipulation; font-family:inherit; }
         .adp-tab.adp-tab-active { color:${C.gold}; border-bottom-color:${C.gold}; }
 
         /* Mobile drag handle */
         .adp-handle { display:flex; justify-content:center; padding:8px 0 2px; flex-shrink:0; }
         @media(min-width:768px) { .adp-handle { display:none; } }
 
-        /* Keyframes */
+        /* ── Keyframes ── */
         @keyframes adp-up    { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
         @keyframes adp-right { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
         @keyframes apps-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
-        /* Global */
+        /* ── Global ── */
         * { box-sizing:border-box; }
         input,select,textarea,button { -webkit-tap-highlight-color:transparent; font-family:inherit; }
         select option { background:${C.card}; color:#ffffff; }

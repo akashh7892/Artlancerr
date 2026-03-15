@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -76,27 +76,22 @@ export default function Sidebar() {
   const [modalOpen, setModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const sidebarRef = useRef(null);
 
   const showFloating = SIDEBAR_PATHS.some((p) =>
     location.pathname.startsWith("/" + p.split("/").slice(1, 3).join("/")),
   );
 
-  // Open modal when route is /artist/plusicon
   useEffect(() => {
-    if (location.pathname === "/artist/plusicon") {
-      setModalOpen(true);
-    } else {
-      setModalOpen(false);
-    }
+    if (location.pathname === "/artist/plusicon") setModalOpen(true);
+    else setModalOpen(false);
   }, [location.pathname]);
 
-  // Close modal → go back to previous page
   const closeModal = () => {
     setModalOpen(false);
     navigate(-1);
   };
 
-  // Lock body scroll
   useEffect(() => {
     document.body.style.overflow = open || modalOpen ? "hidden" : "";
     return () => {
@@ -104,18 +99,20 @@ export default function Sidebar() {
     };
   }, [open, modalOpen]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   const handleLogout = () => {
-    // Remove token / user data
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
-    // Optional: clear everything
-    // localStorage.clear();
-
-    // Redirect to signin page
     navigate("/");
-
-    // Close sidebar if open
     setOpen(false);
   };
 
@@ -123,26 +120,20 @@ export default function Sidebar() {
     if (!path) {
       return (
         <button
-          className="relative flex items-center gap-3 w-full px-4 py-[11px] rounded-xl text-left transition-all duration-200 cursor-pointer border-0 outline-none"
-          style={{ background: "transparent" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-          }}
           onClick={handleLogout}
+          className="sb-item flex items-center gap-3 w-full px-3 py-[10px] rounded-xl text-left border-0 outline-none cursor-pointer"
+          style={{ background: "transparent" }}
         >
           <Icon
-            size={19}
-            strokeWidth={1.7}
-            style={{ color: "#6b7f8f", flexShrink: 0 }}
+            size={17}
+            strokeWidth={1.8}
+            style={{ color: "#5a6e7d", flexShrink: 0 }}
           />
           <span
-            className="text-[15px]"
             style={{
-              color: "#8a9faf",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              color: "#7a8fa0",
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontSize: 13.5,
               fontWeight: 400,
             }}
           >
@@ -155,7 +146,7 @@ export default function Sidebar() {
       <NavLink
         to={path}
         onClick={() => setOpen(false)}
-        className="relative flex items-center gap-3 w-full px-4 py-[11px] rounded-xl text-left transition-all duration-200 cursor-pointer border-0 outline-none no-underline"
+        className="sb-item flex items-center gap-3 w-full px-3 py-[10px] rounded-xl text-left border-0 outline-none cursor-pointer no-underline relative"
         style={({ isActive }) => ({
           background: isActive ? "rgba(201,169,97,0.10)" : "transparent",
           textDecoration: "none",
@@ -165,26 +156,34 @@ export default function Sidebar() {
           <>
             {isActive && (
               <span
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full"
-                style={{ background: "#c9a961", height: "55%" }}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 3,
+                  height: "52%",
+                  borderRadius: "0 3px 3px 0",
+                  background: "#c9a961",
+                }}
               />
             )}
             <Icon
-              size={19}
+              size={17}
               strokeWidth={isActive ? 2.2 : 1.7}
               style={{
-                color: isActive ? "#c9a961" : "#6b7f8f",
+                color: isActive ? "#c9a961" : "#5a6e7d",
                 flexShrink: 0,
-                transition: "color 0.2s",
+                transition: "color 0.18s",
               }}
             />
             <span
-              className="text-[15px] tracking-[0.01em]"
               style={{
-                color: isActive ? "#c4d5e0" : "#8a9faf",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: isActive ? "#ddd0a8" : "#7a8fa0",
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontSize: 13.5,
                 fontWeight: isActive ? 600 : 400,
-                transition: "color 0.2s",
+                transition: "color 0.18s",
               }}
             >
               {label}
@@ -198,139 +197,222 @@ export default function Sidebar() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-        .scrollbar-none::-webkit-scrollbar { display: none; }
-        .scrollbar-none { scrollbar-width: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-        @keyframes float {
+        /* scrollbar */
+        .sb-scroll::-webkit-scrollbar { display: none; }
+        .sb-scroll { scrollbar-width: none; }
+
+        /* ── Hamburger toggle – outside sidebar, mobile only ──────────
+           ☰ when closed, ✕ when open. Hidden on desktop ≥1024px.       */
+        .sb-toggle {
+          display: none;
+          position: fixed;
+          top: 13px; left: 13px;
+          z-index: 1300;
+          align-items: center;
+          justify-content: center;
+          width: 36px; height: 36px;
+          border-radius: 9px;
+          border: 1px solid rgba(201,169,97,0.16);
+          background: #1a1e26;
+          color: #b8c8d4;
+          cursor: pointer;
+          outline: none;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.36);
+          transition: background 0.16s, border-color 0.16s;
+        }
+        .sb-toggle:hover { background: #20262f; border-color: rgba(201,169,97,0.36); }
+        @media (max-width: 1023px) { .sb-toggle { display: flex; } }
+
+        /* ── Backdrop – mobile only ─────────────────────────────────── */
+        .sb-backdrop {
+          display: none;
+          position: fixed; inset: 0;
+          z-index: 1100;
+          background: rgba(0,0,0,0.58);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          animation: sbFade 0.18s ease;
+        }
+        @media (max-width: 1023px) { .sb-backdrop { display: block; } }
+        @keyframes sbFade { from { opacity:0; } to { opacity:1; } }
+
+        /* ── Sidebar panel ──────────────────────────────────────────── */
+        .sb-panel {
+          position: fixed;
+          top: 0; left: 0;
+          width: 242px;
+          height: 100dvh;
+          z-index: 1200;
+          display: flex;
+          flex-direction: column;
+          background: #191d25;
+          border-right: 1px solid rgba(255,255,255,0.055);
+          transform: translateX(0);
+          transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+          will-change: transform;
+        }
+        @media (max-width: 1023px) {
+          .sb-panel { transform: translateX(-100%); }
+          .sb-panel.sb-open { transform: translateX(0); }
+        }
+
+        /* ── Nav item hover ─────────────────────────────────────────── */
+        .sb-item { transition: background 0.15s; }
+        .sb-item:hover { background: rgba(255,255,255,0.042) !important; }
+
+        /* ── Active glow strip ──────────────────────────────────────── */
+        .sb-item-active { background: rgba(201,169,97,0.09) !important; }
+
+        /* ── FAB ────────────────────────────────────────────────────── */
+        @keyframes sbFloat {
           0%,100% { transform: translateY(0); }
-          50%      { transform: translateY(-6px); }
+          50%      { transform: translateY(-4px); }
         }
-        @keyframes pulse-ring {
-          0%  { box-shadow: 0 0 0 0 rgba(201,169,97,0.5), 0 8px 32px rgba(0,0,0,0.4); }
-          70% { box-shadow: 0 0 0 10px rgba(201,169,97,0), 0 8px 32px rgba(0,0,0,0.4); }
-          100%{ box-shadow: 0 0 0 0 rgba(201,169,97,0),   0 8px 32px rgba(0,0,0,0.4); }
+        @keyframes sbRing {
+          0%,100% { box-shadow: 0 0 0 0 rgba(201,169,97,0.42), 0 6px 20px rgba(0,0,0,0.34); }
+          60%      { box-shadow: 0 0 0 9px rgba(201,169,97,0),  0 6px 20px rgba(0,0,0,0.34); }
         }
-        @keyframes overlayIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes cardIn {
-          from { opacity: 0; transform: translateY(20px) scale(0.96); }
-          to   { opacity: 1; transform: translateY(0)    scale(1);    }
-        }
-        @keyframes itemIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
+        .sb-fab { animation: sbFloat 3.2s ease-in-out infinite, sbRing 3s ease-out infinite; }
+        .sb-fab:hover {
+          animation: none !important;
+          transform: scale(1.1) rotate(90deg) !important;
+          transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1) !important;
         }
 
-        .fab-btn { animation: float 3s ease-in-out infinite, pulse-ring 2.5s ease-out infinite; }
-        .fab-btn:hover { animation: none !important; transform: scale(1.13) rotate(90deg) !important; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        /* ── Quick-actions modal ───────────────────────────────────── */
+        @keyframes sbUp {
+          from { opacity:0; transform: translateY(18px) scale(0.96); }
+          to   { opacity:1; transform: none; }
+        }
+        .sb-modal { animation: sbUp 0.26s cubic-bezier(0.34,1.3,0.64,1) forwards; }
 
-        .modal-overlay { animation: overlayIn 0.22s ease forwards; }
-        .modal-card    { animation: cardIn 0.3s cubic-bezier(0.34,1.4,0.64,1) forwards; }
+        @keyframes sbRow {
+          from { opacity:0; transform: translateY(7px); }
+          to   { opacity:1; transform: none; }
+        }
+        .sb-ri { opacity:0; }
+        .sb-ri:nth-child(1) { animation: sbRow 0.22s 0.06s ease forwards; }
+        .sb-ri:nth-child(2) { animation: sbRow 0.22s 0.12s ease forwards; }
+        .sb-ri:nth-child(3) { animation: sbRow 0.22s 0.18s ease forwards; }
 
-        .action-item { opacity: 0; }
-        .action-item:nth-child(1) { animation: itemIn 0.28s 0.10s ease forwards; }
-        .action-item:nth-child(2) { animation: itemIn 0.28s 0.18s ease forwards; }
-        .action-item:nth-child(3) { animation: itemIn 0.28s 0.26s ease forwards; }
+        .sb-row { transition: background 0.15s, transform 0.15s, border-color 0.15s; }
+        .sb-row:hover { background: rgba(201,169,97,0.07) !important; transform: translateX(3px); border-color: rgba(201,169,97,0.20) !important; }
+        .sb-row:hover .sb-arr { opacity:1 !important; transform: translateX(0) !important; }
+        .sb-arr { opacity:0; transform: translateX(-4px); transition: opacity 0.14s, transform 0.14s; }
 
-        .action-row { transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease; }
-        .action-row:hover { background: rgba(201,169,97,0.08) !important; transform: translateX(5px); border-color: rgba(201,169,97,0.22) !important; }
-        .action-row:hover .action-arrow { opacity: 1 !important; transform: translateX(0) !important; }
-        .action-arrow { opacity: 0; transform: translateX(-4px); transition: opacity 0.18s ease, transform 0.18s ease; }
+        .sb-xbtn { transition: background 0.13s, transform 0.17s; }
+        .sb-xbtn:hover { background: rgba(255,255,255,0.10) !important; transform: rotate(90deg); }
 
-        .close-btn { transition: background 0.15s ease, transform 0.2s ease; }
-        .close-btn:hover { background: rgba(255,255,255,0.1) !important; transform: rotate(90deg); }
+        /* ── Section divider label ──────────────────────────────────── */
+        .sb-section-label {
+          padding: 14px 12px 4px;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: rgba(201,169,97,0.28);
+          font-family: 'Plus Jakarta Sans', sans-serif;
+        }
       `}</style>
 
-      {/* Mobile toggle */}
+      {/* ── Hamburger: mobile only, shows ☰ or ✕ ── */}
       <button
-        id="sidebar-toggle"
+        className="sb-toggle"
         onClick={() => setOpen((v) => !v)}
-        className="lg:hidden fixed top-4 left-4 z-[1100] flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200"
-        style={{
-          background: "#1f2229",
-          border: "1px solid rgba(201,169,97,0.2)",
-          color: "#c4d5e0",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-        }}
-        aria-label="Toggle navigation"
+        aria-label={open ? "Close menu" : "Open menu"}
       >
-        {open ? <X size={19} /> : <Menu size={19} />}
+        {open ? (
+          <X size={17} strokeWidth={2.2} />
+        ) : (
+          <Menu size={17} strokeWidth={2} />
+        )}
       </button>
 
-      {/* Sidebar backdrop */}
-      {open && (
-        <div
-          className="lg:hidden fixed inset-0 z-[999] bg-black/65 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        />
-      )}
+      {/* ── Backdrop ── */}
+      {open && <div className="sb-backdrop" onClick={() => setOpen(false)} />}
 
-      {/* Sidebar */}
-      <aside
-        id="FlipSidebar"
-        className={`fixed top-0 left-0 h-screen z-[1000] flex flex-col w-[248px] transition-transform duration-300 ease-in-out lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
-        style={{
-          background: "#1f2229",
-          borderRight: "1px solid rgba(201,169,97,0.10)",
-        }}
-      >
-        {/* Logo */}
+      <aside ref={sidebarRef} className={`sb-panel ${open ? "sb-open" : ""}`}>
+        {/* ── Logo header
+            The logo + name are pushed to the RIGHT end of the header
+            row using justify-end, so they sit away from the hamburger
+            button that floats at top-left on mobile.
+        ── */}
         <div
-          className="flex-shrink-0 px-5 pt-6 pb-5"
-          style={{ borderBottom: "1px solid rgba(201,169,97,0.10)" }}
+          style={{
+            flexShrink: 0,
+            padding: "18px 16px 16px",
+            borderBottom: "1px solid rgba(255,255,255,0.055)",
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
         >
           <NavLink
             to="/artist/dashboard"
-            className="flex items-center gap-3 no-underline"
             onClick={() => setOpen(false)}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              textDecoration: "none",
+            }}
           >
             <img
               src="/logo.png"
-              alt="flip logo"
-              className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
-            />
-            <span
-              className="text-[22px] leading-none"
+              alt="Flip"
               style={{
-                color: "#c9a961",
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 700,
-                letterSpacing: "0.01em",
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                objectFit: "cover",
+              }}
+            />
+
+            <p
+              style={{
+                marginTop: 4,
+                color: "rgba(201,169,97,0.5)",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontWeight: 600,
+                fontSize: 9,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
               }}
             >
-              Flip
-            </span>
+              Artist Mode
+            </p>
           </NavLink>
-          <p
-            className="mt-[7px] text-[10.5px] font-semibold tracking-[0.18em] uppercase"
-            style={{
-              color: "rgba(201,169,97,0.5)",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              paddingLeft: "48px",
-            }}
-          >
-            Artist Mode
-          </p>
         </div>
-
-        {/* Main nav */}
-        <nav className="flex-1 overflow-y-auto scrollbar-none px-3 py-4 flex flex-col gap-[3px]">
-          {NAV_ITEMS.map((item) => (
-            <NavItem key={item.label} {...item} />
-          ))}
+        {/* ── Main nav ── */}
+        <nav
+          className="sb-scroll flex-1 overflow-y-auto"
+          style={{ padding: "8px 8px 0" }}
+        >
+          <p className="sb-section-label">Menu</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {NAV_ITEMS.map((item) => (
+              <NavItem key={item.label} {...item} />
+            ))}
+          </div>
         </nav>
 
-        {/* Bottom nav */}
+        {/* ── Bottom: settings + logout — flex-shrink-0 ensures always visible ── */}
         <div
-          className="px-3 pb-5 pt-3 flex flex-col gap-[3px]"
-          style={{ borderTop: "1px solid rgba(201,169,97,0.10)" }}
+          style={{
+            flexShrink: 0,
+            padding: "8px 8px 16px",
+            borderTop: "1px solid rgba(255,255,255,0.055)",
+          }}
         >
-          {BOTTOM_ITEMS.map((item) => (
-            <NavItem key={item.label} {...item} />
-          ))}
+          <p className="sb-section-label" style={{ paddingTop: 8 }}>
+            Account
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {BOTTOM_ITEMS.map((item) => (
+              <NavItem key={item.label} {...item} />
+            ))}
+          </div>
         </div>
       </aside>
 
@@ -338,149 +420,246 @@ export default function Sidebar() {
       {showFloating && (
         <button
           onClick={() => navigate("/artist/plusicon")}
-          className="fab-btn fixed bottom-8 right-8 z-[1200] flex items-center justify-center w-14 h-14 rounded-full cursor-pointer border-0 outline-none"
+          className="sb-fab fixed z-[1400] flex items-center justify-center rounded-full cursor-pointer border-0 outline-none"
           style={{
+            bottom: 24,
+            right: 20,
+            width: 50,
+            height: 50,
             background:
-              "linear-gradient(135deg, #c9a961 0%, #e0c07a 50%, #b8923f 100%)",
-            color: "#1f2229",
+              "linear-gradient(135deg,#c9a961 0%,#dfc070 50%,#b8923f 100%)",
+            color: "#1a1e26",
           }}
           aria-label="Quick Actions"
         >
-          <Plus size={26} strokeWidth={2.8} />
+          <Plus size={22} strokeWidth={2.8} />
         </button>
       )}
 
-      {/* ── Quick Actions Modal Overlay ── */}
+      {/* ── Quick Actions Modal ── */}
       {modalOpen && (
         <div
-          className="modal-overlay fixed inset-0 z-[2000] flex items-center justify-center"
-          style={{
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
-            background: "rgba(10,12,16,0.45)",
-          }}
           onClick={closeModal}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            background: "rgba(8,10,14,0.55)",
+            animation: "sbFade 0.18s ease",
+          }}
         >
+          {/* Centre on sm+ */}
           <div
-            className="modal-card relative w-[340px] rounded-2xl p-7"
-            style={{
-              background: "#1f2229",
-              border: "1px solid rgba(201,169,97,0.18)",
-              boxShadow:
-                "0 32px 80px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.03)",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-            }}
-            onClick={(e) => e.stopPropagation()}
+            style={{ display: "contents" }}
+            className="sm:flex sm:items-center sm:justify-center sm:inset-0 sm:fixed"
           >
-            {/* Close */}
-            <button
-              className="close-btn absolute top-4 right-4 flex items-center justify-center w-7 h-7 rounded-full border-0 outline-none cursor-pointer"
-              style={{ background: "rgba(255,255,255,0.05)", color: "#6b7f8f" }}
-              onClick={closeModal}
+            <div
+              className="sb-modal"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: "relative",
+                width: "100%",
+                maxWidth: 356,
+                margin: "0 12px",
+                borderRadius: "20px 20px 20px 20px",
+                padding: "24px 24px 28px",
+                background: "#1e2230",
+                border: "1px solid rgba(201,169,97,0.16)",
+                boxShadow: "0 28px 72px rgba(0,0,0,0.62)",
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                maxHeight: "88dvh",
+                overflowY: "auto",
+              }}
             >
-              <X size={15} strokeWidth={2.2} />
-            </button>
+              {/* Drag handle */}
+              <div
+                style={{
+                  width: 36,
+                  height: 3,
+                  borderRadius: 99,
+                  background: "rgba(255,255,255,0.10)",
+                  margin: "0 auto 20px",
+                }}
+                className="sm:hidden"
+              />
 
-            {/* Header */}
-            <div className="mb-1 flex items-center gap-2">
-              <Sparkles size={15} style={{ color: "#c9a961" }} />
-              <span
-                className="text-[11px] font-semibold tracking-[0.16em] uppercase"
-                style={{ color: "rgba(201,169,97,0.65)" }}
+              <button
+                className="sb-xbtn"
+                onClick={closeModal}
+                style={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  border: 0,
+                  outline: "none",
+                  cursor: "pointer",
+                  background: "rgba(255,255,255,0.06)",
+                  color: "#5a6e7d",
+                }}
               >
-                Artist Tools
-              </span>
-            </div>
-            <h2
-              className="text-[20px] font-bold mb-1"
-              style={{ color: "#c4d5e0" }}
-            >
-              Quick Actions
-            </h2>
-            <p
-              className="text-[13px] mb-6 leading-relaxed"
-              style={{ color: "#5a6e7d" }}
-            >
-              Jump straight to what matters — update your work, find new gigs,
-              or check in with clients.
-            </p>
+                <X size={13} strokeWidth={2.2} />
+              </button>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-[10px]">
-              {ACTIONS.map(({ label, desc, icon: Icon, path, tag }) => (
-                <button
-                  key={label}
-                  className="action-item action-row flex items-center gap-4 w-full px-4 py-[13px] rounded-xl border-0 outline-none cursor-pointer text-left"
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  marginBottom: 4,
+                }}
+              >
+                <Sparkles size={13} style={{ color: "#c9a961" }} />
+                <span
                   style={{
-                    background: "rgba(255,255,255,0.025)",
-                    border: "1px solid rgba(201,169,97,0.07)",
-                  }}
-                  onClick={() => {
-                    setModalOpen(false);
-                    navigate(path);
+                    color: "rgba(201,169,97,0.55)",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
                   }}
                 >
-                  {/* Icon box */}
-                  <span
-                    className="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0"
-                    style={{ background: "rgba(201,169,97,0.10)" }}
+                  Artist Tools
+                </span>
+              </div>
+              <h2
+                style={{
+                  margin: "0 0 4px",
+                  color: "#ccc8bc",
+                  fontFamily: "'Playfair Display',serif",
+                  fontWeight: 700,
+                  fontSize: 18,
+                }}
+              >
+                Quick Actions
+              </h2>
+              <p
+                style={{
+                  margin: "0 0 18px",
+                  color: "#4e6070",
+                  fontSize: 12,
+                  lineHeight: 1.65,
+                }}
+              >
+                Jump straight to what matters
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {ACTIONS.map(({ label, desc, icon: Icon, path, tag }) => (
+                  <button
+                    key={label}
+                    className="sb-ri sb-row"
+                    onClick={() => {
+                      setModalOpen(false);
+                      navigate(path);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      width: "100%",
+                      padding: "11px 14px",
+                      borderRadius: 13,
+                      border: "1px solid rgba(201,169,97,0.07)",
+                      background: "rgba(255,255,255,0.022)",
+                      cursor: "pointer",
+                      outline: "none",
+                      textAlign: "left",
+                    }}
                   >
-                    <Icon
-                      size={17}
-                      strokeWidth={1.8}
-                      style={{ color: "#c9a961" }}
-                    />
-                  </span>
-
-                  {/* Text */}
-                  <span className="flex flex-col flex-1 min-w-0">
                     <span
-                      className="text-[14.5px] font-semibold leading-tight"
-                      style={{ color: "#c4d5e0" }}
-                    >
-                      {label}
-                    </span>
-                    <span
-                      className="text-[12px] mt-[3px] leading-snug"
-                      style={{ color: "#5a6e7d" }}
-                    >
-                      {desc}
-                    </span>
-                  </span>
-
-                  {/* Tag + arrow */}
-                  <span className="flex items-center gap-2 flex-shrink-0">
-                    <span
-                      className="text-[10.5px] font-semibold px-2 py-[3px] rounded-full"
                       style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 34,
+                        height: 34,
+                        borderRadius: 10,
+                        flexShrink: 0,
                         background: "rgba(201,169,97,0.10)",
-                        color: "rgba(201,169,97,0.75)",
-                        letterSpacing: "0.04em",
                       }}
                     >
-                      {tag}
+                      <Icon
+                        size={15}
+                        strokeWidth={1.8}
+                        style={{ color: "#c9a961" }}
+                      />
                     </span>
-                    <ArrowRight
-                      size={14}
-                      className="action-arrow"
-                      style={{ color: "#c9a961" }}
-                    />
-                  </span>
-                </button>
-              ))}
-            </div>
+                    <span
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#c0baa8",
+                          fontSize: 13.5,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {label}
+                      </span>
+                      <span
+                        style={{ color: "#4e6070", fontSize: 11, marginTop: 2 }}
+                      >
+                        {desc}
+                      </span>
+                    </span>
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 7,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          background: "rgba(201,169,97,0.10)",
+                          color: "rgba(201,169,97,0.65)",
+                          fontSize: 9.5,
+                          fontWeight: 600,
+                          padding: "2px 7px",
+                          borderRadius: 999,
+                        }}
+                      >
+                        {tag}
+                      </span>
+                      <ArrowRight
+                        size={12}
+                        className="sb-arr"
+                        style={{ color: "#c9a961" }}
+                      />
+                    </span>
+                  </button>
+                ))}
+              </div>
 
-            {/* Footer hint */}
-            <p
-              className="mt-5 text-center text-[11.5px]"
-              style={{ color: "#3a4e5e" }}
-            >
-              Press{" "}
-              <span className="font-semibold" style={{ color: "#5a6e7d" }}>
-                Esc
-              </span>{" "}
-              or click outside to dismiss
-            </p>
+              <p
+                style={{
+                  margin: "18px 0 0",
+                  color: "#283540",
+                  fontSize: 10.5,
+                  textAlign: "center",
+                }}
+              >
+                Click outside or press{" "}
+                <span style={{ color: "#3e5260" }}>Esc</span> to dismiss
+              </p>
+            </div>
           </div>
         </div>
       )}

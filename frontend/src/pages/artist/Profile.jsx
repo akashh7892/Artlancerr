@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
@@ -17,6 +17,7 @@ import {
   ChevronRight as NextIcon,
   Upload,
   Image as ImageIcon,
+  CheckCircle2,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 import { artistAPI, getUser, setUser, uploadFile } from "../../services/api";
@@ -134,6 +135,154 @@ function getMonthFreeDates(year, month, blockedDates) {
     if (!blockedSet.has(key)) free.push(key);
   }
   return free;
+}
+
+/* ─── Save Toast Popup ───────────────────────────────────────────── */
+function SaveToast({ toast, onDismiss }) {
+  if (!toast) return null;
+  return (
+    <>
+      <style>{`
+        @keyframes toastSlideIn {
+          from { opacity: 0; transform: translate(-50%, 20px) scale(0.96); }
+          to   { opacity: 1; transform: translate(-50%, 0)    scale(1);    }
+        }
+        @keyframes toastProgress {
+          from { width: 100%; }
+          to   { width: 0%;   }
+        }
+        .save-toast {
+          position: fixed;
+          bottom: 24px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 99999;
+          width: calc(100vw - 32px);
+          max-width: 420px;
+          border-radius: 16px;
+          overflow: hidden;
+          background: #22252e;
+          border: 1px solid rgba(179,169,97,0.32);
+          box-shadow: 0 12px 48px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+          animation: toastSlideIn 0.38s cubic-bezier(0.34,1.56,0.64,1) both;
+          box-sizing: border-box;
+        }
+        @media (min-width: 640px) {
+          .save-toast {
+            width: auto;
+            min-width: 320px;
+            max-width: 440px;
+            bottom: 32px;
+          }
+        }
+        @media (min-width: 1024px) {
+          .save-toast {
+            bottom: 40px;
+          }
+        }
+      `}</style>
+
+      <div className="save-toast">
+        {/* Gold accent line */}
+        <div
+          style={{
+            height: "2.5px",
+            background:
+              "linear-gradient(90deg, transparent 0%, #b3a961 30%, #cfc060 70%, transparent 100%)",
+          }}
+        />
+
+        <div style={{ padding: "13px 14px 11px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "11px" }}>
+            {/* Icon */}
+            <div
+              style={{
+                flexShrink: 0,
+                width: "38px",
+                height: "38px",
+                borderRadius: "11px",
+                background: "rgba(179,169,97,0.14)",
+                border: "1px solid rgba(179,169,97,0.28)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <CheckCircle2 size={19} color="#b3a961" strokeWidth={2.1} />
+            </div>
+
+            {/* Text */}
+            <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "13.5px",
+                  fontWeight: "700",
+                  color: "#e8e9eb",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  lineHeight: 1.35,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {toast.title}
+              </p>
+              {toast.subtitle && (
+                <p
+                  style={{
+                    margin: "2px 0 0",
+                    fontSize: "12px",
+                    color: "#8ba390",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    lineHeight: 1.4,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {toast.subtitle}
+                </p>
+              )}
+            </div>
+
+            {/* Dismiss button */}
+            <button
+              onClick={onDismiss}
+              style={{
+                flexShrink: 0,
+                width: "28px",
+                height: "28px",
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                outline: "none",
+                padding: 0,
+              }}
+            >
+              <X size={13} color="#8ba390" strokeWidth={2.2} />
+            </button>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{ height: "3px", background: "rgba(255,255,255,0.05)" }}>
+          <div
+            style={{
+              height: "100%",
+              background: "linear-gradient(90deg, #b3a961, #cfc060)",
+              animation: "toastProgress 3s linear forwards",
+              transformOrigin: "left",
+            }}
+          />
+        </div>
+      </div>
+    </>
+  );
 }
 
 /* ─── Reusable Input ─────────────────────────────────────────────── */
@@ -283,7 +432,6 @@ function BasicInfo({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Avatar Card */}
       <div
         className="rounded-2xl p-6 flex items-center gap-6"
         style={{ background: C.card, border: `1px solid ${C.border}` }}
@@ -334,7 +482,6 @@ function BasicInfo({
         </div>
       </div>
 
-      {/* Fields Card */}
       <div
         className="rounded-2xl p-6"
         style={{ background: C.card, border: `1px solid ${C.border}` }}
@@ -352,7 +499,6 @@ function BasicInfo({
             onChange={set("name")}
             placeholder="Your full name"
           />
-          {/* Primary Role — Dropdown */}
           <Dropdown
             label="Primary Role"
             value={basicInfo.artCategory}
@@ -360,7 +506,6 @@ function BasicInfo({
             options={ARTIST_ROLES}
             placeholder="Select your role"
           />
-          {/* Experience — Dropdown */}
           <Dropdown
             label="Experience"
             value={basicInfo.experience}
@@ -645,7 +790,6 @@ function AddEquipmentModal({ onClose, onAdd }) {
     e.target.value = "";
     if (!file || !file.type.startsWith("image/")) return;
 
-    // Show local preview immediately
     const reader = new FileReader();
     reader.onload = (ev) =>
       setForm((f) => ({ ...f, imgPreview: ev.target.result }));
@@ -710,7 +854,6 @@ function AddEquipmentModal({ onClose, onAdd }) {
         </p>
 
         <div className="flex flex-col gap-4">
-          {/* Category */}
           <div className="flex flex-col gap-[6px]">
             <label
               className="text-[12.5px] font-medium"
@@ -763,7 +906,6 @@ function AddEquipmentModal({ onClose, onAdd }) {
             placeholder="₹400"
           />
 
-          {/* ── Image Upload ── */}
           <div className="flex flex-col gap-[6px]">
             <label
               className="text-[12.5px] font-medium"
@@ -815,9 +957,9 @@ function AddEquipmentModal({ onClose, onAdd }) {
                   </div>
                 )}
                 <button
-                  onClick={() => {
-                    setForm((f) => ({ ...f, img: null, imgPreview: null }));
-                  }}
+                  onClick={() =>
+                    setForm((f) => ({ ...f, img: null, imgPreview: null }))
+                  }
                   className="absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center border-0 outline-none cursor-pointer"
                   style={{
                     background: "rgba(239,68,68,0.2)",
@@ -1095,6 +1237,28 @@ export default function Profile() {
   const [savingEquipment, setSavingEquipment] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+  /* ── Toast state ── */
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+
+  const showToast = useCallback((title, subtitle) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ title, subtitle, key: Date.now() });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  const dismissToast = useCallback(() => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(null);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
+
   useEffect(() => {
     (async () => {
       try {
@@ -1152,6 +1316,7 @@ export default function Profile() {
         bio: basicInfo.bio,
         avatar: basicInfo.avatar,
       });
+      showToast("Profile saved!", "Your basic info has been updated.");
     } finally {
       setSavingBasic(false);
     }
@@ -1173,6 +1338,7 @@ export default function Profile() {
       setBasicInfo((prev) => ({ ...prev, avatar: avatarUrl }));
       const localUser = getUser();
       if (localUser) setUser({ ...localUser, avatar: avatarUrl });
+      showToast("Photo updated!", "Your profile photo has been changed.");
     } catch (error) {
       console.error("Failed to upload profile photo", error);
     } finally {
@@ -1184,6 +1350,7 @@ export default function Profile() {
     setSavingRates(true);
     try {
       await artistAPI.updateProfile({ rates });
+      showToast("Rates saved!", "Your pricing has been updated.");
     } finally {
       setSavingRates(false);
     }
@@ -1195,6 +1362,7 @@ export default function Profile() {
     try {
       await artistAPI.updateProfile({ availability: payload });
       setAvailability(payload);
+      showToast("Availability saved!", "Your calendar has been synced.");
     } finally {
       setSyncingAvailability(false);
       setSavingAvailability(false);
@@ -1214,6 +1382,7 @@ export default function Profile() {
           img: item.img || null,
         })),
       });
+      showToast("Equipment saved!", "Your gear inventory has been updated.");
     } finally {
       setSavingEquipment(false);
     }
@@ -1266,6 +1435,11 @@ export default function Profile() {
 
       <Sidebar />
 
+      {/* ── Save Toast ── */}
+      {toast && (
+        <SaveToast key={toast.key} toast={toast} onDismiss={dismissToast} />
+      )}
+
       <div
         className="min-h-screen lg:ml-[248px]"
         style={{
@@ -1287,6 +1461,7 @@ export default function Profile() {
               style={{
                 color: C.darkText,
                 fontFamily: "'Playfair Display', serif",
+                marginTop: "10px",
               }}
             >
               Manage Your Profile

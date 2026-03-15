@@ -612,7 +612,7 @@ function PostRequirementModal({ role, navigate, onClose }) {
                   onClick={() => setStep(2)}
                   style={{ flex: 2, justifyContent: "center" }}
                 >
-                  <Sparkles size={13} /> Preview & Post
+                Preview & Post
                 </button>
               </div>
             </div>
@@ -764,13 +764,12 @@ function ArtistView({ navigate }) {
     <div className="view-stack">
       <div className="hero-section">
         <div className="hero-badge">
-          <Sparkles size={11} style={{ color: C.gold }} />
           <span>Live Opportunities</span>
         </div>
         <h1 className="hero-title">
           Find your next
           <br />
-          big opportunity 🎬
+          big opportunity
         </h1>
         <p className="hero-sub">
           Browse live requirements from top production houses, ad agencies, and
@@ -781,7 +780,7 @@ function ArtistView({ navigate }) {
             className="btn-gold"
             onClick={() => navigate("/auth/artist/signup")}
           >
-            <Sparkles size={13} /> Join Free & Apply
+          Join Free & Apply
           </button>
           <button
             className="btn-outline"
@@ -797,7 +796,7 @@ function ArtistView({ navigate }) {
           action="Sign in for full access"
           onAction={() => navigate("/auth/artist/login")}
         >
-          🔍 Browse Live Opportunities
+          Browse Live Opportunities
         </ST>
 
         <div className="search-row">
@@ -1029,13 +1028,12 @@ function HirerView({ navigate }) {
     <div className="view-stack">
       <div className="hero-section">
         <div className="hero-badge">
-          <Sparkles size={11} style={{ color: C.gold }} />
           <span>Hirer Dashboard Preview</span>
         </div>
         <h1 className="hero-title">
           Discover & hire India's
           <br />
-          finest film talent 🎥
+          finest film talent
         </h1>
         <p className="hero-sub">
           Post requirements, browse verified artists, and manage your entire
@@ -1322,7 +1320,12 @@ export default function HomeDummy() {
         <div className="hd-nav-inner">
           <div className="hd-logo">
             <div className="hd-logo-icon">
-              <img src="/logo.png" alt="Flip Logo" className="hd-logo-img" />
+              <img
+                src="/logo.png"
+                alt="Flip Logo"
+                className="hd-logo-img"
+                style={{ width: "60px", height: "60px" }}
+              />
             </div>
             <span className="hd-logo-text"></span>
           </div>

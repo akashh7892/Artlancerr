@@ -320,6 +320,7 @@ export default function Dashboard() {
               style={{
                 color: C.darkText,
                 fontFamily: "'Playfair Display', serif",
+                marginTop: 25,
               }}
             >
               Welcome back <span>👋</span>

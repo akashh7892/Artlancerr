@@ -1453,7 +1453,7 @@ export default function PostRequirement() {
             >
               <motion.button
                 whileTap={{ scale: 0.94 }}
-                onClick={() => navigate("/hirer/browse-artists")}
+                onClick={() => navigate("/hirer/dashboard")}
                 style={{
                   padding: "9px",
                   borderRadius: "9px",

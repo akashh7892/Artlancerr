@@ -1,108 +1,24 @@
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import {
   Users,
   IndianRupee,
   Briefcase,
-  MessageSquare,
   TrendingUp,
-  CheckCircle,
-  Clock,
-  AlertCircle,
   Shield,
   ArrowRight,
-  Eye,
-  X,
+  Plus,
+  FileText,
+  BarChart2,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
 
-// Simple Card Component
-const Card = ({ children, className = "", style = {} }) => (
-  <div className={`rounded-lg ${className}`} style={style}>
-    {children}
-  </div>
-);
-
-// Simple Badge Component
-const Badge = ({ children, className = "", style = {} }) => (
-  <span
-    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${className}`}
-    style={style}
-  >
-    {children}
-  </span>
-);
-
-// Simple Progress Component
-const Progress = ({ value, className = "" }) => (
-  <div
-    className={`w-full bg-gray-700 rounded-full overflow-hidden ${className}`}
-  >
-    <div
-      className="h-full rounded-full transition-all duration-300"
-      style={{
-        width: `${value}%`,
-        backgroundColor: "#c9a961",
-      }}
-    />
-  </div>
-);
-
-// Simple Button Component
-const Button = ({
-  children,
-  onClick,
-  size = "default",
-  variant = "default",
-  className = "",
-  style = {},
-}) => {
-  const sizeClasses = {
-    sm: "px-3 py-1.5 text-sm",
-    default: "px-4 py-2",
-    lg: "px-6 py-3 text-lg",
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-lg font-medium transition-all duration-200 ${sizeClasses[size]} ${className}`}
-      style={style}
-    >
-      {children}
-    </button>
-  );
-};
-
-// Simple Image with Fallback
-const ImageWithFallback = ({ src, alt, className = "" }) => {
-  const [error, setError] = useState(false);
-
-  if (error) {
-    return (
-      <div
-        className={`bg-gray-700 flex items-center justify-center ${className}`}
-      >
-        <Users className="w-6 h-6 text-gray-400" />
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      onError={() => setError(true)}
-    />
-  );
-};
-
 export default function HirerDashboard() {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [stats, setStats] = useState({
     activeProjects: 0,
@@ -113,8 +29,6 @@ export default function HirerDashboard() {
     applicationCount: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [releaseDialogOpen, setReleaseDialogOpen] = useState(false);
 
   useEffect(() => {
     let m = true;
@@ -122,25 +36,10 @@ export default function HirerDashboard() {
       .getDashboard()
       .then((res) => {
         if (!m) return;
-        const rawTasks = Array.isArray(res?.tasks) ? res.tasks : [];
         const rawProjects = Array.isArray(res?.opportunities)
           ? res.opportunities
           : [];
         setStats((prev) => ({ ...prev, ...(res?.stats || {}) }));
-        setTasks(
-          rawTasks.map((t) => ({
-            id: t._id,
-            projectName: t.opportunity?.title || t.title || "Project",
-            artistName: t.artist?.name || "Artist",
-            artistImage: t.artist?.avatar || "",
-            milestone: t.milestone || "Milestone",
-            amount: Number(t.amount || 0),
-            dueDate: new Date(t.dueDate || t.createdAt),
-            status: t.status || "pending",
-            progress: Number(t.progress || 0),
-            description: t.description || "Task in progress",
-          })),
-        );
         setProjects(
           rawProjects.map((p) => ({
             id: p._id,
@@ -161,13 +60,13 @@ export default function HirerDashboard() {
                   ? new Date(new Date(p.createdAt).getTime() + 12096e5)
                   : Date.now()),
             ),
-            image: "",
+            type: p.type || "Project",
+            location: p.location || "Remote",
           })),
         );
       })
       .catch(() => {
         if (!m) return;
-        setTasks([]);
         setProjects([]);
       })
       .finally(() => {
@@ -182,714 +81,761 @@ export default function HirerDashboard() {
   const inEscrow = Number(stats.inEscrow || 0);
   const activeProjects = Number(stats.activeProjects || projects.length || 0);
 
-  const getTaskStatusColor = (status) => {
-    switch (status) {
-      case "in_progress":
-        return {
-          bg: "rgba(59, 130, 246, 0.1)",
-          text: "#60a5fa",
-          border: "rgba(59, 130, 246, 0.2)",
-        };
-      case "submitted":
-        return {
-          bg: "rgba(34, 197, 94, 0.1)",
-          text: "#4ade80",
-          border: "rgba(34, 197, 94, 0.2)",
-        };
-      case "approved":
-        return {
-          bg: "rgba(168, 85, 247, 0.1)",
-          text: "#c084fc",
-          border: "rgba(168, 85, 247, 0.2)",
-        };
-      case "overdue":
-        return {
-          bg: "rgba(239, 68, 68, 0.1)",
-          text: "#f87171",
-          border: "rgba(239, 68, 68, 0.2)",
-        };
-      default:
-        return {
-          bg: "rgba(156, 163, 175, 0.1)",
-          text: "#9ca3af",
-          border: "rgba(156, 163, 175, 0.2)",
-        };
-    }
-  };
+  /* ── stat cards config ── */
+  const statCards = [
+    {
+      icon: Briefcase,
+      iconBg: "rgba(201,169,97,0.12)",
+      iconColor: "#c9a961",
+      label: "Active Projects",
+      value: activeProjects,
+      badge: "+2",
+      badgeColor: "#4ade80",
+      delay: 0.08,
+    },
+    {
+      icon: Users,
+      iconBg: "rgba(59,130,246,0.12)",
+      iconColor: "#60a5fa",
+      label: "Artists Hired",
+      value: Number(stats.artistsHired || 0),
+      badge: "+5",
+      badgeColor: "#4ade80",
+      delay: 0.14,
+    },
+    {
+      icon: IndianRupee,
+      iconBg: "rgba(34,197,94,0.12)",
+      iconColor: "#4ade80",
+      label: "Total Spent",
+      value: `₹${totalSpent.toLocaleString()}`,
+      badge: "Total",
+      badgeColor: "#6b7f8f",
+      delay: 0.2,
+    },
+    {
+      icon: Shield,
+      iconBg: "rgba(234,179,8,0.12)",
+      iconColor: "#facc15",
+      label: "In Escrow",
+      value: `₹${inEscrow.toLocaleString()}`,
+      badge: "Secured",
+      badgeColor: "#6b7f8f",
+      delay: 0.26,
+    },
+  ];
 
-  const getTaskStatusIcon = (status) => {
-    switch (status) {
-      case "in_progress":
-        return <Clock className="w-4 h-4" />;
-      case "submitted":
-        return <AlertCircle className="w-4 h-4" />;
-      case "approved":
-        return <CheckCircle className="w-4 h-4" />;
-      case "overdue":
-        return <AlertCircle className="w-4 h-4" />;
-      default:
-        return <Clock className="w-4 h-4" />;
-    }
-  };
-
-  const formatStatus = (status) => {
-    return status
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
-
-  const handleReleasePayment = (task) => {
-    setSelectedTask(task);
-    setReleaseDialogOpen(true);
-  };
-
-  const confirmReleasePayment = async () => {
-    if (!selectedTask) return;
-    try {
-      await hirerAPI.releaseTaskPayment(selectedTask.id);
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === selectedTask.id ? { ...t, status: "approved" } : t,
-        ),
-      );
-    } catch (_) {}
-    setReleaseDialogOpen(false);
-    setSelectedTask(null);
-  };
+  /* ── quick actions ── */
+  const quickActions = [
+    {
+      label: "Post Requirement",
+      icon: FileText,
+      path: "/hirer/post-requirement",
+      color: "#c9a961",
+      bg: "rgba(201,169,97,0.10)",
+    },
+    {
+      label: "Browse Artists",
+      icon: Users,
+      path: "/hirer/browse-artists",
+      color: "#60a5fa",
+      bg: "rgba(59,130,246,0.10)",
+    },
+    {
+      label: "View Applications",
+      icon: CheckCircle2,
+      path: "/hirer/applications",
+      color: "#4ade80",
+      bg: "rgba(34,197,94,0.10)",
+    },
+    {
+      label: "Manage Bookings",
+      icon: Clock,
+      path: "/hirer/bookings",
+      color: "#a78bfa",
+      bg: "rgba(167,139,250,0.10)",
+    },
+  ];
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: "#1a1d24" }}>
-      {loading && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40">
-          <div className="w-10 h-10 border-2 border-[#c9a961] border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-      <HirerSidebar />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col lg:ml-72">
-        <main className="flex-1 overflow-auto">
+        .hd-root {
+          min-height: 100dvh;
+          background: #191d25;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* ── Stats grid: 2 cols on mobile, 4 on lg ── */
+        .hd-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        @media (min-width: 1024px) {
+          .hd-stats-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        }
+
+        /* ── Main grid: 1 col mobile, 3 col lg ── */
+        .hd-main-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        @media (min-width: 1024px) {
+          .hd-main-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
+        }
+
+        /* ── Project cards grid: 1 col mobile, 2 col md ── */
+        .hd-proj-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        @media (min-width: 640px) {
+          .hd-proj-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* ── Quick action grid: 2 cols always ── */
+        .hd-qa-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+
+        /* ── Card base ── */
+        .hd-card {
+          background: #22252e;
+          border: 1px solid rgba(201,169,97,0.12);
+          border-radius: 16px;
+          transition: border-color 0.18s, transform 0.18s;
+        }
+        .hd-card:hover { border-color: rgba(201,169,97,0.28); }
+
+        .hd-card-lift:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.28); }
+
+        /* ── Progress bar ── */
+        .hd-prog-track {
+          width: 100%;
+          height: 5px;
+          border-radius: 99px;
+          background: rgba(255,255,255,0.07);
+          overflow: hidden;
+        }
+        .hd-prog-fill {
+          height: 100%;
+          border-radius: 99px;
+          background: linear-gradient(90deg, #c9a961, #dfc070);
+          transition: width 0.4s ease;
+        }
+
+        /* ── Section heading ── */
+        .hd-section-title {
+          font-size: 15px;
+          font-weight: 700;
+          color: #ddd0b0;
+          margin: 0 0 14px;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* ── Stat badge ── */
+        .hd-badge {
+          font-size: 10.5px;
+          font-weight: 600;
+          padding: 2px 7px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.06);
+        }
+
+        /* ── Quick action button ── */
+        .hd-qa-btn {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+          padding: 14px;
+          border-radius: 14px;
+          border: 1px solid rgba(255,255,255,0.07);
+          background: rgba(255,255,255,0.025);
+          cursor: pointer;
+          outline: none;
+          text-align: left;
+          transition: background 0.16s, border-color 0.16s, transform 0.16s;
+          width: 100%;
+        }
+        .hd-qa-btn:hover {
+          background: rgba(255,255,255,0.05);
+          border-color: rgba(201,169,97,0.20);
+          transform: translateY(-1px);
+        }
+        .hd-qa-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 34px; height: 34px;
+          border-radius: 10px;
+          flex-shrink: 0;
+        }
+
+        /* ── Month stat row ── */
+        .hd-month-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 9px 0;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .hd-month-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+        /* ── Scrollbar ── */
+        .hd-scroll::-webkit-scrollbar { width: 4px; }
+        .hd-scroll::-webkit-scrollbar-track { background: transparent; }
+        .hd-scroll::-webkit-scrollbar-thumb { background: rgba(201,169,97,0.2); border-radius: 99px; }
+
+        /* ── Page padding – accounts for sidebar on desktop ── */
+        .hd-content {
+          padding: 20px 16px 40px;
+        }
+        @media (min-width: 640px) { .hd-content { padding: 24px 24px 48px; } }
+        @media (min-width: 1024px) { .hd-content { padding: 32px 32px 56px; } }
+      `}</style>
+
+      <div className="hd-root flex">
+        {loading && (
           <div
-            className="min-h-screen p-8"
-            style={{ backgroundColor: "#1a1d24" }}
+            className="fixed inset-0 z-[70] flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.4)" }}
           >
-            <div className="max-w-7xl mx-auto">
-              {/* Header */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-8"
+            <div className="w-9 h-9 border-2 border-[#c9a961] border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        <HirerSidebar />
+
+        {/* ── Main content – offset by sidebar on desktop ── */}
+        <main className="flex-1 lg:ml-[242px] min-w-0">
+          <div className="hd-content max-w-[1100px] mx-auto">
+            {/* ── Header ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.28 }}
+              style={{ marginBottom: 24 }}
+            >
+              {/* Mobile: extra top space so hamburger doesn't overlap */}
+              <div style={{ height: 4 }} className="lg:hidden" />
+              <div style={{ paddingTop: 8 }} className="lg:hidden" />
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  flexWrap: "wrap",
+                }}
               >
-                <h1 className="text-3xl mb-2" style={{ color: "#ffffff" }}>
-                  Dashboard Overview
-                </h1>
-                <p style={{ color: "#9ca3af" }}>
-                  Track your projects and manage payments
-                </p>
-              </motion.div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <Card
-                    className="p-6"
+                <div>
+                  <h1
                     style={{
-                      backgroundColor: "#2d3139",
-                      border: "1px solid rgba(201, 169, 97, 0.2)",
+                      margin: 0,
+                      fontSize: "clamp(20px, 5vw, 26px)",
+                      fontWeight: 700,
+                      color: "#e8e4d8",
+                      fontFamily: "'Playfair Display', serif",
+                      lineHeight: 1.2,
                     }}
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div
-                        className="p-2 rounded-lg"
-                        style={{ backgroundColor: "rgba(201, 169, 97, 0.1)" }}
-                      >
-                        <Briefcase
-                          className="w-5 h-5"
-                          style={{ color: "#c9a961" }}
-                        />
-                      </div>
-                      <span className="text-xs" style={{ color: "#4ade80" }}>
-                        +2
-                      </span>
-                    </div>
-                    <p className="text-2xl mb-1" style={{ color: "#ffffff" }}>
-                      {activeProjects}
-                    </p>
-                    <p className="text-sm" style={{ color: "#9ca3af" }}>
-                      Active Projects
-                    </p>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <Card
-                    className="p-6"
+                    Dashboard
+                  </h1>
+                  <p
                     style={{
-                      backgroundColor: "#2d3139",
-                      border: "1px solid rgba(201, 169, 97, 0.2)",
+                      margin: "5px 0 0",
+                      fontSize: 13,
+                      color: "#5a6e7d",
                     }}
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div
-                        className="p-2 rounded-lg"
-                        style={{ backgroundColor: "rgba(59, 130, 246, 0.1)" }}
-                      >
-                        <Users
-                          className="w-5 h-5"
-                          style={{ color: "#60a5fa" }}
-                        />
-                      </div>
-                      <span className="text-xs" style={{ color: "#4ade80" }}>
-                        +5
-                      </span>
-                    </div>
-                    <p className="text-2xl mb-1" style={{ color: "#ffffff" }}>
-                      {Number(stats.artistsHired || 0)}
-                    </p>
-                    <p className="text-sm" style={{ color: "#9ca3af" }}>
-                      Artists Hired
-                    </p>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Card
-                    className="p-6"
-                    style={{
-                      backgroundColor: "#2d3139",
-                      border: "1px solid rgba(201, 169, 97, 0.2)",
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div
-                        className="p-2 rounded-lg"
-                        style={{ backgroundColor: "rgba(34, 197, 94, 0.1)" }}
-                      >
-                        <IndianRupee
-                          className="w-5 h-5"
-                          style={{ color: "#4ade80" }}
-                        />
-                      </div>
-                      <span className="text-xs" style={{ color: "#9ca3af" }}>
-                        Total
-                      </span>
-                    </div>
-                    <p className="text-2xl mb-1" style={{ color: "#ffffff" }}>
-                      ₹{totalSpent.toLocaleString()}
-                    </p>
-                    <p className="text-sm" style={{ color: "#9ca3af" }}>
-                      Total Spent
-                    </p>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <Card
-                    className="p-6"
-                    style={{
-                      backgroundColor: "#2d3139",
-                      border: "1px solid rgba(201, 169, 97, 0.2)",
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div
-                        className="p-2 rounded-lg"
-                        style={{ backgroundColor: "rgba(234, 179, 8, 0.1)" }}
-                      >
-                        <Shield
-                          className="w-5 h-5"
-                          style={{ color: "#facc15" }}
-                        />
-                      </div>
-                      <span className="text-xs" style={{ color: "#9ca3af" }}>
-                        Secured
-                      </span>
-                    </div>
-                    <p className="text-2xl mb-1" style={{ color: "#ffffff" }}>
-                      ₹{inEscrow.toLocaleString()}
-                    </p>
-                    <p className="text-sm" style={{ color: "#9ca3af" }}>
-                      In Escrow
-                    </p>
-                  </Card>
-                </motion.div>
-              </div>
-
-              {/* Main Content Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Task Tracking */}
-                <div className="lg:col-span-2">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <Card
-                      className="p-6"
-                      style={{
-                        backgroundColor: "#2d3139",
-                        border: "1px solid rgba(201, 169, 97, 0.2)",
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl" style={{ color: "#ffffff" }}>
-                          Task Tracking & Payment Release
-                        </h2>
-                        <button
-                          onClick={() => navigate("/hirer/payments")}
-                          className="text-sm flex items-center gap-1 transition-colors"
-                          style={{ color: "#c9a961" }}
-                        >
-                          View All
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      <div className="space-y-4">
-                        {tasks.map((task) => {
-                          const statusColors = getTaskStatusColor(task.status);
-                          return (
-                            <motion.div
-                              key={task.id}
-                              whileHover={{ scale: 1.01 }}
-                              className="p-5 rounded-lg transition-all"
-                              style={{
-                                backgroundColor: "#1a1d24",
-                                border: "1px solid rgba(201, 169, 97, 0.1)",
-                              }}
-                            >
-                              <div className="flex items-start gap-4 mb-4">
-                                <ImageWithFallback
-                                  src={task.artistImage}
-                                  alt={task.artistName}
-                                  className="w-12 h-12 rounded-full object-cover"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between gap-2 mb-1">
-                                    <div>
-                                      <h3 style={{ color: "#ffffff" }}>
-                                        {task.projectName}
-                                      </h3>
-                                      <p
-                                        className="text-sm"
-                                        style={{ color: "#9ca3af" }}
-                                      >
-                                        {task.artistName}
-                                      </p>
-                                    </div>
-                                    <Badge
-                                      className="flex items-center gap-1"
-                                      style={{
-                                        backgroundColor: statusColors.bg,
-                                        color: statusColors.text,
-                                        border: `1px solid ${statusColors.border}`,
-                                      }}
-                                    >
-                                      {getTaskStatusIcon(task.status)}
-                                      <span className="ml-1">
-                                        {formatStatus(task.status)}
-                                      </span>
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="mb-3">
-                                <div className="flex items-center justify-between text-sm mb-2">
-                                  <span style={{ color: "#9ca3af" }}>
-                                    Milestone: {task.milestone}
-                                  </span>
-                                  <span style={{ color: "#ffffff" }}>
-                                    {task.progress}%
-                                  </span>
-                                </div>
-                                <Progress
-                                  value={task.progress}
-                                  className="h-2"
-                                />
-                              </div>
-
-                              <p
-                                className="text-sm mb-4"
-                                style={{ color: "#9ca3af" }}
-                              >
-                                {task.description}
-                              </p>
-
-                              <div
-                                className="flex items-center justify-between pt-4"
-                                style={{
-                                  borderTop:
-                                    "1px solid rgba(201, 169, 97, 0.1)",
-                                }}
-                              >
-                                <div>
-                                  <div
-                                    className="flex items-center gap-4 text-sm"
-                                    style={{ color: "#9ca3af" }}
-                                  >
-                                    <span className="flex items-center gap-1">
-                                      <IndianRupee className="w-4 h-4" />₹
-                                      {task.amount.toLocaleString()}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <Clock className="w-4 h-4" />
-                                      Due {task.dueDate.toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                </div>
-                                {task.status === "submitted" && (
-                                  <Button
-                                    onClick={() => handleReleasePayment(task)}
-                                    size="sm"
-                                    style={{
-                                      backgroundColor: "#c9a961",
-                                      color: "#1a1d24",
-                                    }}
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-1 inline" />
-                                    Release Payment
-                                  </Button>
-                                )}
-                                {task.status === "in_progress" && (
-                                  <Button
-                                    size="sm"
-                                    style={{
-                                      border:
-                                        "1px solid rgba(201, 169, 97, 0.2)",
-                                      color: "#ffffff",
-                                      backgroundColor: "transparent",
-                                    }}
-                                  >
-                                    <Eye className="w-4 h-4 mr-1 inline" />
-                                    View Details
-                                  </Button>
-                                )}
-                                {task.status === "overdue" && (
-                                  <Button
-                                    size="sm"
-                                    style={{
-                                      border:
-                                        "1px solid rgba(239, 68, 68, 0.2)",
-                                      color: "#f87171",
-                                      backgroundColor: "transparent",
-                                    }}
-                                  >
-                                    <MessageSquare className="w-4 h-4 mr-1 inline" />
-                                    Contact Artist
-                                  </Button>
-                                )}
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
-                    </Card>
-                  </motion.div>
+                    Track your projects and hire the best artists
+                  </p>
                 </div>
 
-                {/* Sidebar */}
-                <div className="space-y-6">
-                  {/* Active Projects */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    <Card
-                      className="p-6"
-                      style={{
-                        backgroundColor: "#2d3139",
-                        border: "1px solid rgba(201, 169, 97, 0.2)",
-                      }}
-                    >
-                      <h3 className="mb-4" style={{ color: "#ffffff" }}>
-                        Active Projects
-                      </h3>
-                      <div className="space-y-4">
-                        {projects.map((project) => (
-                          <div key={project.id} className="space-y-2">
-                            <ImageWithFallback
-                              src={project.image}
-                              alt={project.title}
-                              className="w-full h-32 rounded-lg object-cover"
-                            />
-                            <h4
-                              className="text-sm"
-                              style={{ color: "#ffffff" }}
-                            >
-                              {project.title}
-                            </h4>
-                            <div
-                              className="flex items-center justify-between text-xs"
-                              style={{ color: "#9ca3af" }}
-                            >
-                              <span>{project.artistsHired} artists</span>
-                              <span>₹{project.budget.toLocaleString()}</span>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between text-xs">
-                                <span style={{ color: "#9ca3af" }}>
-                                  Progress
-                                </span>
-                                <span style={{ color: "#ffffff" }}>
-                                  {project.completion}%
-                                </span>
-                              </div>
-                              <Progress
-                                value={project.completion}
-                                className="h-1.5"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => navigate("/hirer/browse-artists")}
-                        className="w-full mt-4 py-2 rounded-lg transition-colors text-sm"
-                        style={{
-                          border: "1px solid rgba(201, 169, 97, 0.2)",
-                          color: "#ffffff",
-                          backgroundColor: "transparent",
-                        }}
-                      >
-                        View All Projects
-                      </button>
-                    </Card>
-                  </motion.div>
+                <button
+                  onClick={() => navigate("/hirer/post-requirement")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 7,
+                    padding: "9px 16px",
+                    borderRadius: 12,
+                    border: "none",
+                    outline: "none",
+                    cursor: "pointer",
+                    background: "linear-gradient(135deg,#c9a961,#dfc070)",
+                    color: "#1a1e26",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    flexShrink: 0,
+                    transition: "opacity 0.16s, transform 0.16s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = "0.88";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                    e.currentTarget.style.transform = "none";
+                  }}
+                >
+                  <Plus size={15} strokeWidth={2.6} />
+                  Post Requirement
+                </button>
+              </div>
+            </motion.div>
 
-                  {/* Quick Stats */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
+            {/* ── Stats: 2 cols mobile, 4 cols desktop ── */}
+            <div className="hd-stats-grid" style={{ marginBottom: 20 }}>
+              {statCards.map((card, i) => (
+                <motion.div
+                  key={card.label}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: card.delay, duration: 0.26 }}
+                  className="hd-card hd-card-lift"
+                  style={{ padding: "16px" }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      marginBottom: 10,
+                    }}
                   >
-                    <Card
-                      className="p-6"
+                    <div
                       style={{
-                        backgroundColor: "#2d3139",
-                        border: "1px solid rgba(201, 169, 97, 0.2)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: card.iconBg,
+                        flexShrink: 0,
                       }}
                     >
-                      <h3 className="mb-4" style={{ color: "#ffffff" }}>
-                        This Month
-                      </h3>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
+                      <card.icon size={17} style={{ color: card.iconColor }} />
+                    </div>
+                    <span
+                      className="hd-badge"
+                      style={{ color: card.badgeColor }}
+                    >
+                      {card.badge}
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      margin: "0 0 3px",
+                      fontSize: "clamp(18px, 3.5vw, 22px)",
+                      fontWeight: 700,
+                      color: "#e8e4d8",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {card.value}
+                  </p>
+                  <p style={{ margin: 0, fontSize: 12, color: "#5a6e7d" }}>
+                    {card.label}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* ── Main 2-col grid ── */}
+            <div className="hd-main-grid">
+              {/* ── LEFT: Active Projects ── */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.32, duration: 0.28 }}
+                className="hd-card"
+                style={{ padding: "20px" }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 16,
+                  }}
+                >
+                  <p className="hd-section-title" style={{ margin: 0 }}>
+                    Active Projects
+                  </p>
+                  <button
+                    onClick={() => navigate("/hirer/applications")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      background: "none",
+                      border: "none",
+                      outline: "none",
+                      cursor: "pointer",
+                      color: "#c9a961",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      transition: "opacity 0.15s",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.opacity = "0.72")
+                    }
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                  >
+                    View All <ArrowRight size={13} />
+                  </button>
+                </div>
+
+                {/* Project cards: 2 cols inside this section */}
+                {projects.length === 0 ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 10,
+                      padding: "32px 0",
+                      color: "#3a4e5e",
+                    }}
+                  >
+                    <Briefcase size={32} strokeWidth={1.2} />
+                    <p style={{ margin: 0, fontSize: 13 }}>
+                      No active projects yet
+                    </p>
+                    <button
+                      onClick={() => navigate("/hirer/post-requirement")}
+                      style={{
+                        marginTop: 4,
+                        padding: "8px 18px",
+                        borderRadius: 10,
+                        border: "1px solid rgba(201,169,97,0.18)",
+                        background: "transparent",
+                        color: "#c9a961",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        outline: "none",
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      }}
+                    >
+                      Post your first requirement
+                    </button>
+                  </div>
+                ) : (
+                  <div className="hd-proj-grid">
+                    {projects.map((project) => (
+                      <div
+                        key={project.id}
+                        className="hd-card-lift"
+                        style={{
+                          background: "#191d25",
+                          border: "1px solid rgba(255,255,255,0.065)",
+                          borderRadius: 13,
+                          padding: "14px",
+                          cursor: "pointer",
+                          transition: "border-color 0.16s, transform 0.16s",
+                        }}
+                        onClick={() => navigate("/hirer/applications")}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.borderColor =
+                            "rgba(201,169,97,0.28)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.borderColor =
+                            "rgba(255,255,255,0.065)")
+                        }
+                      >
+                        {/* Type badge */}
+                        <div style={{ marginBottom: 8 }}>
                           <span
-                            className="text-sm"
-                            style={{ color: "#9ca3af" }}
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 600,
+                              padding: "2px 8px",
+                              borderRadius: 999,
+                              background: "rgba(201,169,97,0.10)",
+                              color: "rgba(201,169,97,0.70)",
+                              letterSpacing: "0.05em",
+                            }}
                           >
-                            Requirements Posted
-                          </span>
-                          <span style={{ color: "#ffffff" }}>
-                            {Number(stats.opportunityCount || 0)}
+                            {project.type}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span
-                            className="text-sm"
-                            style={{ color: "#9ca3af" }}
-                          >
-                            Applications Received
-                          </span>
-                          <span style={{ color: "#ffffff" }}>
-                            {Number(stats.applicationCount || 0)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span
-                            className="text-sm"
-                            style={{ color: "#9ca3af" }}
-                          >
-                            Artists Hired
-                          </span>
-                          <span style={{ color: "#ffffff" }}>
-                            {Number(stats.artistsHired || 0)}
-                          </span>
-                        </div>
-                        <div
-                          className="flex items-center justify-between pt-3"
+
+                        <p
                           style={{
-                            borderTop: "1px solid rgba(201, 169, 97, 0.1)",
+                            margin: "0 0 4px",
+                            fontSize: 13.5,
+                            fontWeight: 600,
+                            color: "#ddd0b0",
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {project.title}
+                        </p>
+                        <p
+                          style={{
+                            margin: "0 0 10px",
+                            fontSize: 11.5,
+                            color: "#3a4e5e",
+                          }}
+                        >
+                          {project.location}
+                        </p>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: 8,
                           }}
                         >
                           <span
-                            className="text-sm"
-                            style={{ color: "#9ca3af" }}
+                            style={{
+                              fontSize: 11,
+                              color: "#5a6e7d",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 4,
+                            }}
                           >
-                            Budget Spent
+                            <Users size={11} /> {project.artistsHired}
                           </span>
                           <span
-                            className="flex items-center gap-1"
-                            style={{ color: "#ffffff" }}
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: "#c9a961",
+                            }}
                           >
-                            <TrendingUp
-                              className="w-3 h-3"
-                              style={{ color: "#4ade80" }}
-                            />
-                            ₹{totalSpent.toLocaleString()}
+                            ₹{project.budget.toLocaleString()}
+                          </span>
+                        </div>
+
+                        {/* Progress */}
+                        <div className="hd-prog-track">
+                          <div
+                            className="hd-prog-fill"
+                            style={{ width: `${project.completion}%` }}
+                          />
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            marginTop: 5,
+                          }}
+                        >
+                          <span style={{ fontSize: 10.5, color: "#3a4e5e" }}>
+                            Progress
+                          </span>
+                          <span style={{ fontSize: 10.5, color: "#7a8fa0" }}>
+                            {project.completion}%
                           </span>
                         </div>
                       </div>
-                    </Card>
-                  </motion.div>
-                </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+
+              {/* ── RIGHT col: Quick Actions + This Month ── */}
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 16 }}
+              >
+                {/* Quick Actions */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.38, duration: 0.28 }}
+                  className="hd-card"
+                  style={{ padding: "20px" }}
+                >
+                  <p className="hd-section-title">Quick Actions</p>
+                  <div className="hd-qa-grid">
+                    {quickActions.map(
+                      ({ label, icon: Icon, path, color, bg }) => (
+                        <button
+                          key={label}
+                          className="hd-qa-btn"
+                          onClick={() => navigate(path)}
+                        >
+                          <span
+                            className="hd-qa-icon"
+                            style={{ background: bg }}
+                          >
+                            <Icon
+                              size={16}
+                              strokeWidth={1.8}
+                              style={{ color }}
+                            />
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 12.5,
+                              fontWeight: 600,
+                              color: "#b8c8d4",
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {label}
+                          </span>
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* This Month Stats */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.44, duration: 0.28 }}
+                  className="hd-card"
+                  style={{ padding: "20px" }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      marginBottom: 14,
+                    }}
+                  >
+                    <BarChart2 size={15} style={{ color: "#c9a961" }} />
+                    <p className="hd-section-title" style={{ margin: 0 }}>
+                      This Month
+                    </p>
+                  </div>
+
+                  <div>
+                    {[
+                      {
+                        label: "Requirements Posted",
+                        value: Number(stats.opportunityCount || 0),
+                        color: "#c9a961",
+                      },
+                      {
+                        label: "Applications Received",
+                        value: Number(stats.applicationCount || 0),
+                        color: "#60a5fa",
+                      },
+                      {
+                        label: "Artists Hired",
+                        value: Number(stats.artistsHired || 0),
+                        color: "#4ade80",
+                      },
+                      {
+                        label: "Budget Spent",
+                        value: `₹${totalSpent.toLocaleString()}`,
+                        color: "#facc15",
+                        icon: TrendingUp,
+                      },
+                    ].map(({ label, value, color, icon: Icon }) => (
+                      <div key={label} className="hd-month-row">
+                        <span style={{ fontSize: 12.5, color: "#5a6e7d" }}>
+                          {label}
+                        </span>
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: "#ddd0b0",
+                          }}
+                        >
+                          {Icon && <Icon size={12} style={{ color }} />}
+                          {value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Hire More CTA */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.28 }}
+                  style={{
+                    borderRadius: 16,
+                    padding: "18px 20px",
+                    background:
+                      "linear-gradient(135deg, rgba(201,169,97,0.14) 0%, rgba(201,169,97,0.06) 100%)",
+                    border: "1px solid rgba(201,169,97,0.20)",
+                    cursor: "pointer",
+                    transition: "border-color 0.16s",
+                  }}
+                  onClick={() => navigate("/hirer/browse-artists")}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.borderColor =
+                      "rgba(201,169,97,0.38)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.borderColor =
+                      "rgba(201,169,97,0.20)")
+                  }
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div>
+                      <p
+                        style={{
+                          margin: "0 0 4px",
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: "#ddd0b0",
+                        }}
+                      >
+                        Find More Artists
+                      </p>
+                      <p style={{ margin: 0, fontSize: 12, color: "#5a6e7d" }}>
+                        Browse our talent pool
+                      </p>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        background: "rgba(201,169,97,0.15)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ArrowRight size={16} style={{ color: "#c9a961" }} />
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </div>
         </main>
       </div>
-
-      {/* Release Payment Modal */}
-      <AnimatePresence>
-        {releaseDialogOpen && selectedTask && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setReleaseDialogOpen(false)}
-              className="fixed inset-0 z-50 flex items-center justify-center"
-              style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
-            >
-              {/* Modal Content */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-md mx-4 rounded-lg shadow-xl p-6"
-                style={{
-                  backgroundColor: "#2d3139",
-                  border: "1px solid rgba(201, 169, 97, 0.2)",
-                }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl" style={{ color: "#ffffff" }}>
-                    Release Payment
-                  </h2>
-                  <button
-                    onClick={() => setReleaseDialogOpen(false)}
-                    className="p-1 rounded-lg transition-colors"
-                    style={{ color: "#9ca3af" }}
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                <p className="mb-4" style={{ color: "#9ca3af" }}>
-                  Confirm payment release to the artist
-                </p>
-
-                <div className="space-y-4">
-                  <div
-                    className="flex items-center gap-4 p-4 rounded-lg"
-                    style={{
-                      backgroundColor: "#1a1d24",
-                      border: "1px solid rgba(201, 169, 97, 0.2)",
-                    }}
-                  >
-                    <ImageWithFallback
-                      src={selectedTask.artistImage}
-                      alt={selectedTask.artistName}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div>
-                      <p style={{ color: "#ffffff" }}>
-                        {selectedTask.artistName}
-                      </p>
-                      <p className="text-sm" style={{ color: "#9ca3af" }}>
-                        {selectedTask.projectName}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span style={{ color: "#9ca3af" }}>Milestone</span>
-                      <span style={{ color: "#ffffff" }}>
-                        {selectedTask.milestone}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span style={{ color: "#9ca3af" }}>Amount</span>
-                      <span className="text-2xl" style={{ color: "#ffffff" }}>
-                        ₹{selectedTask.amount.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    className="p-4 rounded-lg"
-                    style={{
-                      backgroundColor: "rgba(34, 197, 94, 0.1)",
-                      border: "1px solid rgba(34, 197, 94, 0.2)",
-                    }}
-                  >
-                    <div className="flex items-start gap-2">
-                      <CheckCircle
-                        className="w-5 h-5 mt-0.5"
-                        style={{ color: "#4ade80" }}
-                      />
-                      <div className="text-sm" style={{ color: "#4ade80" }}>
-                        <p className="mb-1">
-                          Payment will be released immediately
-                        </p>
-                        <p className="text-xs opacity-80">
-                          The artist will receive the funds within 2-3 business
-                          days
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => setReleaseDialogOpen(false)}
-                      className="flex-1"
-                      style={{
-                        border: "1px solid rgba(201, 169, 97, 0.2)",
-                        color: "#ffffff",
-                        backgroundColor: "transparent",
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={confirmReleasePayment}
-                      className="flex-1"
-                      style={{
-                        backgroundColor: "#c9a961",
-                        color: "#1a1d24",
-                      }}
-                    >
-                      Confirm Release
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
+    </>
   );
 }
