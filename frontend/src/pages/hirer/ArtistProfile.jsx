@@ -26,8 +26,14 @@ import {
   Twitter,
   Mail,
   Phone,
+  X,
+  ZoomIn,
+  Download,
+  FileText,
+  Film,
+  Image as ImageIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import HirerSidebar from "./HirerSidebar";
 import { hirerAPI } from "../../services/api";
@@ -53,8 +59,6 @@ const C = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Strips any leading currency symbol and re-prefixes with ₹ */
 const asMoney = (value) => {
   if (value === null || value === undefined) return null;
   const s = String(value).trim();
@@ -63,7 +67,6 @@ const asMoney = (value) => {
   return clean ? `₹${clean}` : null;
 };
 
-/** Returns day-of-month integers from ISO date strings */
 const parseBookedDays = (blockedDates = []) => {
   if (!Array.isArray(blockedDates)) return [];
   const days = blockedDates
@@ -75,11 +78,8 @@ const parseBookedDays = (blockedDates = []) => {
   return [...new Set(days)];
 };
 
-/** Maps a raw API artist object to the shape this UI needs.
- *  Returns ONLY real data – no invented placeholders. */
 const mapArtistProfile = (api) => {
   if (!api) return null;
-
   const reviews = Array.isArray(api.reviews) ? api.reviews : [];
   const reviewCount = reviews.length;
   const avgRating =
@@ -91,24 +91,18 @@ const mapArtistProfile = (api) => {
           ).toFixed(1),
         )
       : null;
-
   const blockedDates = api?.availability?.blockedDates || [];
   const freeDates = api?.availability?.freeDates || [];
-
-  // Skills: use artCategory + any explicit skills array
   const skills = [
     ...(api.artCategory ? [api.artCategory] : []),
     ...(Array.isArray(api.skills) ? api.skills : []),
-  ].filter((v, i, a) => v && a.indexOf(v) === i); // unique non-empty
-
-  // Social links
+  ].filter((v, i, a) => v && a.indexOf(v) === i);
   const socials = {
     instagram: api.instagram || api.instagramUrl || null,
     youtube: api.youtube || api.youtubeUrl || null,
     website: api.website || api.websiteUrl || null,
     twitter: api.twitter || api.twitterUrl || null,
   };
-
   return {
     _id: api._id || null,
     name: api.name || null,
@@ -144,8 +138,26 @@ const mapArtistProfile = (api) => {
       ? api.portfolio.map((item) => ({
           title: item?.title || item?.projectName || null,
           type: item?.category || item?.workType || null,
+          // support image, video, document URLs
           thumb: item?.thumbnailUrl || item?.mediaUrl || item?.imageUrl || null,
+          mediaUrl:
+            item?.mediaUrl || item?.imageUrl || item?.thumbnailUrl || null,
+          fileUrl: item?.fileUrl || item?.documentUrl || item?.link || null,
           link: item?.link || item?.url || null,
+          description: item?.description || item?.desc || null,
+          // detect media type
+          mediaType:
+            item?.mediaType ||
+            item?.type ||
+            (item?.mediaUrl || item?.imageUrl || "").match(
+              /\.(mp4|webm|mov|avi)/i,
+            )
+              ? "video"
+              : (item?.mediaUrl || item?.imageUrl || "").match(
+                    /\.(pdf|doc|docx)/i,
+                  )
+                ? "document"
+                : "image",
         }))
       : [],
     reviews_list: reviews,
@@ -171,7 +183,6 @@ const MONTHS = [
   "December",
 ];
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 const CAT_ICONS = {
   Camera,
   Lens: Package,
@@ -188,6 +199,709 @@ const CAT_COLORS = {
   Grip: "#f97316",
   Other: C.gold,
 };
+
+// ─── Detect media type from URL ───────────────────────────────────────────────
+const detectMediaType = (url = "") => {
+  if (!url) return "image";
+  const u = url.toLowerCase();
+  if (u.match(/\.(mp4|webm|mov|avi|mkv|m4v)(\?|$)/)) return "video";
+  if (u.match(/\.(pdf)(\?|$)/)) return "pdf";
+  if (u.match(/\.(doc|docx|ppt|pptx|xls|xlsx)(\?|$)/)) return "document";
+  return "image";
+};
+
+// ─── Portfolio Lightbox ───────────────────────────────────────────────────────
+function PortfolioLightbox({ items, initialIndex, onClose }) {
+  const [current, setCurrent] = useState(initialIndex);
+  const [imgErr, setImgErr] = useState(false);
+  const item = items[current];
+
+  const prev = useCallback(() => {
+    setImgErr(false);
+    setCurrent((c) => (c - 1 + items.length) % items.length);
+  }, [items.length]);
+
+  const next = useCallback(() => {
+    setImgErr(false);
+    setCurrent((c) => (c + 1) % items.length);
+  }, [items.length]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose, prev, next]);
+
+  // Lock body scroll
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  const mediaType = detectMediaType(
+    item?.mediaUrl || item?.thumb || item?.fileUrl || "",
+  );
+
+  const renderMedia = () => {
+    const src = item?.mediaUrl || item?.thumb || "";
+
+    if (!src && !item?.fileUrl) {
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 12,
+            color: C.muted,
+          }}
+        >
+          <ImageIcon size={48} strokeWidth={1} />
+          <span style={{ fontSize: 14 }}>No preview available</span>
+          {item?.link && (
+            <a
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: C.gold,
+                fontSize: 13,
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                textDecoration: "none",
+              }}
+            >
+              <ExternalLink size={13} /> Open external link
+            </a>
+          )}
+        </div>
+      );
+    }
+
+    if (mediaType === "video") {
+      return (
+        <video
+          key={src}
+          src={src}
+          controls
+          autoPlay
+          style={{
+            maxWidth: "100%",
+            maxHeight: "70vh",
+            borderRadius: 10,
+            outline: "none",
+          }}
+        />
+      );
+    }
+
+    if (mediaType === "pdf") {
+      return (
+        <iframe
+          key={src}
+          src={src}
+          title={item?.title || "Document"}
+          style={{
+            width: "100%",
+            height: "70vh",
+            border: "none",
+            borderRadius: 10,
+            background: "#fff",
+          }}
+        />
+      );
+    }
+
+    if (mediaType === "document") {
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 16,
+            color: C.muted,
+            padding: "40px 20px",
+          }}
+        >
+          <FileText size={56} strokeWidth={1} color={C.gold} />
+          <p
+            style={{ margin: 0, fontSize: 15, fontWeight: 600, color: C.text }}
+          >
+            {item?.title || "Document"}
+          </p>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 13,
+              color: C.muted,
+              textAlign: "center",
+            }}
+          >
+            This file type cannot be previewed directly.
+          </p>
+          <a
+            href={item?.fileUrl || src}
+            target="_blank"
+            rel="noopener noreferrer"
+            download
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "10px 22px",
+              background: `linear-gradient(135deg, ${C.gold}, #a8863d)`,
+              borderRadius: 9,
+              color: "#1a1d24",
+              fontWeight: 700,
+              fontSize: 13,
+              textDecoration: "none",
+            }}
+          >
+            <Download size={14} /> Download File
+          </a>
+        </div>
+      );
+    }
+
+    // Image (default)
+    if (imgErr) {
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 12,
+            color: C.muted,
+          }}
+        >
+          <ImageIcon size={48} strokeWidth={1} />
+          <span style={{ fontSize: 14 }}>Image could not be loaded</span>
+          {item?.link && (
+            <a
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: C.gold,
+                fontSize: 13,
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                textDecoration: "none",
+              }}
+            >
+              <ExternalLink size={13} /> Open original
+            </a>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <motion.img
+        key={src}
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.25 }}
+        src={src}
+        alt={item?.title || "Portfolio item"}
+        onError={() => setImgErr(true)}
+        style={{
+          maxWidth: "100%",
+          maxHeight: "70vh",
+          objectFit: "contain",
+          borderRadius: 10,
+          userSelect: "none",
+        }}
+      />
+    );
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
+          background: "rgba(10,11,15,0.94)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "20px 16px",
+        }}
+      >
+        {/* Top bar */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "14px 20px",
+            background:
+              "linear-gradient(to bottom, rgba(10,11,15,0.9), transparent)",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {item?.title && (
+              <span
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: C.text,
+                  lineHeight: 1.3,
+                }}
+              >
+                {item.title}
+              </span>
+            )}
+            {item?.type && (
+              <span
+                style={{
+                  fontSize: 11,
+                  color: C.gold,
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  marginTop: 2,
+                }}
+              >
+                {item.type}
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* Counter */}
+            <span
+              style={{
+                fontSize: 12,
+                color: C.muted,
+                padding: "5px 12px",
+                background: "rgba(255,255,255,0.06)",
+                borderRadius: 20,
+                border: `1px solid ${C.border}`,
+              }}
+            >
+              {current + 1} / {items.length}
+            </span>
+            {/* Open external */}
+            {(item?.link || item?.mediaUrl) && (
+              <a
+                href={item.link || item.mediaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 36,
+                  height: 36,
+                  borderRadius: 9,
+                  background: "rgba(255,255,255,0.06)",
+                  border: `1px solid ${C.border}`,
+                  color: C.muted,
+                  textDecoration: "none",
+                  transition: "color 0.15s, border-color 0.15s",
+                }}
+                title="Open original"
+              >
+                <ExternalLink size={15} />
+              </a>
+            )}
+            {/* Close */}
+            <button
+              onClick={onClose}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 36,
+                height: 36,
+                borderRadius: 9,
+                background: "rgba(255,255,255,0.06)",
+                border: `1px solid ${C.border}`,
+                color: C.text,
+                cursor: "pointer",
+              }}
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Prev button */}
+        {items.length > 1 && (
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              prev();
+            }}
+            style={{
+              position: "absolute",
+              left: 14,
+              top: "50%",
+              transform: "translateY(-50%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 42,
+              height: 42,
+              borderRadius: "50%",
+              background: "rgba(45,49,57,0.9)",
+              border: `1px solid ${C.border}`,
+              color: C.text,
+              cursor: "pointer",
+              zIndex: 10,
+            }}
+            aria-label="Previous"
+          >
+            <PrevIcon size={20} />
+          </motion.button>
+        )}
+
+        {/* Media area */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            maxWidth: 960,
+            minHeight: 200,
+          }}
+        >
+          {renderMedia()}
+        </div>
+
+        {/* Next button */}
+        {items.length > 1 && (
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              next();
+            }}
+            style={{
+              position: "absolute",
+              right: 14,
+              top: "50%",
+              transform: "translateY(-50%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 42,
+              height: 42,
+              borderRadius: "50%",
+              background: "rgba(45,49,57,0.9)",
+              border: `1px solid ${C.border}`,
+              color: C.text,
+              cursor: "pointer",
+              zIndex: 10,
+            }}
+            aria-label="Next"
+          >
+            <NextIcon size={20} />
+          </motion.button>
+        )}
+
+        {/* Description */}
+        {item?.description && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: "20px 24px",
+              background:
+                "linear-gradient(to top, rgba(10,11,15,0.92), transparent)",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontSize: 13,
+                color: C.muted,
+                lineHeight: 1.6,
+                maxWidth: 600,
+              }}
+            >
+              {item.description}
+            </p>
+          </div>
+        )}
+
+        {/* Dot strip */}
+        {items.length > 1 && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "absolute",
+              bottom: item?.description ? 60 : 20,
+              display: "flex",
+              gap: 6,
+            }}
+          >
+            {items.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  setImgErr(false);
+                  setCurrent(i);
+                }}
+                style={{
+                  width: i === current ? 20 : 7,
+                  height: 7,
+                  borderRadius: 4,
+                  border: "none",
+                  cursor: "pointer",
+                  background: i === current ? C.gold : "rgba(255,255,255,0.2)",
+                  padding: 0,
+                  transition: "width 0.25s ease, background 0.2s",
+                }}
+                aria-label={`Go to item ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Thumbnail strip (when > 1 item) */}
+        {items.length > 1 && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "absolute",
+              bottom: item?.description ? 100 : 50,
+              display: "flex",
+              gap: 8,
+              overflowX: "auto",
+              maxWidth: "90vw",
+              padding: "4px 0",
+            }}
+          >
+            {items.map((it, i) => {
+              const t = it?.thumb || it?.mediaUrl || "";
+              const isActive = i === current;
+              return (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setImgErr(false);
+                    setCurrent(i);
+                  }}
+                  style={{
+                    width: 52,
+                    height: 40,
+                    borderRadius: 7,
+                    overflow: "hidden",
+                    border: `2px solid ${isActive ? C.gold : "transparent"}`,
+                    background: C.card,
+                    cursor: "pointer",
+                    padding: 0,
+                    flexShrink: 0,
+                    transition: "border-color 0.2s",
+                    opacity: isActive ? 1 : 0.55,
+                  }}
+                  aria-label={`Thumbnail ${i + 1}`}
+                >
+                  {t ? (
+                    <img
+                      src={t}
+                      alt=""
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {detectMediaType(t) === "video" ? (
+                        <Film size={14} color={C.muted} />
+                      ) : (
+                        <ImageIcon size={14} color={C.muted} />
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ─── Portfolio card (now clickable to open lightbox) ─────────────────────────
+function PortfolioCard({ item, onClick }) {
+  const [imgErr, setImgErr] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const mediaType = detectMediaType(item?.mediaUrl || item?.thumb || "");
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onClick}
+      style={{
+        borderRadius: "11px",
+        overflow: "hidden",
+        position: "relative",
+        aspectRatio: "16/10",
+        cursor: "pointer",
+        border: `1px solid ${hovered ? C.borderHover : C.border}`,
+        transition: "border-color 0.2s",
+      }}
+    >
+      {imgErr || !item.thumb ? (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            background: C.input,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {mediaType === "video" ? (
+            <Film size={24} color={C.muted} />
+          ) : mediaType === "pdf" || mediaType === "document" ? (
+            <FileText size={24} color={C.muted} />
+          ) : (
+            <ImageIcon size={24} color={C.muted} />
+          )}
+        </div>
+      ) : (
+        <img
+          src={item.thumb}
+          alt={item.title || "Portfolio"}
+          onError={() => setImgErr(true)}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transition: "transform 0.35s",
+            transform: hovered ? "scale(1.06)" : "scale(1)",
+          }}
+        />
+      )}
+
+      {/* Video play badge */}
+      {mediaType === "video" && (
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "3px 8px",
+            borderRadius: 20,
+            background: "rgba(0,0,0,0.6)",
+            border: `1px solid rgba(255,255,255,0.15)`,
+          }}
+        >
+          <Play size={10} color="#fff" fill="#fff" />
+          <span style={{ fontSize: 9, color: "#fff", fontWeight: 700 }}>
+            VIDEO
+          </span>
+        </div>
+      )}
+
+      {/* Overlay */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: `rgba(0,0,0,${hovered ? 0.58 : 0.32})`,
+          transition: "background 0.3s",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-end",
+          padding: "12px",
+        }}
+      >
+        {item.type && (
+          <span
+            style={{
+              fontSize: "9px",
+              fontWeight: "700",
+              color: C.gold,
+              letterSpacing: "0.09em",
+              textTransform: "uppercase",
+              marginBottom: "3px",
+            }}
+          >
+            {item.type}
+          </span>
+        )}
+        {item.title && (
+          <span style={{ fontSize: "12px", fontWeight: "600", color: "#fff" }}>
+            {item.title}
+          </span>
+        )}
+        {hovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              marginTop: 6,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              color: C.gold,
+              fontSize: "11px",
+            }}
+          >
+            <ZoomIn size={11} /> Click to view
+          </motion.div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
 
 // ─── Reusable UI primitives ───────────────────────────────────────────────────
 function SectionCard({ children, delay = 0 }) {
@@ -299,106 +1013,6 @@ function RateTab({ label, active, onClick }) {
   );
 }
 
-// ─── Portfolio card ───────────────────────────────────────────────────────────
-function PortfolioCard({ item }) {
-  const [imgErr, setImgErr] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        borderRadius: "11px",
-        overflow: "hidden",
-        position: "relative",
-        aspectRatio: "16/10",
-        cursor: "pointer",
-        border: `1px solid ${C.border}`,
-      }}
-    >
-      {imgErr || !item.thumb ? (
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            background: C.input,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Play size={22} color={C.muted} />
-        </div>
-      ) : (
-        <img
-          src={item.thumb}
-          alt={item.title || "Portfolio"}
-          onError={() => setImgErr(true)}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            transition: "transform 0.3s",
-          }}
-        />
-      )}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: `rgba(0,0,0,${hovered ? 0.62 : 0.38})`,
-          transition: "background 0.3s",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          padding: "12px",
-        }}
-      >
-        {item.type && (
-          <span
-            style={{
-              fontSize: "9px",
-              fontWeight: "700",
-              color: C.gold,
-              letterSpacing: "0.09em",
-              textTransform: "uppercase",
-              marginBottom: "3px",
-            }}
-          >
-            {item.type}
-          </span>
-        )}
-        {item.title && (
-          <span style={{ fontSize: "12px", fontWeight: "600", color: "#fff" }}>
-            {item.title}
-          </span>
-        )}
-        {hovered && item.link && (
-          <motion.a
-            href={item.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              marginTop: "6px",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              color: C.gold,
-              fontSize: "11px",
-              textDecoration: "none",
-            }}
-          >
-            <ExternalLink size={11} /> View Project
-          </motion.a>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
 // ─── Review card ──────────────────────────────────────────────────────────────
 function ReviewCard({ review }) {
   const [imgErr, setImgErr] = useState(false);
@@ -415,7 +1029,6 @@ function ReviewCard({ review }) {
       : "";
   const text = review.text || review.comment || review.message || "";
   const rating = Number(review.rating || 0);
-
   return (
     <div
       style={{
@@ -503,10 +1116,8 @@ function AvailabilityCalendar({ bookedDates = [] }) {
     month: now.getMonth(),
   });
   const bookedSet = new Set(bookedDates);
-
   const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
   const firstDay = (y, m) => new Date(y, m, 1).getDay();
-
   const prevMonth = () =>
     setCurrent((c) => {
       const m = c.month === 0 ? 11 : c.month - 1;
@@ -519,20 +1130,17 @@ function AvailabilityCalendar({ bookedDates = [] }) {
       const y = c.month === 11 ? c.year + 1 : c.year;
       return { year: y, month: m };
     });
-
   const totalDays = daysInMonth(current.year, current.month);
   const startDay = firstDay(current.year, current.month);
   const cells = Array.from({ length: startDay + totalDays }, (_, i) =>
     i < startDay ? null : i - startDay + 1,
   );
   while (cells.length % 7 !== 0) cells.push(null);
-
   const isToday = (d) =>
     current.year === now.getFullYear() &&
     current.month === now.getMonth() &&
     d === now.getDate();
   const availableCount = totalDays - bookedSet.size;
-
   return (
     <SectionCard delay={0.2}>
       <SectionTitle
@@ -541,7 +1149,6 @@ function AvailabilityCalendar({ bookedDates = [] }) {
       >
         Availability Calendar
       </SectionTitle>
-
       <div
         style={{
           display: "flex",
@@ -592,7 +1199,6 @@ function AvailabilityCalendar({ bookedDates = [] }) {
           </div>
         ))}
       </div>
-
       <div
         style={{
           display: "flex",
@@ -633,7 +1239,6 @@ function AvailabilityCalendar({ bookedDates = [] }) {
           ),
         )}
       </div>
-
       <div
         style={{
           display: "grid",
@@ -656,7 +1261,6 @@ function AvailabilityCalendar({ bookedDates = [] }) {
           </div>
         ))}
       </div>
-
       <div
         style={{
           display: "grid",
@@ -694,7 +1298,6 @@ function AvailabilityCalendar({ bookedDates = [] }) {
           );
         })}
       </div>
-
       <div
         style={{
           display: "flex",
@@ -748,9 +1351,7 @@ function AvailabilityCalendar({ bookedDates = [] }) {
 function EquipmentSection({ equipment = [] }) {
   const [selectedEquip, setSelectedEquip] = useState(null);
   if (!equipment.length) return null;
-
   const availableItems = equipment.filter((e) => e.available);
-
   return (
     <SectionCard delay={0.25}>
       <SectionTitle
@@ -759,7 +1360,6 @@ function EquipmentSection({ equipment = [] }) {
       >
         Equipment &amp; Gear
       </SectionTitle>
-
       <div
         style={{
           display: "inline-flex",
@@ -777,7 +1377,6 @@ function EquipmentSection({ equipment = [] }) {
           {availableItems.length} of {equipment.length} items available to rent
         </span>
       </div>
-
       <div
         style={{
           display: "grid",
@@ -789,7 +1388,6 @@ function EquipmentSection({ equipment = [] }) {
           const CatIcon = CAT_ICONS[item.category] || Package;
           const catColor = CAT_COLORS[item.category] || C.gold;
           const isSelected = selectedEquip === item.id;
-
           return (
             <motion.div
               key={item.id}
@@ -883,7 +1481,6 @@ function EquipmentSection({ equipment = [] }) {
                     {item.category}
                   </span>
                 </div>
-
                 <div
                   style={{
                     display: "flex",
@@ -939,7 +1536,6 @@ function EquipmentSection({ equipment = [] }) {
                     </span>
                   </div>
                 </div>
-
                 {item.available && (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -968,7 +1564,6 @@ function EquipmentSection({ equipment = [] }) {
           );
         })}
       </div>
-
       <div
         style={{
           marginTop: "16px",
@@ -1033,7 +1628,6 @@ function LoadingSkeleton() {
   );
 }
 
-// ─── Empty state ──────────────────────────────────────────────────────────────
 function EmptyField({ message = "Not provided" }) {
   return (
     <span style={{ color: C.muted, fontStyle: "italic", fontSize: "13px" }}>
@@ -1056,14 +1650,18 @@ export default function ArtistProfile() {
   const [coverErr, setCoverErr] = useState(false);
   const [photoErr, setPhotoErr] = useState(false);
 
-  // If navigated with state, use it immediately while API loads
+  // ── Lightbox state ──────────────────────────────────────────────────────────
+  const [lightbox, setLightbox] = useState({ open: false, index: 0 });
+  const openLightbox = (index) => setLightbox({ open: true, index });
+  const closeLightbox = useCallback(
+    () => setLightbox({ open: false, index: 0 }),
+    [],
+  );
+
   useEffect(() => {
-    if (state?.artist) {
-      setArtist(mapArtistProfile(state.artist));
-    }
+    if (state?.artist) setArtist(mapArtistProfile(state.artist));
   }, [state]);
 
-  // Always fetch fresh data from API
   useEffect(() => {
     if (!id) {
       setLoading(false);
@@ -1093,7 +1691,6 @@ export default function ArtistProfile() {
     setPhotoErr(false);
   }, [artist?.photo, artist?.coverPhoto]);
 
-  // Rate display – only show tabs that have actual data
   const rateOptions = useMemo(() => {
     if (!artist) return [];
     return [
@@ -1114,7 +1711,6 @@ export default function ArtistProfile() {
     rateOptions[0]?.value ??
     null;
 
-  // Auto-select first available rate tab
   useEffect(() => {
     if (
       rateOptions.length > 0 &&
@@ -1170,7 +1766,6 @@ export default function ArtistProfile() {
                 }}
               />
 
-              {/* Back */}
               <motion.button
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.95 }}
@@ -1188,12 +1783,12 @@ export default function ArtistProfile() {
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
+                  marginTop: "32px",
                 }}
               >
                 <ArrowLeft size={17} />
               </motion.button>
 
-              {/* Actions */}
               <div
                 style={{
                   position: "absolute",
@@ -1201,6 +1796,7 @@ export default function ArtistProfile() {
                   right: "14px",
                   display: "flex",
                   gap: "8px",
+                  marginTop: "32px",
                 }}
               >
                 {[
@@ -1298,7 +1894,6 @@ export default function ArtistProfile() {
                     marginBottom: "22px",
                   }}
                 >
-                  {/* Avatar + name row */}
                   <div
                     style={{
                       display: "flex",
@@ -1451,7 +2046,6 @@ export default function ArtistProfile() {
                     </span>
                   </div>
 
-                  {/* Skills */}
                   {artist.skills.length > 0 && (
                     <div
                       style={{
@@ -1480,7 +2074,6 @@ export default function ArtistProfile() {
                     </div>
                   )}
 
-                  {/* Meta chips */}
                   <div
                     style={{
                       display: "flex",
@@ -1548,7 +2141,6 @@ export default function ArtistProfile() {
                     )}
                   </div>
 
-                  {/* Contact & social links */}
                   {(artist.email ||
                     artist.phone ||
                     artist.instagram ||
@@ -1688,7 +2280,6 @@ export default function ArtistProfile() {
                     </div>
                   )}
 
-                  {/* Rates + CTAs */}
                   {rateOptions.length > 0 && (
                     <div
                       style={{
@@ -1834,7 +2425,34 @@ export default function ArtistProfile() {
 
                 {/* ── Portfolio ── */}
                 <SectionCard delay={0.14}>
-                  <SectionTitle>Portfolio</SectionTitle>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: "18px",
+                      flexWrap: "wrap",
+                      gap: 8,
+                    }}
+                  >
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontSize: "16px",
+                        fontWeight: "700",
+                        color: C.text,
+                      }}
+                    >
+                      Portfolio
+                    </h2>
+                    {artist.portfolio.length > 0 && (
+                      <span style={{ fontSize: 12, color: C.muted }}>
+                        {artist.portfolio.length} item
+                        {artist.portfolio.length !== 1 ? "s" : ""} · Click to
+                        view
+                      </span>
+                    )}
+                  </div>
                   {artist.portfolio.length > 0 ? (
                     <div
                       style={{
@@ -1845,7 +2463,11 @@ export default function ArtistProfile() {
                       }}
                     >
                       {artist.portfolio.map((item, i) => (
-                        <PortfolioCard key={i} item={item} />
+                        <PortfolioCard
+                          key={i}
+                          item={item}
+                          onClick={() => openLightbox(i)}
+                        />
                       ))}
                     </div>
                   ) : (
@@ -2043,6 +2665,15 @@ export default function ArtistProfile() {
           </div>
         </main>
       </div>
+
+      {/* ── Portfolio Lightbox ── */}
+      {lightbox.open && artist?.portfolio?.length > 0 && (
+        <PortfolioLightbox
+          items={artist.portfolio}
+          initialIndex={lightbox.index}
+          onClose={closeLightbox}
+        />
+      )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');

@@ -5,309 +5,388 @@ import {
   MessageSquare,
   ArrowRight,
   Sparkles,
-  Zap,
-  TrendingUp,
-  Star,
   ChevronLeft,
 } from "lucide-react";
 
-const ACTIONS = [
+/* ── Dynamic actions — pass via props or replace with API fetch ── */
+const getActions = (basePath = "/artist") => [
   {
     label: "Update Portfolio",
     desc: "Add your latest projects, reels, or artwork to attract new clients and opportunities.",
     icon: Briefcase,
-    path: "/artist/portfolio",
+    path: `${basePath}/portfolio`,
     tag: "Portfolio",
-    stat: "Last updated 3d ago",
   },
   {
     label: "Browse Opportunities",
     desc: "Discover gigs, collaborations and projects tailored to your skills and style.",
     icon: CalendarSearch,
-    path: "/artist/opportunity",
+    path: `${basePath}/opportunity`,
     tag: "Explore",
-    stat: "12 new listings",
   },
   {
     label: "Check Messages",
     desc: "Reply to client inquiries and stay on top of active project conversations.",
     icon: MessageSquare,
-    path: "/artist/message",
+    path: `${basePath}/message`,
     tag: "Inbox",
-    stat: "3 unread",
   },
 ];
-
-const TIPS = [
-  { icon: Zap, text: "Complete your profile to get 3× more views" },
-  { icon: TrendingUp, text: "Artists who post weekly earn 40% more" },
-  { icon: Star, text: "Top-rated artists get priority in search" },
-];
-
-export default function Plusicon() {
+export default function Plusicon({
+  basePath = "/artist",
+  actions,
+  backPath,
+  onBack,
+}) {
   const navigate = useNavigate();
+
+  const ACTIONS =
+    Array.isArray(actions) && actions.length > 0
+      ? actions
+      : getActions(basePath);
+
+  const resolvedBack = backPath ?? `${basePath}/dashboard`;
+
+  const goBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    navigate(resolvedBack);
+  };
+
+  const goTo = (path) => {
+    if (!path) return;
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      window.open(path, "_blank", "noopener,noreferrer");
+    } else {
+      navigate(path);
+    }
+  };
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-        @keyframes fadeUp   { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
-        @keyframes blob1    { 0%,100%{transform:translate(0,0) scale(1);}  50%{transform:translate(30px,-20px) scale(1.08);} }
-        @keyframes blob2    { 0%,100%{transform:translate(0,0) scale(1);}  50%{transform:translate(-20px,25px) scale(1.06);} }
-        @keyframes blob3    { 0%,100%{transform:translate(0,0) scale(1);}  50%{transform:translate(15px,20px)  scale(1.05);} }
-        @keyframes shimmer  { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
+        @keyframes pi-fadeUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pi-fadeIn  { from{opacity:0} to{opacity:1} }
+        @keyframes pi-blob1   { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,-20px) scale(1.08)} }
+        @keyframes pi-blob2   { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-20px,25px) scale(1.06)} }
+        @keyframes pi-blob3   { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(15px,20px)  scale(1.05)} }
+        @keyframes pi-shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
 
-        .page-wrap   { animation: fadeIn  0.3s ease forwards; }
-        .card-wrap   { animation: fadeUp  0.38s cubic-bezier(0.34,1.3,0.64,1) 0.05s both; }
-        .tip-item    { animation: fadeUp  0.3s ease both; }
-        .tip-item:nth-child(1){ animation-delay:0.35s; }
-        .tip-item:nth-child(2){ animation-delay:0.42s; }
-        .tip-item:nth-child(3){ animation-delay:0.49s; }
-        .action-row  { animation: fadeUp  0.3s ease both; }
-        .action-row:nth-child(1){ animation-delay:0.15s; }
-        .action-row:nth-child(2){ animation-delay:0.22s; }
-        .action-row:nth-child(3){ animation-delay:0.29s; }
-
-        .blob1 { animation: blob1 8s ease-in-out infinite; }
-        .blob2 { animation: blob2 10s ease-in-out infinite; }
-        .blob3 { animation: blob3 7s  ease-in-out infinite; }
-
-        .action-btn { transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
-        .action-btn:hover {
-          background: rgba(201,169,97,0.08) !important;
-          transform: translateY(-2px);
-          border-color: rgba(201,169,97,0.28) !important;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        /* ── Page ── */
+        .pi-page {
+          min-height: 100svh;
+          width: 100%;
+          background: #171a20;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 48px 16px 48px;
+          position: relative;
+          overflow: hidden;
+          animation: pi-fadeIn 0.3s ease forwards;
         }
-        .action-btn:hover .arr-icon { opacity:1 !important; transform:translateX(0) !important; }
-        .arr-icon { opacity:0; transform:translateX(-6px); transition: opacity 0.2s ease, transform 0.2s ease; }
+        @media (min-width: 480px) {
+          .pi-page { padding: 64px 24px 64px; }
+        }
 
-        .back-btn { transition: color 0.15s, transform 0.15s; }
-        .back-btn:hover { color: #c9a961 !important; transform: translateX(-3px); }
+        /* ── Blobs ── */
+        .pi-blob {
+          position: absolute;
+          border-radius: 50%;
+          pointer-events: none;
+        }
+        .pi-b1 {
+          top: -120px; right: -100px;
+          width: 440px; height: 440px; opacity: .07;
+          background: radial-gradient(circle, #c9a961 0%, transparent 70%);
+          filter: blur(55px);
+          animation: pi-blob1 8s ease-in-out infinite;
+        }
+        .pi-b2 {
+          bottom: -150px; left: -80px;
+          width: 400px; height: 400px; opacity: .05;
+          background: radial-gradient(circle, #4ab8c8 0%, transparent 70%);
+          filter: blur(65px);
+          animation: pi-blob2 10s ease-in-out infinite;
+        }
+        .pi-b3 {
+          top: 50%; left: -150px;
+          width: 320px; height: 320px; opacity: .055;
+          background: radial-gradient(circle, #c9a961 0%, transparent 70%);
+          filter: blur(50px);
+          animation: pi-blob3 7s ease-in-out infinite;
+        }
+        .pi-grid {
+          position: absolute; inset: 0; opacity: .025; pointer-events: none;
+          background-image:
+            linear-gradient(rgba(196,213,224,.5) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(196,213,224,.5) 1px, transparent 1px);
+          background-size: 48px 48px;
+        }
 
-        .gold-tag {
-          background: linear-gradient(90deg, rgba(201,169,97,0.15), rgba(201,169,97,0.08), rgba(201,169,97,0.15));
+        /* ── Content ── */
+        .pi-content {
+          position: relative;
+          z-index: 10;
+          width: 100%;
+          max-width: 420px;
+        }
+
+        /* ── Back ── */
+        .pi-back {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #5a6e7d;
+          font-size: 13px;
+          font-weight: 500;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          padding: 0 0 28px;
+          outline: none;
+          -webkit-tap-highlight-color: transparent;
+          transition: color .15s ease, transform .15s ease;
+        }
+        .pi-back:hover { color: #c9a961; transform: translateX(-3px); }
+        .pi-back:active { color: #c9a961; }
+
+        /* ── Header ── */
+        .pi-header {
+          margin-bottom: 22px;
+          animation: pi-fadeUp .35s ease .05s both;
+        }
+        .pi-eyebrow {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 6px;
+        }
+        .pi-eyebrow-text {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: .22em;
+          text-transform: uppercase;
+          color: rgba(201,169,97,.58);
+        }
+        .pi-h1 {
+          margin: 0 0 8px;
+          font-family: 'Playfair Display', serif;
+          font-size: clamp(20px, 5vw, 24px);
+          font-weight: 700;
+          color: #c4d5e0;
+          line-height: 1.25;
+        }
+        .pi-subtitle {
+          margin: 0;
+          font-size: 13px;
+          line-height: 1.65;
+          color: #4e6070;
+        }
+
+        /* ── Divider ── */
+        .pi-divider {
+          height: 1px;
+          margin-bottom: 18px;
+          background: linear-gradient(90deg, rgba(201,169,97,.22), transparent);
+        }
+
+        /* ── Cards ── */
+        .pi-cards {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .pi-card {
+          display: flex;
+          align-items: flex-start;
+          gap: 14px;
+          padding: 15px 13px;
+          border-radius: 16px;
+          border: 1px solid rgba(201,169,97,.07);
+          background: rgba(255,255,255,.026);
+          cursor: pointer;
+          text-align: left;
+          outline: none;
+          -webkit-tap-highlight-color: transparent;
+          transition:
+            background   .2s ease,
+            border-color .2s ease,
+            transform    .2s cubic-bezier(.34,1.4,.64,1),
+            box-shadow   .2s ease;
+          animation: pi-fadeUp .3s ease both;
+        }
+        .pi-card:nth-child(1){ animation-delay: .12s; }
+        .pi-card:nth-child(2){ animation-delay: .20s; }
+        .pi-card:nth-child(3){ animation-delay: .28s; }
+        @media (hover: hover) {
+          .pi-card:hover {
+            background: rgba(201,169,97,.08);
+            border-color: rgba(201,169,97,.28);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(0,0,0,.28);
+          }
+          .pi-card:hover .pi-arr {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        .pi-card:active {
+          transform: scale(.97);
+          background: rgba(201,169,97,.10);
+          border-color: rgba(201,169,97,.30);
+        }
+        @media (min-width: 480px) {
+          .pi-card { padding: 17px 15px; gap: 16px; border-radius: 18px; }
+        }
+
+        /* Icon */
+        .pi-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 42px;
+          height: 42px;
+          border-radius: 13px;
+          flex-shrink: 0;
+          margin-top: 1px;
+          background: rgba(201,169,97,.10);
+          border: 1px solid rgba(201,169,97,.13);
+        }
+        @media (min-width: 480px) {
+          .pi-icon { width: 44px; height: 44px; border-radius: 14px; }
+        }
+
+        /* Body */
+        .pi-card-body {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+        }
+        .pi-card-title-row {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          margin-bottom: 4px;
+          flex-wrap: wrap;
+        }
+        .pi-card-title {
+          font-size: 14px;
+          font-weight: 600;
+          color: #c4d5e0;
+        }
+        .pi-tag {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+          padding: 2px 7px;
+          border-radius: 999px;
+          color: rgba(201,169,97,.82);
+          background: linear-gradient(90deg,
+            rgba(201,169,97,.15),
+            rgba(201,169,97,.07),
+            rgba(201,169,97,.15));
           background-size: 200% 100%;
-          animation: shimmer 2.5s linear infinite;
+          animation: pi-shimmer 2.8s linear infinite;
+        }
+        .pi-card-desc {
+          font-size: 12px;
+          line-height: 1.5;
+          color: #4a6070;
+          margin-bottom: 5px;
+        }
+        .pi-card-stat {
+          font-size: 11px;
+          font-weight: 500;
+          color: rgba(201,169,97,.45);
+        }
+
+        /* Arrow */
+        .pi-arr {
+          flex-shrink: 0;
+          margin-top: 3px;
+          opacity: 0;
+          transform: translateX(-7px);
+          transition: opacity .2s ease, transform .2s ease;
+          color: #c9a961;
+        }
+        @media (hover: none) {
+          .pi-arr { opacity: .35; transform: translateX(0); }
         }
       `}</style>
 
-      <div
-        className="page-wrap relative min-h-screen w-full flex items-center justify-center overflow-hidden"
-        style={{
-          background: "#171a20",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-        }}
-      >
-        {/* ── Decorative blurred background blobs ── */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Large gold blob top-right */}
-          <div
-            className="blob1 absolute -top-32 -right-32 w-[520px] h-[520px] rounded-full opacity-[0.07]"
-            style={{
-              background:
-                "radial-gradient(circle, #c9a961 0%, transparent 70%)",
-              filter: "blur(60px)",
-            }}
-          />
-          {/* Teal blob bottom-left */}
-          <div
-            className="blob2 absolute -bottom-40 -left-20 w-[480px] h-[480px] rounded-full opacity-[0.05]"
-            style={{
-              background:
-                "radial-gradient(circle, #4ab8c8 0%, transparent 70%)",
-              filter: "blur(70px)",
-            }}
-          />
-          {/* Gold blob center-left */}
-          <div
-            className="blob3 absolute top-1/2 -left-40 w-[380px] h-[380px] rounded-full opacity-[0.06]"
-            style={{
-              background:
-                "radial-gradient(circle, #c9a961 0%, transparent 70%)",
-              filter: "blur(55px)",
-            }}
-          />
+      <div className="pi-page">
+        {/* Background */}
+        <div className="pi-blob pi-b1" />
+        <div className="pi-blob pi-b2" />
+        <div className="pi-blob pi-b3" />
+        <div className="pi-grid" />
 
-          {/* Subtle grid pattern */}
-          <div
-            className="absolute inset-0 opacity-[0.025]"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(196,213,224,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(196,213,224,0.5) 1px, transparent 1px)",
-              backgroundSize: "48px 48px",
-            }}
-          />
-        </div>
+        <div className="pi-content">
+          {/* Back */}
+          <button className="pi-back" onClick={goBack} aria-label="Go back">
+            <ChevronLeft size={15} strokeWidth={2} />
+            Back
+          </button>
 
-        {/* ── Back button ── */}
-        <button
-          onClick={() => navigate("/artist/dashboard")}
-          className="back-btn absolute top-6 left-6 flex items-center gap-1.5 border-0 bg-transparent outline-none cursor-pointer"
-          style={{ color: "#5a6e7d" }}
-        >
-          <ChevronLeft size={16} strokeWidth={2} />
-          <span className="text-[13px] font-medium">Back</span>
-        </button>
-
-        {/* ── Main card ── */}
-        <div
-          className="card-wrap relative z-10 w-full max-w-[400px] mx-4 rounded-2xl p-7"
-          style={{
-            background: "rgba(31,34,41,0.92)",
-            border: "1px solid rgba(201,169,97,0.14)",
-            boxShadow:
-              "0 40px 100px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-          }}
-        >
-          {/* Card header */}
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles size={14} style={{ color: "#c9a961" }} />
-            <span
-              className="text-[10.5px] font-bold tracking-[0.2em] uppercase"
-              style={{ color: "rgba(201,169,97,0.6)" }}
-            >
-              Quick Actions
-            </span>
+          {/* Header */}
+          <div className="pi-header">
+            <div className="pi-eyebrow">
+              <Sparkles size={13} style={{ color: "#c9a961" }} />
+              <span className="pi-eyebrow-text">Quick Actions</span>
+            </div>
+            <h1 className="pi-h1">What would you like to do?</h1>
+            <p className="pi-subtitle">
+              Jump straight into your most important tasks — no digging through
+              menus.
+            </p>
           </div>
 
-          <h1
-            className="text-[22px] font-bold leading-tight mb-1"
-            style={{
-              color: "#c4d5e0",
-              fontFamily: "'Playfair Display', serif",
-            }}
-          >
-            What would you like to do?
-          </h1>
-          <p
-            className="text-[13px] leading-relaxed mb-6"
-            style={{ color: "#4e6070" }}
-          >
-            Jump straight into your most important tasks — no digging through
-            menus.
-          </p>
+          <div className="pi-divider" />
 
-          {/* Divider */}
-          <div
-            className="mb-5 h-px"
-            style={{
-              background:
-                "linear-gradient(90deg, rgba(201,169,97,0.2), transparent)",
-            }}
-          />
-
-          {/* Action rows */}
-          <div className="flex flex-col gap-3">
-            {ACTIONS.map(({ label, desc, icon: Icon, path, tag, stat }) => (
-              <button
-                key={label}
-                onClick={() => navigate(path)}
-                className="action-btn action-row flex items-start gap-4 w-full px-4 py-4 rounded-xl text-left border-0 outline-none cursor-pointer"
-                style={{
-                  background: "rgba(255,255,255,0.025)",
-                  border: "1px solid rgba(201,169,97,0.07)",
-                }}
-              >
-                {/* Icon */}
-                <span
-                  className="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 mt-[1px]"
-                  style={{
-                    background: "rgba(201,169,97,0.10)",
-                    border: "1px solid rgba(201,169,97,0.12)",
-                  }}
+          {/* Cards */}
+          <div className="pi-cards">
+            {ACTIONS.map(
+              ({ label, desc, icon: Icon, path, tag, stat }, idx) => (
+                <button
+                  key={`${label}-${idx}`}
+                  className="pi-card"
+                  onClick={() => goTo(path)}
+                  aria-label={label}
                 >
-                  <Icon
-                    size={18}
-                    strokeWidth={1.8}
-                    style={{ color: "#c9a961" }}
-                  />
-                </span>
+                  {/* Icon box */}
+                  <span className="pi-icon">
+                    <Icon
+                      size={18}
+                      strokeWidth={1.8}
+                      style={{ color: "#c9a961" }}
+                    />
+                  </span>
 
-                {/* Text block */}
-                <span className="flex flex-col flex-1 min-w-0">
-                  <span className="flex items-center gap-2 mb-[3px]">
-                    <span
-                      className="text-[14.5px] font-semibold"
-                      style={{ color: "#c4d5e0" }}
-                    >
-                      {label}
+                  {/* Text */}
+                  <span className="pi-card-body">
+                    <span className="pi-card-title-row">
+                      <span className="pi-card-title">{label}</span>
+                      <span className="pi-tag">{tag}</span>
                     </span>
-                    <span
-                      className="gold-tag text-[9.5px] font-bold px-[7px] py-[2px] rounded-full tracking-wider uppercase"
-                      style={{ color: "rgba(201,169,97,0.8)" }}
-                    >
-                      {tag}
-                    </span>
+                    <span className="pi-card-desc">{desc}</span>
+                    {stat && <span className="pi-card-stat">{stat}</span>}
                   </span>
-                  <span
-                    className="text-[12px] leading-snug mb-2"
-                    style={{ color: "#4e6070" }}
-                  >
-                    {desc}
-                  </span>
-                  <span
-                    className="text-[11px] font-medium"
-                    style={{ color: "rgba(201,169,97,0.45)" }}
-                  >
-                    {stat}
-                  </span>
-                </span>
 
-                {/* Arrow */}
-                <ArrowRight
-                  size={16}
-                  className="arr-icon mt-[2px] flex-shrink-0"
-                  style={{ color: "#c9a961" }}
-                />
-              </button>
-            ))}
-          </div>
-
-          {/* Divider */}
-          <div
-            className="my-5 h-px"
-            style={{
-              background:
-                "linear-gradient(90deg, rgba(201,169,97,0.15), transparent)",
-            }}
-          />
-
-          {/* Tips section */}
-          <div className="mb-1 flex items-center gap-2">
-            <TrendingUp size={13} style={{ color: "rgba(201,169,97,0.5)" }} />
-            <span
-              className="text-[10.5px] font-bold tracking-[0.18em] uppercase"
-              style={{ color: "rgba(201,169,97,0.4)" }}
-            >
-              Pro Tips
-            </span>
-          </div>
-          <div className="flex flex-col gap-[8px] mt-3">
-            {TIPS.map(({ icon: TipIcon, text }) => (
-              <div key={text} className="tip-item flex items-center gap-3">
-                <span
-                  className="flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0"
-                  style={{ background: "rgba(201,169,97,0.07)" }}
-                >
-                  <TipIcon
-                    size={12}
-                    strokeWidth={2}
-                    style={{ color: "rgba(201,169,97,0.55)" }}
-                  />
-                </span>
-                <span
-                  className="text-[12px] leading-snug"
-                  style={{ color: "#3d5160" }}
-                >
-                  {text}
-                </span>
-              </div>
-            ))}
+                  {/* Arrow */}
+                  <ArrowRight size={16} className="pi-arr" />
+                </button>
+              ),
+            )}
           </div>
         </div>
       </div>

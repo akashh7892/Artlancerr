@@ -486,6 +486,7 @@ export default function ArtistProfileView() {
               backdropFilter: "blur(8px)",
               color: "#fff",
               transition: "background 0.15s",
+              marginTop: "30px",
             }}
             onMouseEnter={(e) =>
               (e.currentTarget.style.background = "rgba(0,0,0,0.7)")
@@ -506,6 +507,7 @@ export default function ArtistProfileView() {
               background: C.card,
               border: `1px solid ${C.border}`,
               animation: "fadeUp 0.3s ease both",
+              marginTop: "30px",
             }}
           >
             <div className="flex flex-col sm:flex-row sm:items-start gap-4">

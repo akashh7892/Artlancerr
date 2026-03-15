@@ -232,7 +232,7 @@ export default function Portfolio() {
               <ImageUpload
                 onUpload={handleUpload}
                 accept="*/*"
-                maxSizeMB={20}
+                maxSizeMB={50}
                 uploadOptions={{ type: "portfolio", bucket: "portfolios" }}
               />
               <button

@@ -1528,7 +1528,7 @@ export default function PostRequirement() {
                     icon={Briefcase}
                     value={formData.title}
                     onChange={set("title")}
-                    placeholder="e.g. Lead Actor for Indie Film"
+                    placeholder="Add title for your project and Tasks"
                     required
                   />
                 </div>
