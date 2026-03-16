@@ -375,20 +375,42 @@ export const publicAPI = {
 // Export utility functions
 export { getToken, setToken, getUser, setUser, clearAuth, fetchAPI };
 
-// Upload file (multipart/form-data) — do not set Content-Type so browser sets boundary
+// Upload file to S3 via Presigned URL
 export const uploadFile = async (file, options = {}) => {
   const token = getToken();
-  const formData = new FormData();
-  formData.append(options.fieldName || "file", file);
-  if (options.bucket) formData.append("bucket", options.bucket);
-  if (options.type) formData.append("type", options.type);
-  if (options.context) formData.append("context", options.context);
-  const res = await fetch(`${API_BASE_URL}/upload`, {
-    method: "POST",
+  
+  // 1. Request Presigned URL from Backend
+  const bucketName = options.bucket || (options.context === "cover" ? "covers" : "uploads");
+  const fileName = file.name || "upload.file";
+  const fileType = file.type || "application/octet-stream";
+  
+  const presignedRes = await fetch(`${API_BASE_URL}/upload/url?fileName=${encodeURIComponent(fileName)}&fileType=${encodeURIComponent(fileType)}&bucket=${encodeURIComponent(bucketName)}`, {
+    method: "GET",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: formData,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Upload failed");
-  return data;
+  
+  const presignedData = await presignedRes.json();
+  if (!presignedRes.ok) throw new Error(presignedData.message || "Failed to get upload URL");
+  
+  const { presignedUrl, publicUrl, key } = presignedData;
+
+  // 2. Upload directly to S3
+  const s3Res = await fetch(presignedUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": fileType,
+    },
+    body: file,
+  });
+
+  if (!s3Res.ok) {
+    throw new Error("Failed to upload file to S3");
+  }
+
+  // 3. Return the URL format expected by the frontend components
+  return {
+    url: publicUrl,
+    public_id: key,
+    message: "File uploaded successfully"
+  };
 };
