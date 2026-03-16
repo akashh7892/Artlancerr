@@ -8,7 +8,7 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 } else {
-  console.warn("RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing. Razorpay integration disabled.");
+  // console.warn("RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing. Razorpay integration disabled.");
   // Export a mock object to prevent crashes on import
   razorpay = {
     orders: {

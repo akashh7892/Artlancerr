@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
-const { uploadFile, resolveBucket } = require("../utils/uploadToSupabase");
+const { uploadFile, resolveBucket } = require("../utils/uploadToS3");
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { s3Client, getSignedUrl } = require("../config/s3");
 
