@@ -25,6 +25,15 @@ const uploadRoutes = require("./routes/upload");
 const publicRoutes = require("./routes/public");
 
 const app = express();
+// Trust proxy in production (or when explicitly configured) so rate-limits and IPs work correctly behind a load balancer.
+const trustProxyEnv = String(process.env.TRUST_PROXY || "").toLowerCase();
+if (trustProxyEnv === "true" || trustProxyEnv === "1") {
+  app.set("trust proxy", 1);
+} else if (trustProxyEnv === "false" || trustProxyEnv === "0") {
+  app.set("trust proxy", false);
+} else if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 const server = http.createServer(app);
 
 // Connect DB

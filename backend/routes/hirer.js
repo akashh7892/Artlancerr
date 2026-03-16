@@ -117,6 +117,12 @@ router.post('/opportunity', protect, async (req, res) => {
       return res.status(400).json({ message: 'Missing required opportunity fields' });
     }
 
+    const allowedTypes = Opportunity.schema.path('type').enumValues || [];
+    const normalizedType = String(type).trim();
+    if (!allowedTypes.includes(normalizedType)) {
+      return res.status(400).json({ message: 'Invalid opportunity type' });
+    }
+
     const safeMaxSlots = Number(maxSlots) || 1;
     const safeAvailableSlots = Number(availableSlots) || safeMaxSlots;
     if (safeAvailableSlots > safeMaxSlots) {
@@ -126,7 +132,7 @@ router.post('/opportunity', protect, async (req, res) => {
     const opportunity = await Opportunity.create({
       ...req.body,
       title: String(title).trim(),
-      type: String(type).trim(),
+      type: normalizedType,
       description: String(description).trim(),
       location: String(location).trim(),
       budget: String(budget).trim(),
@@ -143,6 +149,12 @@ router.post('/opportunity', protect, async (req, res) => {
     res.status(201).json(opportunity);
   } catch (error) {
     console.error('Create opportunity error:', error);
+    if (error?.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Invalid opportunity data' });
+    }
+    if (error?.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid field format' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 });

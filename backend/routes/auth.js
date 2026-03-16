@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const Artist = require('../models/Artist');
 const Hirer = require('../models/Hirer');
 const { generateToken, protect } = require('../middleware/auth');
@@ -13,6 +14,12 @@ const authLimiter = rateLimit({
   message: { message: 'Too many attempts. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    const email = String(req.body?.email || '').toLowerCase().trim();
+    const role = String(req.body?.role || '').toLowerCase().trim();
+    const ipKey = ipKeyGenerator(req);
+    return [ipKey, email, role].filter(Boolean).join(':') || ipKey;
+  },
 });
 
 // In-memory reset flow store.
