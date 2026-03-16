@@ -93,7 +93,7 @@ export default function Signup() {
                 onChange={handleChange}
                 required
                 className="w-full bg-transparent border border-[#5f5641] rounded-lg py-2 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-sm sm:text-base text-[#e2e3e5] placeholder-[#808590]/50 focus:outline-none focus:border-[#c9a961] transition-colors font-light"
-                placeholder="John Doe"
+                placeholder="Your full name"
               />
             </div>
           </div>
