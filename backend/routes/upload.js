@@ -2,13 +2,9 @@ const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
-<<<<<<< HEAD
-const { uploadFile, resolveBucket } = require("../utils/uploadToS3");
-=======
 const { uploadFile, resolveBucket } = require("../utils/uploadToSupabase");
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { s3Client, getSignedUrl } = require("../config/s3");
->>>>>>> bb50f7d (feat(backend): add presigned URL generation for S3 direct uploads)
 
 // GET /api/upload/url - Generate S3 presigned URL for direct frontend upload
 router.get("/url", protect, async (req, res) => {
