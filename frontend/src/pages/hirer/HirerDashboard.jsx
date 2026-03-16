@@ -89,8 +89,6 @@ export default function HirerDashboard() {
       iconColor: "#c9a961",
       label: "Active Projects",
       value: activeProjects,
-      badge: "+2",
-      badgeColor: "#4ade80",
       delay: 0.08,
     },
     {
@@ -99,8 +97,6 @@ export default function HirerDashboard() {
       iconColor: "#60a5fa",
       label: "Artists Hired",
       value: Number(stats.artistsHired || 0),
-      badge: "+5",
-      badgeColor: "#4ade80",
       delay: 0.14,
     },
     {
