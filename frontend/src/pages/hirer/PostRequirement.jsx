@@ -25,6 +25,7 @@ import {
   Loader2,
   Star,
   Search,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -1357,6 +1358,7 @@ export default function PostRequirement() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [viewAppsPost, setViewAppsPost] = useState(null);
   const [editPost, setEditPost] = useState(null);
+  const [deletingId, setDeletingId] = useState("");
 
   const set = (k) => (e) =>
     setFormData((p) => ({
@@ -1433,8 +1435,29 @@ export default function PostRequirement() {
     }
   };
 
-  const handlePostSaved = (u) =>
+  const handlePostSaved = (u) => {
+    if (!u?._id) return;
     setRecentPosts((p) => p.map((x) => (x._id === u._id ? { ...x, ...u } : x)));
+  };
+
+  const handleDeletePost = async (post) => {
+    if (!post?._id) return;
+    const ok = window.confirm(
+      `Delete "${post.title || "this post"}"? This will remove it everywhere.`,
+    );
+    if (!ok) return;
+    setDeletingId(post._id);
+    try {
+      await hirerAPI.deleteOpportunity(post._id);
+      setRecentPosts((p) => p.filter((x) => x._id !== post._id));
+      if (editPost?._id === post._id) setEditPost(null);
+      if (viewAppsPost?._id === post._id) setViewAppsPost(null);
+    } catch (err) {
+      alert(err?.message || "Could not delete post.");
+    } finally {
+      setDeletingId("");
+    }
+  };
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: C.bg }}>
@@ -1930,6 +1953,7 @@ export default function PostRequirement() {
                     <motion.button
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setEditPost(post)}
+                      disabled={deletingId === post._id}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -1946,10 +1970,49 @@ export default function PostRequirement() {
                         justifyContent: "center",
                         minWidth: "80px",
                         touchAction: "manipulation",
+                        opacity: deletingId === post._id ? 0.6 : 1,
                       }}
                     >
                       <Edit3 size={13} />
                       Edit
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => handleDeletePost(post)}
+                      disabled={deletingId === post._id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        padding: "9px 14px",
+                        background: "transparent",
+                        border: `1px solid ${C.danger}`,
+                        borderRadius: "8px",
+                        color: C.danger,
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        flex: "1 1 auto",
+                        justifyContent: "center",
+                        minWidth: "90px",
+                        touchAction: "manipulation",
+                        opacity: deletingId === post._id ? 0.7 : 1,
+                      }}
+                    >
+                      {deletingId === post._id ? (
+                        <>
+                          <Loader2
+                            size={13}
+                            style={{ animation: "pr-spin 1s linear infinite" }}
+                          />
+                          Deleting
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 size={13} />
+                          Delete
+                        </>
+                      )}
                     </motion.button>
                   </div>
                 </motion.div>
