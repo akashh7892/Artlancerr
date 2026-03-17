@@ -17,6 +17,7 @@ import {
   Sparkles,
   ArrowRight,
   Badge,
+  FileText,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { label: "Profile", icon: User, path: "/artist/profile" },
   { label: "Portfolio", icon: Briefcase, path: "/artist/portfolio" },
   { label: "Opportunities", icon: Search, path: "/artist/opportunity" },
+  { label: "My Applications", icon: FileText, path: "/artist/applications" },
   { label: "Nearby Artists", icon: Users, path: "/artist/near-by-artists" },
   { label: "Messages", icon: MessageSquare, path: "/artist/message" },
   { label: "Payments", icon: CreditCard, path: "/artist/payment" },
@@ -64,6 +66,7 @@ const SIDEBAR_PATHS = [
   "/artist/profile",
   "/artist/portfolio",
   "/artist/opportunity",
+  "/artist/applications",
   "/artist/near-by-artists",
   "/artist/message",
   "/artist/payment",
