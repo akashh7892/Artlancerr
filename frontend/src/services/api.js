@@ -1,14 +1,35 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Helper function to get token from localStorage
-const getToken = () => localStorage.getItem("token");
+const TOKEN_KEY = "token";
+const TOKEN_EXP_KEY = "token_expires_at";
+const DEFAULT_SESSION_DAYS = 30;
 
-// Helper function to set token in localStorage
-const setToken = (token) => {
+// Helper function to get token from localStorage (with expiry)
+const getToken = () => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return null;
+  const exp = Number(localStorage.getItem(TOKEN_EXP_KEY) || 0);
+  if (exp && Date.now() > exp) {
+    clearAuth();
+    return null;
+  }
+  return token;
+};
+
+// Helper function to set token in localStorage (with expiry)
+const setToken = (token, ttlDays = DEFAULT_SESSION_DAYS) => {
   if (token) {
-    localStorage.setItem("token", token);
+    localStorage.setItem(TOKEN_KEY, token);
+    const ttl = Number(ttlDays);
+    if (Number.isFinite(ttl) && ttl > 0) {
+      const exp = Date.now() + ttl * 24 * 60 * 60 * 1000;
+      localStorage.setItem(TOKEN_EXP_KEY, String(exp));
+    } else {
+      localStorage.removeItem(TOKEN_EXP_KEY);
+    }
   } else {
-    localStorage.removeItem("token");
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_EXP_KEY);
   }
 };
 
@@ -29,7 +50,8 @@ const setUser = (user) => {
 
 // Clear auth data (for logout)
 const clearAuth = () => {
-  localStorage.removeItem("token");
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_EXP_KEY);
   localStorage.removeItem("user");
 };
 
@@ -95,7 +117,7 @@ export const authAPI = {
       body: JSON.stringify(userData),
     });
     if (data.token) {
-      setToken(data.token);
+      setToken(data.token, data.expiresInDays || DEFAULT_SESSION_DAYS);
       setUser(data.user);
     }
     return data;
@@ -107,7 +129,7 @@ export const authAPI = {
       body: JSON.stringify(credentials),
     });
     if (data.token) {
-      setToken(data.token);
+      setToken(data.token, data.expiresInDays || DEFAULT_SESSION_DAYS);
       setUser(data.user);
     }
     return data;

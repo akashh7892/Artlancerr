@@ -1,5 +1,12 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { getToken, getUser, setToken, setUser, clearAuth } from "../services/api";
+import {
+  authAPI,
+  getToken,
+  getUser,
+  setToken,
+  setUser,
+  clearAuth,
+} from "../services/api";
 import { connectSocket, disconnectSocket } from "../socket";
 
 const AuthContext = createContext(null);
@@ -14,16 +21,38 @@ export function AuthProvider({ children }) {
   const role = user?.role || null;
 
   useEffect(() => {
-    const t = getToken();
-    const u = getUser();
-    setTokenState(t);
-    setUserState(u);
-    if (t && u) {
-      connectSocket(t);
-    } else {
-      disconnectSocket();
-    }
-    setLoading(false);
+    let m = true;
+    const init = async () => {
+      const t = getToken();
+      if (!t) {
+        setTokenState(null);
+        setUserState(null);
+        disconnectSocket();
+        if (m) setLoading(false);
+        return;
+      }
+      try {
+        const me = await authAPI.getCurrentUser();
+        if (!m) return;
+        const resolvedUser = me?.user || me || getUser();
+        setTokenState(t);
+        setUserState(resolvedUser);
+        setUser(resolvedUser);
+        connectSocket(t);
+      } catch {
+        if (!m) return;
+        clearAuth();
+        setTokenState(null);
+        setUserState(null);
+        disconnectSocket();
+      } finally {
+        if (m) setLoading(false);
+      }
+    };
+    init();
+    return () => {
+      m = false;
+    };
   }, []);
 
   const login = useCallback((data) => {

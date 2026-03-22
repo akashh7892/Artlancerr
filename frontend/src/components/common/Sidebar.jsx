@@ -19,6 +19,7 @@ import {
   Badge,
   FileText,
 } from "lucide-react";
+import { clearAuth } from "../../services/api";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/artist/dashboard" },
@@ -113,8 +114,7 @@ export default function Sidebar() {
   }, [open]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearAuth();
     navigate("/");
     setOpen(false);
   };
