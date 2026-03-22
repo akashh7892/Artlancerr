@@ -601,7 +601,7 @@ export default function OpportunityPublicView() {
             <button
               className="pub-apply-btn"
               onClick={() =>
-                navigate(`/auth/artist/login?redirect=/artist/opportunities`)
+                navigate(`/auth/artist/login?redirect=/artist/opportunity/${id}`)
               }
               style={{
                 width: "100%",
@@ -616,7 +616,7 @@ export default function OpportunityPublicView() {
                 marginBottom: 10,
               }}
             >
-              Sign In to Apply
+              Apply Now
             </button>
 
             <button
