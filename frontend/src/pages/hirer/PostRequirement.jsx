@@ -26,6 +26,9 @@ import {
   Star,
   Search,
   Trash2,
+  Share2,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -143,6 +146,536 @@ const ALL_PROJECT_TYPES = PROJECT_TYPE_GROUPS.flatMap((g) =>
   g.items.map((item) => ({ value: item, label: item, group: g.group })),
 );
 
+// ─── Share Platforms ──────────────────────────────────────────────────────────
+const SHARE_PLATFORMS = [
+  {
+    id: "whatsapp",
+    label: "WhatsApp",
+    color: "#25D366",
+    bg: "rgba(37,211,102,0.12)",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+      </svg>
+    ),
+    getUrl: (text, url) =>
+      `https://wa.me/?text=${encodeURIComponent(text + "\n" + url)}`,
+  },
+  {
+    id: "telegram",
+    label: "Telegram",
+    color: "#26A5E4",
+    bg: "rgba(38,165,228,0.12)",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21">
+        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+      </svg>
+    ),
+    getUrl: (text, url) =>
+      `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+  },
+  {
+    id: "twitter",
+    label: "X (Twitter)",
+    color: "#e8e9eb",
+    bg: "rgba(232,233,235,0.08)",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="19" height="19">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+      </svg>
+    ),
+    getUrl: (text, url) =>
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+  },
+  {
+    id: "linkedin",
+    label: "LinkedIn",
+    color: "#0A66C2",
+    bg: "rgba(10,102,194,0.12)",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+      </svg>
+    ),
+    getUrl: (text, url) =>
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+  },
+  {
+    id: "facebook",
+    label: "Facebook",
+    color: "#1877F2",
+    bg: "rgba(24,119,242,0.12)",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+      </svg>
+    ),
+    getUrl: (text, url) =>
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+  },
+  {
+    id: "instagram",
+    label: "Instagram",
+    color: "#E4405F",
+    bg: "rgba(228,64,95,0.12)",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21">
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+      </svg>
+    ),
+    action: "copy",
+    getUrl: () => null,
+  },
+  {
+    id: "threads",
+    label: "Threads",
+    color: "#e8e9eb",
+    bg: "rgba(232,233,235,0.08)",
+    icon: (
+      <svg viewBox="0 0 192 192" fill="currentColor" width="21" height="21">
+        <path d="M141.537 88.988a66.667 66.667 0 00-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.15-23.806 1.371-39.104 15.264-38.053 34.568.527 9.792 5.625 18.218 14.35 23.718 7.404 4.709 16.935 7.006 26.881 6.466 13.098-.703 23.376-5.709 30.552-14.873 5.464-6.994 8.921-16.055 10.472-27.492 6.28 3.79 10.927 8.821 13.449 14.874 4.503 10.697 4.763 28.237-9.138 42.097-12.22 12.183-26.85 17.448-49.01 17.61-24.534-.176-43.128-8.057-55.264-23.43C29.102 138.265 23.516 118.409 23.333 93c.183-25.409 5.77-45.265 16.596-59.01C51.063 19.617 69.657 11.737 94.19 11.561c24.714.178 43.687 8.102 56.378 23.55 6.222 7.685 10.932 17.41 14.08 29.055l16.338-4.35c-3.825-14.106-9.834-26.198-18.003-36.132C147.034 8.47 123.737-.182 94.3 0h-.12C65.002.182 41.86 9.006 26.33 26.198 12.534 41.495 5.418 63.16 5.191 90.98v.12c.227 27.82 7.343 49.485 21.139 64.782 15.529 17.192 38.672 26.016 67.97 26.198h.12c26.032-.164 44.413-7.012 59.496-22.054 19.965-19.916 19.365-44.853 12.803-60.168-4.493-10.675-13.173-19.396-25.182-25.87zM100.35 141.44c-10.137.577-20.652-3.988-21.212-13.768-.424-7.885 5.598-16.694 23.967-17.717 2.098-.12 4.155-.177 6.173-.177 5.918 0 11.453.573 16.47 1.67-1.876 23.407-14.71 29.444-25.398 29.992z" />
+      </svg>
+    ),
+    getUrl: (text, url) =>
+      `https://www.threads.net/intent/post?text=${encodeURIComponent(text + " " + url)}`,
+  },
+  {
+    id: "email",
+    label: "Email",
+    color: "#c9a961",
+    bg: "rgba(201,169,97,0.12)",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        width="21"
+        height="21"
+      >
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+        <polyline points="22,6 12,13 2,6" />
+      </svg>
+    ),
+    getUrl: (text, url) =>
+      `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(text + "\n\nView opportunity: " + url)}`,
+  },
+];
+
+// ─── Share Sheet ──────────────────────────────────────────────────────────────
+function ShareSheet({ post, onClose }) {
+  const [copied, setCopied] = useState(false);
+  const [instaCopied, setInstaCopied] = useState(false);
+  const [nativeShared, setNativeShared] = useState(false);
+
+  useEffect(() => {
+    if (!post) return;
+    const h = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [post, onClose]);
+
+  if (!post) return null;
+
+  const shareUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/opportunities/${post._id || ""}`
+      : "";
+  const shareText = `🎬 ${post.title}${post.type ? ` — ${post.type}` : ""}${post.budget ? ` | Budget: ${post.budget}` : ""}${post.location ? ` (${post.location})` : ""}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl || shareText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {}
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: shareText,
+          url: shareUrl,
+        });
+        setNativeShared(true);
+        setTimeout(() => setNativeShared(false), 2000);
+      } catch (e) {
+        if (e.name !== "AbortError") handleCopy();
+      }
+    } else {
+      handleCopy();
+    }
+  };
+
+  const handlePlatformClick = (platform) => {
+    if (platform.action === "copy") {
+      navigator.clipboard
+        .writeText(shareUrl || shareText)
+        .then(() => {
+          setInstaCopied(true);
+          setTimeout(() => setInstaCopied(false), 2800);
+        })
+        .catch(() => {});
+      return;
+    }
+    const url = platform.getUrl(shareText, shareUrl);
+    if (url)
+      window.open(url, "_blank", "noopener,noreferrer,width=600,height=520");
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        key="share-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 3000,
+          background: "rgba(0,0,0,0.72)",
+          backdropFilter: "blur(6px)",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+        }}
+      >
+        <motion.div
+          key="share-sheet"
+          initial={{ y: "100%", opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: "100%", opacity: 0 }}
+          transition={{ type: "spring", damping: 28, stiffness: 280 }}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            width: "100%",
+            maxWidth: 560,
+            background: "linear-gradient(180deg, #22252e 0%, #1a1d24 100%)",
+            borderRadius: "20px 20px 0 0",
+            border: "1px solid rgba(201,169,97,0.18)",
+            borderBottom: "none",
+            boxShadow: "0 -20px 70px rgba(0,0,0,0.7)",
+            fontFamily: "inherit",
+            overflow: "hidden",
+          }}
+        >
+          {/* Gold top bar */}
+          <div
+            style={{
+              height: 3,
+              background:
+                "linear-gradient(90deg, transparent, #c9a961, #e8c97a, transparent)",
+            }}
+          />
+
+          {/* Drag handle */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "10px 0 4px",
+            }}
+          >
+            <div
+              style={{
+                width: 36,
+                height: 4,
+                borderRadius: 9999,
+                background: "rgba(255,255,255,0.12)",
+              }}
+            />
+          </div>
+
+          <div style={{ padding: "4px 20px 28px" }}>
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 16,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p
+                  style={{
+                    margin: "0 0 3px",
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "rgba(201,169,97,0.65)",
+                  }}
+                >
+                  Share Opportunity
+                </p>
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: "#ffffff",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {post.title}
+                </h3>
+                <p
+                  style={{ margin: "2px 0 0", fontSize: 12, color: "#9ca3af" }}
+                >
+                  {post.type || "Requirement"}
+                  {post.location ? ` • ${post.location}` : ""}
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.07)",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#9ca3af",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  transition: "background 0.15s, transform 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+                  e.currentTarget.style.transform = "rotate(90deg)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.07)";
+                  e.currentTarget.style.transform = "rotate(0deg)";
+                }}
+              >
+                <X size={14} strokeWidth={2.2} />
+              </button>
+            </div>
+
+            {/* Instagram copy toast */}
+            <AnimatePresence>
+              {instaCopied && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 12px",
+                    borderRadius: 10,
+                    marginBottom: 12,
+                    background: "rgba(228,64,95,0.1)",
+                    border: "1px solid rgba(228,64,95,0.25)",
+                  }}
+                >
+                  <Check
+                    size={13}
+                    strokeWidth={2.5}
+                    style={{ color: "#E4405F", flexShrink: 0 }}
+                  />
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#E4405F",
+                    }}
+                  >
+                    Link copied! Open Instagram and paste in your story or bio.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Platform grid — 4 cols */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: "10px 6px",
+                marginBottom: 18,
+              }}
+            >
+              {SHARE_PLATFORMS.map((p, i) => (
+                <motion.button
+                  key={p.id}
+                  initial={{ opacity: 0, y: 10, scale: 0.85 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{
+                    delay: i * 0.035,
+                    type: "spring",
+                    damping: 20,
+                    stiffness: 300,
+                  }}
+                  onClick={() => handlePlatformClick(p)}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 6,
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    touchAction: "manipulation",
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                  title={p.label}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.1, filter: "brightness(1.2)" }}
+                    style={{
+                      width: 52,
+                      height: 52,
+                      background: p.bg,
+                      border: `1px solid ${p.color}28`,
+                      borderRadius: 14,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: p.color,
+                      transition: "filter 0.18s",
+                    }}
+                  >
+                    {p.icon}
+                  </motion.div>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: "#9ca3af",
+                      textAlign: "center",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {p.label}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div
+              style={{
+                height: 1,
+                background: "rgba(255,255,255,0.06)",
+                marginBottom: 14,
+              }}
+            />
+
+            {/* Copy link row */}
+            <div style={{ display: "flex", gap: 8 }}>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "9px 12px",
+                  borderRadius: 10,
+                  overflow: "hidden",
+                  background: "rgba(255,255,255,0.035)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                }}
+              >
+                <ExternalLink
+                  size={12}
+                  strokeWidth={1.8}
+                  style={{ color: "#9ca3af", flexShrink: 0 }}
+                />
+                <span
+                  style={{
+                    fontSize: 11.5,
+                    color: "rgba(255,255,255,0.4)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {shareUrl || `${post.title}`}
+                </span>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleCopy}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "9px 14px",
+                  borderRadius: 10,
+                  flexShrink: 0,
+                  background: copied
+                    ? "rgba(201,169,97,0.12)"
+                    : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${copied ? "rgba(201,169,97,0.4)" : "rgba(255,255,255,0.08)"}`,
+                  color: copied ? "#c9a961" : "#ffffff",
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                {copied ? (
+                  <>
+                    <Check size={13} strokeWidth={2.5} /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy size={13} strokeWidth={1.8} /> Copy link
+                  </>
+                )}
+              </motion.button>
+            </div>
+
+            {/* Native share — mobile */}
+            {typeof navigator !== "undefined" && navigator.share && (
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={handleNativeShare}
+                style={{
+                  marginTop: 10,
+                  width: "100%",
+                  padding: "11px",
+                  background: "linear-gradient(135deg, #c9a961, #a8863d)",
+                  border: "none",
+                  borderRadius: 10,
+                  color: "#1a1d24",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 7,
+                  touchAction: "manipulation",
+                }}
+              >
+                <Share2 size={14} strokeWidth={2.2} />
+                {nativeShared ? "Shared!" : "More options…"}
+              </motion.button>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 // ─── Searchable Project Type Picker ──────────────────────────────────────────
 function ProjectTypePicker({ value, onChange }) {
   const [open, setOpen] = useState(false);
@@ -226,7 +759,6 @@ function ProjectTypePicker({ value, onChange }) {
             transition={{ duration: 0.15 }}
             className="ptp-dropdown"
           >
-            {/* Search */}
             <div
               style={{
                 padding: "9px 12px",
@@ -268,7 +800,6 @@ function ProjectTypePicker({ value, onChange }) {
                 </button>
               )}
             </div>
-            {/* Options */}
             <div
               style={{
                 maxHeight: "300px",
@@ -519,7 +1050,7 @@ function StatusBadge({ status }) {
   );
 }
 
-// ─── Modal shell (bottom sheet mobile / centered desktop) ────────────────────
+// ─── Modal shell ─────────────────────────────────────────────────────────────
 function ModalShell({ onClose, children }) {
   return (
     <AnimatePresence>
@@ -616,7 +1147,6 @@ function ApplicationsModal({ post, onClose, onViewAll }) {
 
   return (
     <ModalShell onClose={onClose}>
-      {/* header */}
       <div
         style={{
           padding: "14px 18px 12px",
@@ -692,7 +1222,6 @@ function ApplicationsModal({ post, onClose, onViewAll }) {
           <X size={15} />
         </button>
       </div>
-      {/* body */}
       <div
         style={{
           flex: 1,
@@ -1008,7 +1537,6 @@ function ApplicationsModal({ post, onClose, onViewAll }) {
           </div>
         )}
       </div>
-      {/* footer */}
       <div
         style={{
           padding: "12px 18px",
@@ -1359,6 +1887,7 @@ export default function PostRequirement() {
   const [viewAppsPost, setViewAppsPost] = useState(null);
   const [editPost, setEditPost] = useState(null);
   const [deletingId, setDeletingId] = useState("");
+  const [sharePost, setSharePost] = useState(null); // ← NEW
 
   const set = (k) => (e) =>
     setFormData((p) => ({
@@ -1463,6 +1992,9 @@ export default function PostRequirement() {
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: C.bg }}>
       <HirerSidebar />
 
+      {/* ── Share Sheet ── */}
+      <ShareSheet post={sharePost} onClose={() => setSharePost(null)} />
+
       <div className="pr-main">
         <div className="pr-page">
           {/* ── Header ── */}
@@ -1495,20 +2027,12 @@ export default function PostRequirement() {
               </motion.button>
               <div>
                 <h1
-                  style={{
-                    color: C.muted,
-                    marginTop: "30px",
-                  }}
+                  style={{ color: C.muted, marginTop: "30px" }}
                   className="pr-title"
                 >
                   Post a Requirement
                 </h1>
-                <p
-                  style={{
-                    color: C.muted,
-                    fontSize: "13.5px",
-                  }}
-                >
+                <p style={{ color: C.muted, fontSize: "13.5px" }}>
                   Find the perfect talent for your project
                 </p>
               </div>
@@ -1638,7 +2162,6 @@ export default function PostRequirement() {
                     />
                   </div>
                 </div>
-
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   type="submit"
@@ -1816,6 +2339,7 @@ export default function PostRequirement() {
                   >
                     {post._meta}
                   </p>
+
                   {/* Info pills */}
                   <div
                     style={{
@@ -1908,10 +2432,12 @@ export default function PostRequirement() {
                       </span>
                     )}
                   </div>
-                  {/* Actions */}
+
+                  {/* ── Actions row ── */}
                   <div
                     style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}
                   >
+                    {/* View Applications */}
                     <motion.button
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setViewAppsPost(post)}
@@ -1950,6 +2476,8 @@ export default function PostRequirement() {
                         </span>
                       )}
                     </motion.button>
+
+                    {/* Edit */}
                     <motion.button
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setEditPost(post)}
@@ -1976,6 +2504,50 @@ export default function PostRequirement() {
                       <Edit3 size={13} />
                       Edit
                     </motion.button>
+
+                    {/* ── Share Button — NEW ── */}
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setSharePost(post)}
+                      disabled={deletingId === post._id}
+                      title="Share this opportunity"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        padding: "9px 14px",
+                        background: "transparent",
+                        border: `1px solid ${C.border}`,
+                        borderRadius: "8px",
+                        color: C.text,
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        flex: "1 1 auto",
+                        justifyContent: "center",
+                        minWidth: "80px",
+                        touchAction: "manipulation",
+                        opacity: deletingId === post._id ? 0.6 : 1,
+                        transition:
+                          "border-color 0.18s, color 0.18s, background 0.18s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor =
+                          "rgba(201,169,97,0.5)";
+                        e.currentTarget.style.color = C.gold;
+                        e.currentTarget.style.background = C.goldDim;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = C.border;
+                        e.currentTarget.style.color = C.text;
+                        e.currentTarget.style.background = "transparent";
+                      }}
+                    >
+                      <Share2 size={13} strokeWidth={1.8} />
+                      Share
+                    </motion.button>
+
+                    {/* Delete */}
                     <motion.button
                       whileTap={{ scale: 0.97 }}
                       onClick={() => handleDeletePost(post)}
@@ -2041,21 +2613,16 @@ export default function PostRequirement() {
       )}
 
       <style>{`
-        /* ── Layout ── */
         .pr-main { flex:1; overflow-x:hidden; }
         .pr-page { max-width:820px; margin:0 auto; padding:18px 14px 70px; }
         @media(min-width:480px)  { .pr-page { padding:22px 20px 70px; } }
         @media(min-width:768px)  { .pr-page { padding:28px 26px 60px; } }
         @media(min-width:1024px) { .pr-main { margin-left:288px; } .pr-page { padding:36px 32px 60px; } }
 
-        /* ── Title ── */
         .pr-title { font-size:clamp(20px,4vw,28px); font-weight:700; margin:0 0 4px; color:#ffffff; letter-spacing:-0.02em; }
-
-        /* ── 2-col grid that stacks on mobile ── */
         .pr-grid2 { display:grid; grid-template-columns:1fr; gap:14px; }
         @media(min-width:480px) { .pr-grid2 { grid-template-columns:1fr 1fr; } }
 
-        /* ── Project type picker dropdown ── */
         .ptp-dropdown {
           position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:999;
           background:${C.card}; border:1px solid ${C.border}; border-radius:12px;
@@ -2068,31 +2635,23 @@ export default function PostRequirement() {
         }
         .ptp-opt:hover { background:rgba(255,255,255,0.04) !important; }
 
-        /* ── Modal overlay ── */
         .pr-modal-overlay {
           position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.7);
           backdrop-filter:blur(4px); display:flex; align-items:flex-end; justify-content:center;
         }
-        @media(min-width:640px) {
-          .pr-modal-overlay { align-items:center; padding:20px; }
-        }
+        @media(min-width:640px) { .pr-modal-overlay { align-items:center; padding:20px; } }
 
-        /* ── Modal sheet (bottom sheet mobile / card desktop) ── */
         .pr-modal-sheet {
           background:${C.cardDeep}; border-radius:18px 18px 0 0;
           border:1px solid ${C.border}; width:100%; max-height:92vh;
           display:flex; flex-direction:column;
           box-shadow:0 -8px 40px rgba(0,0,0,0.5); overflow:hidden;
         }
-        @media(min-width:640px) {
-          .pr-modal-sheet { border-radius:16px; max-width:640px; max-height:88vh; box-shadow:0 24px 80px rgba(0,0,0,0.65); }
-        }
+        @media(min-width:640px) { .pr-modal-sheet { border-radius:16px; max-width:640px; max-height:88vh; box-shadow:0 24px 80px rgba(0,0,0,0.65); } }
 
-        /* ── Modal handle ── */
         .pr-modal-handle-wrap { display:flex; justify-content:center; padding:8px 0 2px; }
         @media(min-width:640px) { .pr-modal-handle-wrap { display:none; } }
 
-        /* ── Global ── */
         *{box-sizing:border-box;}
         input,select,textarea,button{-webkit-tap-highlight-color:transparent;font-family:inherit;}
         input::placeholder,textarea::placeholder{color:#6b7280;}
