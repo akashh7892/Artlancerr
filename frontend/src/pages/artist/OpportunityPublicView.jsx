@@ -209,7 +209,7 @@ export default function OpportunityPublicView() {
               </span>
             </div>
             <span style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>
-              Filp
+              Flip
             </span>
           </div>
         </div>
