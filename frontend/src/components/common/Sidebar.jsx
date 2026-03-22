@@ -19,7 +19,7 @@ import {
   Badge,
   FileText,
 } from "lucide-react";
-import { clearAuth } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/artist/dashboard" },
@@ -80,6 +80,7 @@ export default function Sidebar() {
   const [modalOpen, setModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const sidebarRef = useRef(null);
 
   const showFloating = SIDEBAR_PATHS.some((p) =>
@@ -113,8 +114,8 @@ export default function Sidebar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const handleLogout = () => {
-    clearAuth();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
     setOpen(false);
   };

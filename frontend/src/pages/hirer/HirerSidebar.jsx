@@ -18,7 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { clearAuth } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/hirer/dashboard" },
@@ -70,9 +70,10 @@ export default function HirerSidebar() {
   const [open, setOpen] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
   const sidebarRef = useRef(null);
+  const { logout } = useAuth();
 
-  const handleLogout = () => {
-    clearAuth();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
     setOpen(false);
   };
