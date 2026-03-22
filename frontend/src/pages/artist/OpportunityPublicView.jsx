@@ -32,6 +32,7 @@ export default function OpportunityPublicView() {
   const [opp, setOpp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const rawApiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").replace(
     /\/+$/,
@@ -42,6 +43,40 @@ export default function OpportunityPublicView() {
       ? rawApiBaseUrl
       : `${rawApiBaseUrl}/api`
     : "/api";
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Check if user has a valid token/session
+        const token =
+          localStorage.getItem("token") || sessionStorage.getItem("token");
+
+        if (token) {
+          // Verify token with backend
+          const response = await fetch(`${apiRoot}/auth/verify`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+            // Clear invalid token
+            localStorage.removeItem("token");
+            sessionStorage.removeItem("token");
+          }
+        }
+      } catch (err) {
+        console.error("Auth check failed:", err);
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
+  }, [apiRoot]);
 
   useEffect(() => {
     if (!id) {
@@ -58,6 +93,17 @@ export default function OpportunityPublicView() {
       .catch(() => setError("Could not load opportunity. Please try again."))
       .finally(() => setLoading(false));
   }, [id, apiRoot]);
+
+  // Handle apply button click
+  const handleApply = () => {
+    if (isAuthenticated) {
+      // User is signed in, go directly to opportunities
+      navigate(`/artist/opportunities`);
+    } else {
+      // User is not signed in, redirect to login with return URL
+      navigate(`/auth/artist/login?redirect=/artist/opportunities`);
+    }
+  };
 
   if (loading)
     return (
@@ -201,11 +247,8 @@ export default function OpportunityPublicView() {
                 justifyContent: "center",
               }}
             >
-              <span style={{ fontSize: 11 }}><img
-                src="/logo.png"
-                class="img-fluid rounded-top"
-                alt=""
-              />
+              <span style={{ fontSize: 11 }}>
+                <img src="/logo.png" className="img-fluid rounded-top" alt="" />
               </span>
             </div>
             <span style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>
@@ -587,83 +630,134 @@ export default function OpportunityPublicView() {
               animationDelay: "0.08s",
             }}
           >
-            <p
-              style={{
-                margin: "0 0 4px",
-                fontSize: 15,
-                fontWeight: 700,
-                color: C.darkText,
-              }}
-            >
-              Interested in this role?
-            </p>
-            <p style={{ margin: "0 0 16px", fontSize: 13, color: C.lightText }}>
-              Sign in or create a free account to apply instantly.
-            </p>
+            {isAuthenticated ? (
+              // Show for authenticated users
+              <>
+                <p
+                  style={{
+                    margin: "0 0 4px",
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: C.darkText,
+                  }}
+                >
+                  Ready to apply?
+                </p>
+                <p
+                  style={{
+                    margin: "0 0 16px",
+                    fontSize: 13,
+                    color: C.lightText,
+                  }}
+                >
+                  Click below to view this opportunity and submit your
+                  application.
+                </p>
 
-            <button
-              className="pub-apply-btn"
-              onClick={() =>
-                navigate(`/auth/artist/login?redirect=/artist/opportunities`)
-              }
-              style={{
-                width: "100%",
-                padding: "13px",
-                background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
-                border: "none",
-                borderRadius: 10,
-                color: "#1a1d24",
-                fontWeight: 700,
-                fontSize: 14,
-                cursor: "pointer",
-                marginBottom: 10,
-              }}
-            >
-              Sign In to Apply
-            </button>
+                <button
+                  className="pub-apply-btn"
+                  onClick={handleApply}
+                  style={{
+                    width: "100%",
+                    padding: "13px",
+                    background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
+                    border: "none",
+                    borderRadius: 10,
+                    color: "#1a1d24",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    cursor: "pointer",
+                  }}
+                >
+                  View & Apply Now
+                </button>
+              </>
+            ) : (
+              // Show for non-authenticated users
+              <>
+                <p
+                  style={{
+                    margin: "0 0 4px",
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: C.darkText,
+                  }}
+                >
+                  Interested in this role?
+                </p>
+                <p
+                  style={{
+                    margin: "0 0 16px",
+                    fontSize: 13,
+                    color: C.lightText,
+                  }}
+                >
+                  Sign in or create a free account to apply instantly.
+                </p>
 
-            <button
-              className="pub-apply-btn"
-              onClick={() => navigate(`/auth/artist/signup`)}
-              style={{
-                width: "100%",
-                padding: "12px",
-                background: "transparent",
-                border: `1px solid ${C.inputBorder}`,
-                borderRadius: 10,
-                color: C.darkText,
-                fontWeight: 600,
-                fontSize: 13.5,
-                cursor: "pointer",
-              }}
-            >
-              New here? Create a free account
-            </button>
+                <button
+                  className="pub-apply-btn"
+                  onClick={handleApply}
+                  style={{
+                    width: "100%",
+                    padding: "13px",
+                    background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
+                    border: "none",
+                    borderRadius: 10,
+                    color: "#1a1d24",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    cursor: "pointer",
+                    marginBottom: 10,
+                  }}
+                >
+                  Sign In to Apply
+                </button>
 
-            <p
-              style={{
-                margin: "12px 0 0",
-                textAlign: "center",
-                fontSize: 11.5,
-                color: C.lightText,
-              }}
-            >
-              Already have an account?{" "}
-              <button
-                onClick={() => navigate("/home")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: C.gold,
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  padding: 0,
-                }}
-              >
-                Browse all opportunities
-              </button>
-            </p>
+                <button
+                  className="pub-apply-btn"
+                  onClick={() => navigate(`/auth/artist/signup`)}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    background: "transparent",
+                    border: `1px solid ${C.inputBorder}`,
+                    borderRadius: 10,
+                    color: C.darkText,
+                    fontWeight: 600,
+                    fontSize: 13.5,
+                    cursor: "pointer",
+                  }}
+                >
+                  New here? Create a free account
+                </button>
+
+                <p
+                  style={{
+                    margin: "12px 0 0",
+                    textAlign: "center",
+                    fontSize: 11.5,
+                    color: C.lightText,
+                  }}
+                >
+                  Already have an account?{" "}
+                  <button
+                    onClick={() => navigate("/home")}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: C.gold,
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  >
+                    Browse all opportunities
+                  </button>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
