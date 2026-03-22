@@ -117,7 +117,7 @@ export default function OpportunityPublicView() {
           {error || "Opportunity not found."}
         </p>
         <button
-          onClick={() => navigate("/artist/opportunities")}
+          onClick={() => navigate("/home")}
           style={{
             padding: "10px 22px",
             background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
@@ -172,7 +172,7 @@ export default function OpportunityPublicView() {
           }}
         >
           <button
-            onClick={() => navigate("/artist/opportunities")}
+            onClick={() => navigate("/home")}
             style={{
               display: "flex",
               alignItems: "center",
@@ -201,10 +201,15 @@ export default function OpportunityPublicView() {
                 justifyContent: "center",
               }}
             >
-              <span style={{ fontSize: 11 }}>🎬</span>
+              <span style={{ fontSize: 11 }}><img
+                src="/logo.png"
+                class="img-fluid rounded-top"
+                alt=""
+              />
+              </span>
             </div>
             <span style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>
-              FilmConnect
+              Filp
             </span>
           </div>
         </div>
@@ -619,7 +624,7 @@ export default function OpportunityPublicView() {
 
             <button
               className="pub-apply-btn"
-              onClick={() => navigate(`/auth/artist/register`)}
+              onClick={() => navigate(`/auth/artist/signup`)}
               style={{
                 width: "100%",
                 padding: "12px",
@@ -645,7 +650,7 @@ export default function OpportunityPublicView() {
             >
               Already have an account?{" "}
               <button
-                onClick={() => navigate("/artist/opportunities")}
+                onClick={() => navigate("/home")}
                 style={{
                   background: "none",
                   border: "none",
