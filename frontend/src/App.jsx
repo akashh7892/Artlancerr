@@ -1,8 +1,9 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Landing from "./pages/Landing";
 import IntroFlow from "./pages/IntroFlow";
 import HomeDummy from "./pages/Homedummy";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
 
 // Auth components (role‑aware)
 import Signup from "./components/auth/Signup";
@@ -37,20 +38,95 @@ import BrowseArtist from "./pages/hirer/Browseartist";
 import ArtistProfile from "./pages/hirer/ArtistProfile";
 import HirerApplications from "./pages/hirer/Applications";
 
+function PublicRoute({ children }) {
+  const { isAuthenticated, role, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#1a1d24]">
+        <div className="w-10 h-10 border-2 border-[#b3a961] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    const target = role === "hirer" ? "/hirer/dashboard" : "/artist/dashboard";
+    return <Navigate to={target} replace />;
+  }
+
+  return children;
+}
+
 function App() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/home" element={<HomeDummy />} />
-      <Route path="/" element={<Landing />} />
-      <Route path="/intro/:role" element={<IntroFlow />} />
+      <Route
+        path="/home"
+        element={
+          <PublicRoute>
+            <HomeDummy />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <Landing />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/intro/:role"
+        element={
+          <PublicRoute>
+            <IntroFlow />
+          </PublicRoute>
+        }
+      />
 
       {/* Auth role in URL */}
-      <Route path="/auth/:role/signup" element={<Signup />} />
-      <Route path="/auth/:role/login" element={<Login />} />
-      <Route path="/auth/:role/forgot-password" element={<ForgotPassword />} />
-      <Route path="/auth/:role/verify-otp" element={<VerifyOTP />} />
-      <Route path="/auth/:role/reset-password" element={<ResetPassword />} />
+      <Route
+        path="/auth/:role/signup"
+        element={
+          <PublicRoute>
+            <Signup />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/auth/:role/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/auth/:role/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPassword />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/auth/:role/verify-otp"
+        element={
+          <PublicRoute>
+            <VerifyOTP />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/auth/:role/reset-password"
+        element={
+          <PublicRoute>
+            <ResetPassword />
+          </PublicRoute>
+        }
+      />
 
       {/* Artist routes — protected */}
       <Route
