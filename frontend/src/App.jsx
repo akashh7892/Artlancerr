@@ -25,6 +25,7 @@ import Settings from "./pages/artist/Settings";
 import ArtistProfileView from "./pages/artist/Artistviewprofile";
 import Opportunities from "./pages/artist/Opportunity";
 import ArtistApplications from "./pages/artist/Applications";
+import OpportunityPublicView from "./pages/artist/OpportunityPublicView";
 
 // Hirer pages
 import HirerDashboard from "./pages/hirer/HirerDashboard";
@@ -232,6 +233,10 @@ function App() {
             <Settings />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/artist/opportunity/:id"
+        element={<OpportunityPublicView />}
       />
 
       {/* Hirer routes — protected */}

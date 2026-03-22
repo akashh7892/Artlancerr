@@ -22,13 +22,13 @@ import {
   ExternalLink,
   Star,
   Layers,
-  Filter,
   Share2,
   Copy,
   Check,
 } from "lucide-react";
 import Sidebar from "../../components/common/Sidebar";
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
   bg: "#1a1d24",
   card: "#22252e",
@@ -43,6 +43,7 @@ const C = {
   panelBg2: "#191c23",
 };
 
+// ─── Filter data ──────────────────────────────────────────────────────────────
 const FILTERS = [
   "All",
   "Film & TV Production",
@@ -95,7 +96,6 @@ const FILTERS = [
   "Marketing Media Teams",
   "Internal Communication Studios",
 ];
-
 const LOCATIONS = [
   "All locations",
   "Remote",
@@ -143,7 +143,7 @@ const DURATIONS = [
 ];
 const POSTED = ["Any time", "Last 24 hours", "Last week", "Last month"];
 
-// ── Social Platforms Config ───────────────────────────────────────────────────
+// ─── Social platform definitions ──────────────────────────────────────────────
 const SHARE_PLATFORMS = [
   {
     id: "whatsapp",
@@ -155,8 +155,7 @@ const SHARE_PLATFORMS = [
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
       </svg>
     ),
-    getUrl: (text, url) =>
-      `https://wa.me/?text=${encodeURIComponent(text + "\n" + url)}`,
+    getUrl: (msg) => `https://wa.me/?text=${encodeURIComponent(msg)}`,
   },
   {
     id: "telegram",
@@ -168,8 +167,8 @@ const SHARE_PLATFORMS = [
         <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
       </svg>
     ),
-    getUrl: (text, url) =>
-      `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+    getUrl: (msg, url) =>
+      `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(msg)}`,
   },
   {
     id: "twitter",
@@ -181,8 +180,8 @@ const SHARE_PLATFORMS = [
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
       </svg>
     ),
-    getUrl: (text, url) =>
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+    getUrl: (msg, url) =>
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(msg)}&url=${encodeURIComponent(url)}`,
   },
   {
     id: "linkedin",
@@ -194,7 +193,7 @@ const SHARE_PLATFORMS = [
         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
       </svg>
     ),
-    getUrl: (text, url) =>
+    getUrl: (_, url) =>
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
   },
   {
@@ -207,7 +206,7 @@ const SHARE_PLATFORMS = [
         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
       </svg>
     ),
-    getUrl: (text, url) =>
+    getUrl: (_, url) =>
       `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
   },
   {
@@ -233,8 +232,8 @@ const SHARE_PLATFORMS = [
         <path d="M141.537 88.988a66.667 66.667 0 00-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.15-23.806 1.371-39.104 15.264-38.053 34.568.527 9.792 5.625 18.218 14.35 23.718 7.404 4.709 16.935 7.006 26.881 6.466 13.098-.703 23.376-5.709 30.552-14.873 5.464-6.994 8.921-16.055 10.472-27.492 6.28 3.79 10.927 8.821 13.449 14.874 4.503 10.697 4.763 28.237-9.138 42.097-12.22 12.183-26.85 17.448-49.01 17.61-24.534-.176-43.128-8.057-55.264-23.43C29.102 138.265 23.516 118.409 23.333 93c.183-25.409 5.77-45.265 16.596-59.01C51.063 19.617 69.657 11.737 94.19 11.561c24.714.178 43.687 8.102 56.378 23.55 6.222 7.685 10.932 17.41 14.08 29.055l16.338-4.35c-3.825-14.106-9.834-26.198-18.003-36.132C147.034 8.47 123.737-.182 94.3 0h-.12C65.002.182 41.86 9.006 26.33 26.198 12.534 41.495 5.418 63.16 5.191 90.98v.12c.227 27.82 7.343 49.485 21.139 64.782 15.529 17.192 38.672 26.016 67.97 26.198h.12c26.032-.164 44.413-7.012 59.496-22.054 19.965-19.916 19.365-44.853 12.803-60.168-4.493-10.675-13.173-19.396-25.182-25.87zM100.35 141.44c-10.137.577-20.652-3.988-21.212-13.768-.424-7.885 5.598-16.694 23.967-17.717 2.098-.12 4.155-.177 6.173-.177 5.918 0 11.453.573 16.47 1.67-1.876 23.407-14.71 29.444-25.398 29.992z" />
       </svg>
     ),
-    getUrl: (text, url) =>
-      `https://www.threads.net/intent/post?text=${encodeURIComponent(text + " " + url)}`,
+    getUrl: (msg) =>
+      `https://www.threads.net/intent/post?text=${encodeURIComponent(msg)}`,
   },
   {
     id: "email",
@@ -254,38 +253,62 @@ const SHARE_PLATFORMS = [
         <polyline points="22,6 12,13 2,6" />
       </svg>
     ),
-    getUrl: (text, url) =>
-      `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(text + "\n\nCheck it out: " + url)}`,
+    getUrl: (msg) =>
+      `mailto:?subject=${encodeURIComponent("Film Opportunity — Check this out!")}&body=${encodeURIComponent(msg)}`,
   },
 ];
 
-// ── Share Sheet Component ─────────────────────────────────────────────────────
+// ─── Share Sheet ──────────────────────────────────────────────────────────────
 function ShareSheet({ opp, onClose }) {
   const [copied, setCopied] = useState(false);
-  const [nativeShared, setNativeShared] = useState(false);
   const [instaCopied, setInstaCopied] = useState(false);
+  const [nativeShared, setNativeShared] = useState(false);
 
   useEffect(() => {
-    if (!opp) return;
-    const handleKey = (e) => e.key === "Escape" && onClose();
+    const handleKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [opp, onClose]);
+  }, [onClose]);
 
   if (!opp) return null;
 
+  // ── Correct share URL — uses the public /artist/opportunity/:id route ──
   const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/opportunities/${opp._id || ""}`
-      : "";
-  const shareText = `🎬 ${opp.title} at ${opp.company}${opp.budget ? ` — ${opp.budget}` : ""}${opp.location ? ` (${opp.location})` : ""}`;
+    typeof window !== "undefined" && opp._id
+      ? `${window.location.origin}/artist/opportunity/${opp._id}`
+      : `${window.location.origin}/artist/opportunities`;
+
+  // ── Rich share message with all details + working link ──
+  const shareMessage = [
+    `🎬 ${opp.title}`,
+    opp.company ? `🏢 ${opp.company}` : null,
+    opp.type ? `Role: ${opp.type}` : null,
+    opp.location ? `📍 ${opp.location}` : null,
+    opp.budget ? `💰 Budget: ${opp.budget}` : null,
+    opp.duration ? `⏱️ Duration: ${opp.duration}` : null,
+    ``,
+    `View & apply here 👇`,
+    shareUrl,
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareMessage);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (_) {}
+  };
 
   const handleNativeShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: opp.title,
-          text: shareText,
+          text: shareMessage,
           url: shareUrl,
         });
         setNativeShared(true);
@@ -298,28 +321,18 @@ function ShareSheet({ opp, onClose }) {
     }
   };
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl || shareText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      setCopied(false);
-    }
-  };
-
   const handlePlatformClick = (platform) => {
     if (platform.action === "copy") {
       navigator.clipboard
-        .writeText(shareUrl || shareText)
+        .writeText(shareMessage)
         .then(() => {
           setInstaCopied(true);
-          setTimeout(() => setInstaCopied(false), 2500);
+          setTimeout(() => setInstaCopied(false), 2800);
         })
         .catch(() => {});
       return;
     }
-    const url = platform.getUrl(shareText, shareUrl);
+    const url = platform.getUrl(shareMessage, shareUrl);
     if (url)
       window.open(url, "_blank", "noopener,noreferrer,width=600,height=520");
   };
@@ -328,39 +341,54 @@ function ShareSheet({ opp, onClose }) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[2000] bg-black/60"
-        style={{
-          backdropFilter: "blur(6px)",
-          animation: "fadeInBg 0.2s ease both",
-        }}
         onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 2000,
+          background: "rgba(0,0,0,0.65)",
+          backdropFilter: "blur(6px)",
+          animation: "ssBackdrop 0.2s ease both",
+        }}
       />
 
-      {/* Bottom Sheet */}
+      {/* Bottom sheet */}
       <div
-        className="share-sheet-panel fixed bottom-0 left-0 right-0 z-[2100] rounded-t-3xl"
         style={{
-          background: "linear-gradient(180deg, #1e2129 0%, #191c23 100%)",
-          border: "1px solid rgba(179,169,97,0.16)",
-          borderBottom: "none",
-          boxShadow: "0 -24px 80px rgba(0,0,0,0.7)",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 2100,
           maxWidth: 560,
           margin: "0 auto",
+          background: "linear-gradient(180deg,#1e2129 0%,#191c23 100%)",
+          borderRadius: "24px 24px 0 0",
+          border: "1px solid rgba(179,169,97,0.18)",
+          borderBottom: "none",
+          boxShadow: "0 -24px 80px rgba(0,0,0,0.7)",
+          fontFamily: "'Plus Jakarta Sans',sans-serif",
+          animation: "ssSlideUp 0.38s cubic-bezier(0.34,1.56,0.64,1) both",
         }}
       >
-        {/* Gold accent bar */}
+        {/* Gold top accent */}
         <div
           style={{
             height: 3,
             background:
-              "linear-gradient(90deg, transparent, #b3a961, #cfc060, transparent)",
+              "linear-gradient(90deg,transparent,#b3a961,#cfc060,transparent)",
             borderRadius: "24px 24px 0 0",
           }}
         />
 
         {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-0">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "10px 0 4px",
+          }}
+        >
           <div
             style={{
               width: 36,
@@ -371,179 +399,277 @@ function ShareSheet({ opp, onClose }) {
           />
         </div>
 
-        <div className="px-5 pt-3 pb-7">
-          {/* Header row */}
-          <div className="flex items-start justify-between gap-3 mb-4">
-            <div className="flex-1 min-w-0">
+        <div style={{ padding: "4px 20px 32px" }}>
+          {/* Header */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+              marginBottom: 14,
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
               <p
-                className="text-[10.5px] font-bold uppercase tracking-widest mb-1"
-                style={{ color: "rgba(179,169,97,0.65)" }}
+                style={{
+                  margin: "0 0 3px",
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "rgba(179,169,97,0.65)",
+                }}
               >
                 Share Opportunity
               </p>
               <h3
-                className="text-[16px] font-bold truncate leading-snug"
                 style={{
+                  margin: 0,
+                  fontSize: 16,
+                  fontWeight: 700,
                   color: C.darkText,
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: "'Playfair Display',serif",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {opp.title}
               </h3>
-              <p className="text-[12px] mt-0.5" style={{ color: C.lightText }}>
+              <p
+                style={{ margin: "2px 0 0", fontSize: 12, color: C.lightText }}
+              >
                 {opp.company}
                 {opp.location ? ` • ${opp.location}` : ""}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="adv-btn-close flex items-center justify-center w-8 h-8 rounded-full border-0 outline-none cursor-pointer flex-shrink-0"
               style={{
-                background: "rgba(255,255,255,0.06)",
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.07)",
+                border: "none",
+                cursor: "pointer",
                 color: C.lightText,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                transition: "background 0.15s,transform 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+                e.currentTarget.style.transform = "rotate(90deg)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.07)";
+                e.currentTarget.style.transform = "rotate(0deg)";
               }}
             >
               <X size={15} strokeWidth={2.2} />
             </button>
           </div>
 
+          {/* Message preview */}
+          <div
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(179,169,97,0.12)",
+              borderRadius: 10,
+              padding: "10px 12px",
+              marginBottom: 14,
+            }}
+          >
+            <p
+              style={{
+                margin: "0 0 5px",
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: "rgba(179,169,97,0.55)",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
+              What gets shared
+            </p>
+            <pre
+              style={{
+                margin: 0,
+                fontSize: 11.5,
+                color: C.lightText,
+                fontFamily: "inherit",
+                whiteSpace: "pre-wrap",
+                lineHeight: 1.65,
+              }}
+            >
+              {shareMessage}
+            </pre>
+          </div>
+
           {/* Instagram copy toast */}
           {instaCopied && (
             <div
-              className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
               style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 12px",
+                borderRadius: 10,
+                marginBottom: 12,
                 background: "rgba(228,64,95,0.1)",
                 border: "1px solid rgba(228,64,95,0.25)",
-                animation:
-                  "shareIconPop 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
+                animation: "ssBackdrop 0.2s ease both",
               }}
             >
-              <Check size={13} strokeWidth={2.5} style={{ color: "#E4405F" }} />
+              <Check
+                size={13}
+                strokeWidth={2.5}
+                style={{ color: "#E4405F", flexShrink: 0 }}
+              />
               <p
-                className="text-[12px] font-semibold"
-                style={{ color: "#E4405F" }}
+                style={{
+                  margin: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#E4405F",
+                }}
               >
-                Link copied! Open Instagram and paste in your story or bio.
+                Copied! Open Instagram and paste in your story or bio.
               </p>
             </div>
           )}
 
-          {/* Platform grid — 4 columns */}
+          {/* Platform grid */}
           <div
-            className="grid gap-y-3 gap-x-2 mb-5"
-            style={{ gridTemplateColumns: "repeat(4, 1fr)" }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4,1fr)",
+              gap: "10px 6px",
+              marginBottom: 16,
+            }}
           >
-            {SHARE_PLATFORMS.map((p, i) => (
+            {SHARE_PLATFORMS.map((platform, i) => (
               <button
-                key={p.id}
-                onClick={() => handlePlatformClick(p)}
-                className="share-icon-btn flex flex-col items-center gap-1.5 border-0 outline-none cursor-pointer bg-transparent p-0"
-                style={{ animationDelay: `${i * 0.035}s` }}
-                title={p.label}
+                key={platform.id}
+                onClick={() => handlePlatformClick(platform)}
+                title={platform.label}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  animation: `ssIconPop 0.35s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.035}s both`,
+                }}
               >
                 <div
-                  className="share-icon-circle flex items-center justify-center rounded-2xl"
                   style={{
                     width: 54,
                     height: 54,
-                    background: p.bg,
-                    border: `1px solid ${p.color}26`,
-                    color: p.color,
+                    background: platform.bg,
+                    border: `1px solid ${platform.color}28`,
+                    borderRadius: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: platform.color,
+                    transition: "filter 0.18s, transform 0.18s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.filter = "brightness(1.2)";
+                    e.currentTarget.style.transform = "scale(1.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.filter = "none";
+                    e.currentTarget.style.transform = "scale(1)";
                   }}
                 >
-                  {p.icon}
+                  {platform.icon}
                 </div>
                 <span
-                  className="text-[10px] font-semibold text-center leading-tight"
-                  style={{ color: C.lightText }}
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: C.lightText,
+                    textAlign: "center",
+                    lineHeight: 1.2,
+                  }}
                 >
-                  {p.label}
+                  {platform.label}
                 </span>
               </button>
             ))}
           </div>
 
-          {/* Divider */}
           <div
             style={{
               height: 1,
               background: "rgba(255,255,255,0.06)",
-              marginBottom: 14,
+              marginBottom: 12,
             }}
           />
 
-          {/* Copy link row */}
-          <div className="flex gap-2">
-            <div
-              className="flex-1 flex items-center gap-2 px-3 py-[10px] rounded-xl overflow-hidden"
-              style={{
-                background: "rgba(255,255,255,0.035)",
-                border: "1px solid rgba(255,255,255,0.07)",
-              }}
-            >
-              <ExternalLink
-                size={13}
-                strokeWidth={1.8}
-                style={{ color: C.lightText, flexShrink: 0 }}
-              />
-              <span
-                className="text-[11.5px] truncate"
-                style={{
-                  color: "rgba(232,233,235,0.5)",
-                  fontFamily: "monospace",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                {shareUrl || `${opp.company} — ${opp.title}`}
-              </span>
-            </div>
-            <button
-              onClick={handleCopy}
-              className="share-copy-btn flex items-center gap-1.5 px-3 py-[10px] rounded-xl font-semibold border outline-none cursor-pointer flex-shrink-0"
-              style={{
-                background: copied ? C.goldDim : "rgba(255,255,255,0.05)",
-                borderColor: copied
-                  ? "rgba(179,169,97,0.4)"
-                  : "rgba(255,255,255,0.08)",
-                color: copied ? C.gold : C.darkText,
-                fontSize: "12.5px",
-                transition: "all 0.2s",
-              }}
-            >
-              {copied ? (
-                <>
-                  <Check size={13} strokeWidth={2.5} />
-                  <span
-                    style={{
-                      animation:
-                        "shareIconPop 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
-                    }}
-                  >
-                    Copied!
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Copy size={13} strokeWidth={1.8} />
-                  Copy link
-                </>
-              )}
-            </button>
-          </div>
+          {/* Copy full message */}
+          <button
+            onClick={handleCopy}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              padding: "11px",
+              borderRadius: 10,
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 600,
+              background: copied ? C.goldDim : "rgba(255,255,255,0.05)",
+              border: `1px solid ${copied ? "rgba(179,169,97,0.4)" : "rgba(255,255,255,0.08)"}`,
+              color: copied ? C.gold : C.darkText,
+              transition: "all 0.2s",
+              marginBottom:
+                typeof navigator !== "undefined" && navigator.share ? 8 : 0,
+            }}
+          >
+            {copied ? (
+              <>
+                <Check size={14} strokeWidth={2.5} /> Message Copied!
+              </>
+            ) : (
+              <>
+                <Copy size={14} strokeWidth={1.8} /> Copy Full Message
+              </>
+            )}
+          </button>
 
-          {/* Native share — mobile only */}
+          {/* Native share (mobile) */}
           {typeof navigator !== "undefined" && navigator.share && (
             <button
               onClick={handleNativeShare}
-              className="mt-3 w-full py-[11px] rounded-xl font-bold border-0 outline-none cursor-pointer flex items-center justify-center gap-2"
               style={{
-                background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
+                width: "100%",
+                padding: "11px",
+                borderRadius: 10,
+                border: "none",
+                cursor: "pointer",
+                background: `linear-gradient(135deg,${C.gold},#cfc060)`,
                 color: "#1a1d24",
-                fontSize: "13px",
+                fontSize: 13,
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 7,
               }}
             >
               <Share2 size={15} strokeWidth={2.2} />
-              {nativeShared ? "Shared!" : "More options…"}
+              {nativeShared ? "Shared!" : "Share via…"}
             </button>
           )}
         </div>
@@ -552,27 +678,28 @@ function ShareSheet({ opp, onClose }) {
   );
 }
 
+// ─── Utility components ───────────────────────────────────────────────────────
 function StyledSelect({ value, onChange, options }) {
   return (
-    <div className="relative">
+    <div style={{ position: "relative" }}>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl outline-none appearance-none cursor-pointer"
         style={{
+          width: "100%",
+          borderRadius: 10,
+          outline: "none",
+          appearance: "none",
+          cursor: "pointer",
           background: C.inputBg,
           border: `1px solid ${C.inputBorder}`,
           color: C.darkText,
           padding: "10px 36px 10px 14px",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: "13.5px",
         }}
-        onFocus={(e) => {
-          e.target.style.borderColor = "rgba(179,169,97,0.4)";
-        }}
-        onBlur={(e) => {
-          e.target.style.borderColor = C.inputBorder;
-        }}
+        onFocus={(e) => (e.target.style.borderColor = "rgba(179,169,97,0.4)")}
+        onBlur={(e) => (e.target.style.borderColor = C.inputBorder)}
       >
         {options.map((o) => (
           <option key={o} value={o} style={{ background: "#1e2129" }}>
@@ -582,8 +709,14 @@ function StyledSelect({ value, onChange, options }) {
       </select>
       <ChevronDown
         size={14}
-        className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-        style={{ color: C.lightText }}
+        style={{
+          position: "absolute",
+          right: 12,
+          top: "50%",
+          transform: "translateY(-50%)",
+          pointerEvents: "none",
+          color: C.lightText,
+        }}
       />
     </div>
   );
@@ -603,7 +736,7 @@ function FilterTabs({ filters, selected, onSelect }) {
   const scroll = (dir) =>
     scrollRef.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
 
-  const arrowStyle = (active) => ({
+  const arrowBtn = (active) => ({
     background: active ? C.card : "transparent",
     border: `1px solid ${active ? C.inputBorder : "transparent"}`,
     color: active ? C.darkText : "transparent",
@@ -611,41 +744,69 @@ function FilterTabs({ filters, selected, onSelect }) {
     pointerEvents: active ? "auto" : "none",
     flexShrink: 0,
     transition: "all 0.15s",
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   });
 
   return (
-    <div className="flex items-center gap-2 mb-5">
-      <button
-        onClick={() => scroll(-1)}
-        className="flex items-center justify-center w-8 h-8 rounded-xl border-0 outline-none"
-        style={arrowStyle(canLeft)}
-      >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 20,
+      }}
+    >
+      <button style={arrowBtn(canLeft)} onClick={() => scroll(-1)}>
         <ChevronLeft size={16} strokeWidth={2} />
       </button>
       <div
         ref={scrollRef}
         onScroll={updateArrows}
-        className="flex items-center gap-2 overflow-x-auto flex-1"
-        style={{ scrollbarWidth: "none" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          overflowX: "auto",
+          flex: 1,
+          scrollbarWidth: "none",
+        }}
       >
-        <div className="flex items-center gap-2 w-max">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            width: "max-content",
+          }}
+        >
           {filters.map((f) => {
             const active = selected === f;
             return (
               <button
                 key={f}
                 onClick={() => onSelect(f)}
-                className="filter-tab px-3 py-[7px] rounded-xl font-semibold outline-none cursor-pointer flex-shrink-0"
                 style={{
+                  padding: "7px 14px",
+                  borderRadius: 10,
+                  fontWeight: 600,
+                  outline: "none",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
+                  fontSize: 12,
                   background: active
-                    ? `linear-gradient(135deg, ${C.gold}, #cfc060)`
+                    ? `linear-gradient(135deg,${C.gold},#cfc060)`
                     : C.card,
                   color: active ? "#1a1d24" : C.lightText,
                   border: active
                     ? "1px solid transparent"
                     : `1px solid ${C.inputBorder}`,
-                  whiteSpace: "nowrap",
-                  fontSize: "12px",
+                  transition: "background 0.18s,color 0.18s,border-color 0.18s",
                 }}
               >
                 {f}
@@ -654,11 +815,7 @@ function FilterTabs({ filters, selected, onSelect }) {
           })}
         </div>
       </div>
-      <button
-        onClick={() => scroll(1)}
-        className="flex items-center justify-center w-8 h-8 rounded-xl border-0 outline-none"
-        style={arrowStyle(canRight)}
-      >
+      <button style={arrowBtn(canRight)} onClick={() => scroll(1)}>
         <ChevronRight size={16} strokeWidth={2} />
       </button>
     </div>
@@ -667,11 +824,24 @@ function FilterTabs({ filters, selected, onSelect }) {
 
 function SectionTitle({ icon, title }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 12,
+      }}
+    >
       <span style={{ color: C.gold }}>{icon}</span>
       <h4
-        className="text-[12.5px] font-bold uppercase tracking-wider"
-        style={{ color: C.darkText }}
+        style={{
+          margin: 0,
+          fontSize: 12.5,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          color: C.darkText,
+        }}
       >
         {title}
       </h4>
@@ -683,7 +853,7 @@ function getPostedLabel(createdAt) {
   if (!createdAt) return "Recently";
   const d = new Date(createdAt);
   if (isNaN(d.getTime())) return "Recently";
-  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  const days = Math.floor((Date.now() - d.getTime()) / 86_400_000);
   if (days <= 0) return "Today";
   if (days === 1) return "1d ago";
   if (days < 7) return `${days}d ago`;
@@ -700,20 +870,22 @@ function matchesDuration(duration, filter) {
   if (filter === "Ongoing") return t.includes("ongoing");
   return true;
 }
+
 function matchesPosted(createdAt, filter) {
   if (filter === "Any time" || !createdAt) return true;
   const d = new Date(createdAt);
   if (isNaN(d.getTime())) return true;
-  const days = (Date.now() - d.getTime()) / 86400000;
+  const days = (Date.now() - d.getTime()) / 86_400_000;
   if (filter === "Last 24 hours") return days <= 1;
   if (filter === "Last week") return days <= 7;
   if (filter === "Last month") return days <= 30;
   return true;
 }
 
-/* ─── Detail Panel ───────────────────────────────────────────────── */
+// ─── Detail Panel ─────────────────────────────────────────────────────────────
 function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
   const [tab, setTab] = useState("overview");
+
   if (!opp) return null;
 
   const posted = getPostedLabel(opp.createdAt);
@@ -734,79 +906,146 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
   )
     tabs.push("about");
 
+  const metaItems = [
+    opp.location && { Icon: MapPin, label: "Location", val: opp.location },
+    opp.budget && { Icon: IndianRupee, label: "Budget", val: opp.budget },
+    opp.duration && { Icon: Clock, label: "Duration", val: opp.duration },
+    opp.createdAt && { Icon: Calendar, label: "Posted", val: posted },
+  ].filter(Boolean);
+
   return (
     <>
       <div
-        className="detail-overlay fixed inset-0 z-[1700] bg-black/50"
         onClick={onClose}
-        style={{ backdropFilter: "blur(2px)" }}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 1700,
+          background: "rgba(0,0,0,0.5)",
+          backdropFilter: "blur(2px)",
+          animation: "ssBackdrop 0.25s ease both",
+        }}
       />
       <div
-        className="detail-panel fixed top-0 right-0 h-[100dvh] z-[1800] flex flex-col"
         style={{
-          width: "min(100vw, 520px)",
+          position: "fixed",
+          top: 0,
+          right: 0,
+          height: "100dvh",
+          zIndex: 1800,
+          width: "min(100vw,520px)",
           background: C.panelBg2,
           borderLeft: `1px solid ${C.border}`,
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
           boxShadow: "-12px 0 60px rgba(0,0,0,0.55)",
+          fontFamily: "'Plus Jakarta Sans',sans-serif",
+          display: "flex",
+          flexDirection: "column",
+          animation: "slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) both",
         }}
       >
+        {/* Gold top bar */}
         <div
           style={{
             height: 3,
-            background: `linear-gradient(90deg, ${C.gold}, #cfc060, transparent)`,
+            background: `linear-gradient(90deg,${C.gold},#cfc060,transparent)`,
+            flexShrink: 0,
           }}
         />
 
         {/* Header */}
-        <div className="px-5 pt-5 pb-0 flex-shrink-0">
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div className="flex-1 min-w-0">
+        <div style={{ padding: "20px 20px 0", flexShrink: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+              marginBottom: 12,
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
               <span
-                className="inline-block text-[10.5px] font-semibold px-2.5 py-[3px] rounded-full mb-2"
                 style={{
+                  display: "inline-block",
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  padding: "3px 10px",
+                  borderRadius: 9999,
+                  marginBottom: 8,
                   background: C.goldDim,
                   color: C.gold,
-                  border: `1px solid rgba(179,169,97,0.2)`,
+                  border: "1px solid rgba(179,169,97,0.2)",
                 }}
               >
                 {opp.type}
               </span>
               <h2
-                className="text-[18px] font-bold leading-snug mb-1"
                 style={{
+                  margin: "0 0 4px",
+                  fontSize: 18,
+                  fontWeight: 700,
+                  lineHeight: 1.3,
                   color: C.darkText,
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: "'Playfair Display',serif",
                 }}
               >
                 {opp.title}
               </h2>
-              <p className="text-[12.5px]" style={{ color: C.lightText }}>
+              <p style={{ margin: 0, fontSize: 12.5, color: C.lightText }}>
                 {opp.company}
               </p>
             </div>
-            {/* Share + Close */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              {/* Share icon in header */}
               <button
-                onClick={() => {
-                  onClose();
-                  onShare(opp);
-                }}
-                className="share-trigger-btn flex items-center justify-center w-8 h-8 rounded-full border-0 outline-none cursor-pointer"
+                onClick={() => onShare(opp)}
+                title="Share"
                 style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
                   background: "rgba(255,255,255,0.06)",
+                  border: "none",
+                  cursor: "pointer",
                   color: C.lightText,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background 0.15s,color 0.15s",
                 }}
-                title="Share opportunity"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                  e.currentTarget.style.color = C.gold;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                  e.currentTarget.style.color = C.lightText;
+                }}
               >
                 <Share2 size={14} strokeWidth={2} />
               </button>
               <button
                 onClick={onClose}
-                className="adv-btn-close flex items-center justify-center w-8 h-8 rounded-full border-0 outline-none cursor-pointer"
                 style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
                   background: "rgba(255,255,255,0.06)",
+                  border: "none",
+                  cursor: "pointer",
                   color: C.lightText,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background 0.15s,transform 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                  e.currentTarget.style.transform = "rotate(90deg)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                  e.currentTarget.style.transform = "rotate(0deg)";
                 }}
               >
                 <X size={15} strokeWidth={2.2} />
@@ -814,38 +1053,37 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
             </div>
           </div>
 
-          {/* Stats grid */}
-          <div
-            className="grid grid-cols-2 gap-2 p-3 rounded-xl mb-4"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: `1px solid ${C.inputBorder}`,
-            }}
-          >
-            {[
-              opp.location && {
-                Icon: MapPin,
-                label: "Location",
-                val: opp.location,
-              },
-              opp.budget && {
-                Icon: IndianRupee,
-                label: "Budget",
-                val: opp.budget,
-              },
-              opp.duration && {
-                Icon: Clock,
-                label: "Duration",
-                val: opp.duration,
-              },
-              opp.createdAt && { Icon: Calendar, label: "Posted", val: posted },
-            ]
-              .filter(Boolean)
-              .map(({ Icon, label, val }) => (
-                <div key={label} className="flex items-start gap-2">
+          {/* Meta grid */}
+          {metaItems.length > 0 && (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 8,
+                padding: 12,
+                borderRadius: 10,
+                marginBottom: 16,
+                background: "rgba(255,255,255,0.03)",
+                border: `1px solid ${C.inputBorder}`,
+              }}
+            >
+              {metaItems.map(({ Icon, label, val }) => (
+                <div
+                  key={label}
+                  style={{ display: "flex", alignItems: "flex-start", gap: 8 }}
+                >
                   <div
-                    className="flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0 mt-0.5"
-                    style={{ background: C.goldDim }}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 8,
+                      background: C.goldDim,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                      marginTop: 2,
+                    }}
                   >
                     <Icon
                       size={12}
@@ -855,33 +1093,59 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
                   </div>
                   <div>
                     <p
-                      className="text-[10px] font-semibold uppercase tracking-wide mb-0.5"
-                      style={{ color: C.lightText }}
+                      style={{
+                        margin: "0 0 2px",
+                        fontSize: 10,
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        color: C.lightText,
+                      }}
                     >
                       {label}
                     </p>
                     <p
-                      className="text-[12px] font-semibold"
-                      style={{ color: C.darkText }}
+                      style={{
+                        margin: 0,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: C.darkText,
+                      }}
                     >
                       {val}
                     </p>
                   </div>
                 </div>
               ))}
-          </div>
+            </div>
+          )}
 
           {/* Tabs */}
           <div
-            className="flex gap-1 p-1 rounded-xl mb-0"
-            style={{ background: "rgba(255,255,255,0.04)" }}
+            style={{
+              display: "flex",
+              gap: 4,
+              padding: 4,
+              borderRadius: 10,
+              background: "rgba(255,255,255,0.04)",
+              marginBottom: 0,
+            }}
           >
             {tabs.map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className="flex-1 py-[7px] rounded-lg text-[11.5px] font-semibold capitalize outline-none border-0 cursor-pointer transition-all"
                 style={{
+                  flex: 1,
+                  padding: "7px",
+                  borderRadius: 8,
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  textTransform: "capitalize",
+                  outline: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
                   background: tab === t ? C.card : "transparent",
                   color: tab === t ? C.darkText : C.lightText,
                   boxShadow: tab === t ? "0 1px 6px rgba(0,0,0,0.3)" : "none",
@@ -893,16 +1157,18 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
           </div>
         </div>
 
-        {/* Scrollable body */}
+        {/* Scrollable content */}
         <div
-          className="flex-1 overflow-y-auto px-5 py-4"
           style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "16px 20px",
             scrollbarWidth: "thin",
             scrollbarColor: `${C.border} transparent`,
           }}
         >
           {tab === "overview" && (
-            <div className="flex flex-col gap-4">
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               {opp.description && (
                 <div>
                   <SectionTitle
@@ -910,8 +1176,12 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
                     title="Project Overview"
                   />
                   <p
-                    className="text-[13px] leading-relaxed"
-                    style={{ color: C.lightText }}
+                    style={{
+                      margin: 0,
+                      fontSize: 13,
+                      lineHeight: 1.65,
+                      color: C.lightText,
+                    }}
                   >
                     {opp.description}
                   </p>
@@ -923,19 +1193,31 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
                     icon={<Briefcase size={13} />}
                     title="Key Responsibilities"
                   />
-                  <ul className="flex flex-col gap-2">
+                  <ul
+                    style={{
+                      margin: 0,
+                      padding: 0,
+                      listStyle: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                    }}
+                  >
                     {responsibilities.map((r, i) => (
-                      <li key={i} className="flex items-start gap-2">
+                      <li
+                        key={i}
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 8,
+                        }}
+                      >
                         <CheckCircle2
                           size={13}
                           strokeWidth={2}
-                          className="flex-shrink-0 mt-0.5"
-                          style={{ color: C.gold }}
+                          style={{ color: C.gold, flexShrink: 0, marginTop: 2 }}
                         />
-                        <span
-                          className="text-[12.5px]"
-                          style={{ color: C.lightText }}
-                        >
+                        <span style={{ fontSize: 12.5, color: C.lightText }}>
                           {r}
                         </span>
                       </li>
@@ -949,17 +1231,36 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
                     icon={<Star size={13} />}
                     title="What You Get"
                   />
-                  <ul className="flex flex-col gap-2">
+                  <ul
+                    style={{
+                      margin: 0,
+                      padding: 0,
+                      listStyle: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                    }}
+                  >
                     {perks.map((p, i) => (
-                      <li key={i} className="flex items-start gap-2">
+                      <li
+                        key={i}
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 8,
+                        }}
+                      >
                         <div
-                          className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
-                          style={{ background: C.gold }}
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: C.gold,
+                            flexShrink: 0,
+                            marginTop: 6,
+                          }}
                         />
-                        <span
-                          className="text-[12.5px]"
-                          style={{ color: C.lightText }}
-                        >
+                        <span style={{ fontSize: 12.5, color: C.lightText }}>
                           {p}
                         </span>
                       </li>
@@ -970,12 +1271,15 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
               {opp.tags?.length > 0 && (
                 <div>
                   <SectionTitle icon={<Tag size={13} />} title="Tags" />
-                  <div className="flex flex-wrap gap-1.5">
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {opp.tags.map((tag, i) => (
                       <span
                         key={i}
-                        className="text-[11px] font-medium px-2.5 py-1 rounded-full"
                         style={{
+                          fontSize: 11,
+                          fontWeight: 500,
+                          padding: "4px 10px",
+                          borderRadius: 9999,
                           background: "rgba(255,255,255,0.05)",
                           color: C.lightText,
                           border: `1px solid ${C.inputBorder}`,
@@ -992,8 +1296,12 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
                 perks.length === 0 &&
                 !opp.tags?.length && (
                   <p
-                    className="text-[12.5px] py-4 text-center"
-                    style={{ color: "rgba(139,163,144,0.4)" }}
+                    style={{
+                      textAlign: "center",
+                      padding: "24px 0",
+                      fontSize: 12.5,
+                      color: "rgba(139,163,144,0.4)",
+                    }}
                   >
                     No additional details provided.
                   </p>
@@ -1002,46 +1310,67 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
           )}
 
           {tab === "requirements" && (
-            <div className="flex flex-col gap-4">
-              <div>
-                <SectionTitle
-                  icon={<CheckCircle2 size={13} />}
-                  title="Requirements"
-                />
-                <ul className="flex flex-col gap-2">
-                  {requirements.map((r, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2.5 p-3 rounded-xl"
-                      style={{
-                        background: "rgba(255,255,255,0.025)",
-                        border: `1px solid ${C.inputBorder}`,
-                      }}
-                    >
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {requirements.length > 0 && (
+                <div>
+                  <SectionTitle
+                    icon={<CheckCircle2 size={13} />}
+                    title="Requirements"
+                  />
+                  <ul
+                    style={{
+                      margin: 0,
+                      padding: 0,
+                      listStyle: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                    }}
+                  >
+                    {requirements.map((r, i) => (
+                      <li
+                        key={i}
                         style={{
-                          background: C.goldDim,
-                          border: `1px solid rgba(179,169,97,0.2)`,
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 10,
+                          padding: 12,
+                          borderRadius: 10,
+                          background: "rgba(255,255,255,0.025)",
+                          border: `1px solid ${C.inputBorder}`,
                         }}
                       >
-                        <span
-                          className="text-[10px] font-bold"
-                          style={{ color: C.gold }}
+                        <div
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: "50%",
+                            background: C.goldDim,
+                            border: "1px solid rgba(179,169,97,0.2)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
                         >
-                          {i + 1}
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: C.gold,
+                            }}
+                          >
+                            {i + 1}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: 12.5, color: C.lightText }}>
+                          {r}
                         </span>
-                      </div>
-                      <span
-                        className="text-[12.5px]"
-                        style={{ color: C.lightText }}
-                      >
-                        {r}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {opp.experienceLevel && (
                 <div>
                   <SectionTitle
@@ -1049,11 +1378,15 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
                     title="Experience Level"
                   />
                   <span
-                    className="text-[12px] font-semibold px-3 py-1.5 rounded-xl inline-block"
                     style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: "6px 14px",
+                      borderRadius: 10,
+                      display: "inline-block",
                       background: C.goldDim,
                       color: C.gold,
-                      border: `1px solid rgba(179,169,97,0.2)`,
+                      border: "1px solid rgba(179,169,97,0.2)",
                     }}
                   >
                     {opp.experienceLevel}
@@ -1062,20 +1395,27 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
               )}
               {opp.applicationNote && (
                 <div
-                  className="flex items-start gap-3 p-3 rounded-xl"
                   style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 12,
+                    padding: 12,
+                    borderRadius: 10,
                     background: "rgba(179,169,97,0.06)",
-                    border: `1px solid rgba(179,169,97,0.15)`,
+                    border: "1px solid rgba(179,169,97,0.15)",
                   }}
                 >
                   <AlertCircle
                     size={15}
-                    className="flex-shrink-0 mt-0.5"
-                    style={{ color: C.gold }}
+                    style={{ color: C.gold, flexShrink: 0, marginTop: 2 }}
                   />
                   <p
-                    className="text-[12.5px] leading-relaxed"
-                    style={{ color: C.lightText }}
+                    style={{
+                      margin: 0,
+                      fontSize: 12.5,
+                      lineHeight: 1.6,
+                      color: C.lightText,
+                    }}
                   >
                     {opp.applicationNote}
                   </p>
@@ -1085,7 +1425,7 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
           )}
 
           {tab === "about" && (
-            <div className="flex flex-col gap-4">
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               {opp.companyDescription && (
                 <div>
                   <SectionTitle
@@ -1093,8 +1433,12 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
                     title="About the Company"
                   />
                   <p
-                    className="text-[13px] leading-relaxed"
-                    style={{ color: C.lightText }}
+                    style={{
+                      margin: 0,
+                      fontSize: 13,
+                      lineHeight: 1.65,
+                      color: C.lightText,
+                    }}
                   >
                     {opp.companyDescription}
                   </p>
@@ -1109,7 +1453,13 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
                 opp.founded && { label: "Founded", val: opp.founded },
                 opp.totalJobs && { label: "Jobs Posted", val: opp.totalJobs },
               ].filter(Boolean).length > 0 && (
-                <div className="grid grid-cols-2 gap-2">
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 8,
+                  }}
+                >
                   {[
                     opp.companySize && {
                       label: "Company Size",
@@ -1126,21 +1476,32 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
                     .map(({ label, val }) => (
                       <div
                         key={label}
-                        className="p-3 rounded-xl"
                         style={{
+                          padding: 12,
+                          borderRadius: 10,
                           background: "rgba(255,255,255,0.025)",
                           border: `1px solid ${C.inputBorder}`,
                         }}
                       >
                         <p
-                          className="text-[10px] uppercase tracking-wide font-semibold mb-1"
-                          style={{ color: C.lightText }}
+                          style={{
+                            margin: "0 0 4px",
+                            fontSize: 10,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            fontWeight: 600,
+                            color: C.lightText,
+                          }}
                         >
                           {label}
                         </p>
                         <p
-                          className="text-[12.5px] font-semibold"
-                          style={{ color: C.darkText }}
+                          style={{
+                            margin: 0,
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            color: C.darkText,
+                          }}
                         >
                           {val}
                         </p>
@@ -1153,8 +1514,15 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
                   href={opp.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-[12.5px] font-semibold"
-                  style={{ color: C.gold }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: C.gold,
+                    textDecoration: "none",
+                  }}
                 >
                   <ExternalLink size={13} />
                   {opp.website}
@@ -1166,21 +1534,41 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
 
         {/* Footer CTA */}
         <div
-          className="px-5 pb-6 pt-3 flex-shrink-0"
-          style={{ borderTop: `1px solid ${C.inputBorder}` }}
+          style={{
+            padding: "12px 20px 24px",
+            flexShrink: 0,
+            borderTop: `1px solid ${C.inputBorder}`,
+          }}
         >
-          {/* Share button */}
+          {/* Share this opportunity button */}
           <button
-            onClick={() => {
-              onClose();
-              onShare(opp);
-            }}
-            className="share-trigger-btn w-full py-[9px] rounded-xl font-semibold border outline-none cursor-pointer flex items-center justify-center gap-2 mb-2"
+            onClick={() => onShare(opp)}
             style={{
+              width: "100%",
+              padding: "9px",
+              borderRadius: 10,
+              cursor: "pointer",
               background: "transparent",
               border: `1px solid ${C.inputBorder}`,
               color: C.darkText,
-              fontSize: "13px",
+              fontSize: 13,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              marginBottom: 8,
+              transition: "border-color 0.18s,color 0.18s,background 0.18s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "rgba(179,169,97,0.5)";
+              e.currentTarget.style.color = C.gold;
+              e.currentTarget.style.background = C.goldDim;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = C.inputBorder;
+              e.currentTarget.style.color = C.darkText;
+              e.currentTarget.style.background = "transparent";
             }}
           >
             <Share2 size={14} strokeWidth={1.8} />
@@ -1189,17 +1577,19 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
 
           {opp.hasApplied ? (
             <div
-              className="flex items-center justify-center gap-2 py-3 rounded-xl"
               style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "12px",
+                borderRadius: 10,
                 background: "rgba(179,169,97,0.1)",
-                border: `1px solid rgba(179,169,97,0.2)`,
+                border: "1px solid rgba(179,169,97,0.2)",
               }}
             >
               <CheckCircle2 size={15} style={{ color: C.gold }} />
-              <span
-                className="text-[13.5px] font-bold"
-                style={{ color: C.gold }}
-              >
+              <span style={{ fontSize: 13.5, fontWeight: 700, color: C.gold }}>
                 Application Submitted
               </span>
             </div>
@@ -1207,11 +1597,32 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
             <button
               onClick={() => onApply(opp._id)}
               disabled={!opp._id || applyingId === opp._id}
-              className="apply-btn w-full py-[12px] rounded-xl text-[13.5px] font-bold border-0 outline-none cursor-pointer flex items-center justify-center gap-2"
               style={{
-                background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
+                width: "100%",
+                padding: "12px",
+                borderRadius: 10,
+                border: "none",
+                cursor: "pointer",
+                background: `linear-gradient(135deg,${C.gold},#cfc060)`,
                 color: "#1a1d24",
+                fontSize: 13.5,
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
                 opacity: !opp._id ? 0.65 : 1,
+                transition: "filter 0.18s,transform 0.18s",
+              }}
+              onMouseEnter={(e) => {
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.filter = "brightness(1.1)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.filter = "none";
+                e.currentTarget.style.transform = "none";
               }}
             >
               <Send size={14} strokeWidth={2.2} />
@@ -1221,8 +1632,12 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
             </button>
           )}
           <p
-            className="text-center text-[11px] mt-2"
-            style={{ color: "rgba(139,163,144,0.45)" }}
+            style={{
+              textAlign: "center",
+              margin: "8px 0 0",
+              fontSize: 11,
+              color: "rgba(139,163,144,0.45)",
+            }}
           >
             Your profile will be shared with the poster
           </p>
@@ -1232,7 +1647,7 @@ function DetailPanel({ opp, onClose, onApply, applyingId, onShare }) {
   );
 }
 
-/* ─── Main Page ──────────────────────────────────────────────────── */
+// ─── Main Opportunities page ──────────────────────────────────────────────────
 export default function Opportunities() {
   const navigate = useNavigate();
 
@@ -1249,20 +1664,21 @@ export default function Opportunities() {
   const [error, setError] = useState("");
   const [applyingId, setApplyingId] = useState(null);
   const [detailOpp, setDetailOpp] = useState(null);
-  const [shareOpp, setShareOpp] = useState(null); // ← NEW
+  const [shareOpp, setShareOpp] = useState(null); // ← share state
 
-  const rawApiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").replace(
+  const rawBase = String(import.meta.env.VITE_API_BASE_URL || "").replace(
     /\/+$/,
     "",
   );
-  const apiRoot = rawApiBaseUrl
-    ? rawApiBaseUrl.endsWith("/api")
-      ? rawApiBaseUrl
-      : `${rawApiBaseUrl}/api`
+  const apiRoot = rawBase
+    ? rawBase.endsWith("/api")
+      ? rawBase
+      : `${rawBase}/api`
     : "/api";
 
+  // Fetch opportunities
   useEffect(() => {
-    const controller = new AbortController();
+    const ctrl = new AbortController();
     (async () => {
       setIsLoading(true);
       try {
@@ -1277,7 +1693,7 @@ export default function Opportunities() {
         }
         const res = await fetch(
           `${apiRoot}/opportunities${params.toString() ? `?${params}` : ""}`,
-          { signal: controller.signal },
+          { signal: ctrl.signal },
         );
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Failed to load");
@@ -1295,7 +1711,7 @@ export default function Opportunities() {
         setIsLoading(false);
       }
     })();
-    return () => controller.abort();
+    return () => ctrl.abort();
   }, [
     apiRoot,
     budgetMax,
@@ -1338,6 +1754,7 @@ export default function Opportunities() {
     }
   };
 
+  // Client-side filtering
   const filtered = opportunities.filter((o) => {
     const q = searchQuery.toLowerCase();
     return (
@@ -1361,157 +1778,142 @@ export default function Opportunities() {
     budgetMin > 0 || budgetMax < 30000,
   ].filter(Boolean).length;
 
+  // Shared button hover helper
+  const hoverGold = (e) => {
+    e.currentTarget.style.borderColor = "rgba(179,169,97,0.5)";
+    e.currentTarget.style.color = C.gold;
+    e.currentTarget.style.background = C.goldDim;
+  };
+  const unhoverGold = (e) => {
+    e.currentTarget.style.borderColor = C.inputBorder;
+    e.currentTarget.style.color = C.darkText;
+    e.currentTarget.style.background = "transparent";
+  };
+
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-        @keyframes fadeUp {
-          from { opacity:0; transform:translateY(12px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
-        @keyframes slideInRight {
-          from { transform:translateX(100%); opacity:0.4; }
-          to   { transform:translateX(0);    opacity:1; }
-        }
-        @keyframes fadeInBg { from { opacity:0; } to { opacity:1; } }
+        @keyframes ssBackdrop  { from{opacity:0} to{opacity:1} }
+        @keyframes ssSlideUp   { from{transform:translateY(100%) scale(0.97);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
+        @keyframes ssIconPop   { 0%{transform:scale(0.5) translateY(6px);opacity:0} 70%{transform:scale(1.12);opacity:1} 100%{transform:scale(1);opacity:1} }
+        @keyframes slideInRight{ from{transform:translateX(100%);opacity:0.4} to{transform:translateX(0);opacity:1} }
+        @keyframes fadeUp      { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
 
-        /* ── Share Sheet Animations ── */
-        @keyframes shareSlideUp {
-          from { transform: translateY(100%) scale(0.97); opacity: 0; }
-          to   { transform: translateY(0)    scale(1);    opacity: 1; }
-        }
-        @keyframes shareIconPop {
-          0%   { transform: scale(0.5) translateY(6px); opacity: 0; }
-          70%  { transform: scale(1.12); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-
-        .opp-header  { animation: fadeUp 0.3s ease both; }
-        .opp-search  { animation: fadeUp 0.32s 0.04s ease both; }
-        .opp-card    { animation: fadeUp 0.32s ease both; transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s; }
-        .opp-card:hover {
-          border-color: rgba(179,169,97,0.35) !important;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.32);
-          transform: translateY(-1px);
-        }
-
-        .apply-btn { transition: filter 0.18s, transform 0.18s; }
-        .apply-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
-        .apply-btn:active { transform: scale(0.97); }
-
-        .detail-btn { transition: border-color 0.18s, color 0.18s, background 0.18s; }
-        .detail-btn:hover {
-          border-color: rgba(179,169,97,0.5) !important;
-          color: #b3a961 !important;
-          background: rgba(179,169,97,0.06) !important;
-        }
-
-        .filter-tab { transition: background 0.18s, color 0.18s, border-color 0.18s; }
-        .sheet-panel    { animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) both; }
-        .sheet-overlay  { animation: fadeInBg 0.25s ease both; }
-        .detail-panel   { animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) both; }
-        .detail-overlay { animation: fadeInBg 0.25s ease both; }
-
-        .adv-btn-close { transition: background 0.15s, transform 0.2s; }
-        .adv-btn-close:hover { background: rgba(255,255,255,0.1) !important; transform: rotate(90deg); }
-
-        .back-btn-opp { transition: background 0.15s, color 0.15s; }
-        .back-btn-opp:hover { background: rgba(255,255,255,0.07) !important; color: #b3a961 !important; }
-
-        .filter-sheet-btn { transition: filter 0.15s, transform 0.15s; }
-        .filter-sheet-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
-
-        /* ── Share Sheet Styles ── */
-        .share-sheet-panel  { animation: shareSlideUp 0.38s cubic-bezier(0.34,1.56,0.64,1) both; }
-        .share-icon-btn     { animation: shareIconPop 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
-        .share-icon-btn:hover .share-icon-circle { filter: brightness(1.18); transform: scale(1.09); }
-        .share-icon-btn:active .share-icon-circle { transform: scale(0.92); }
-        .share-icon-circle  { transition: filter 0.18s, transform 0.18s; }
-        .share-copy-btn     { transition: background 0.18s, color 0.18s, border-color 0.18s; }
-        .share-copy-btn:hover { border-color: rgba(179,169,97,0.5) !important; background: rgba(179,169,97,0.08) !important; }
-        .share-trigger-btn  { transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.15s; }
-        .share-trigger-btn:hover { border-color: rgba(179,169,97,0.5) !important; color: #b3a961 !important; background: rgba(179,169,97,0.06) !important; transform: translateY(-1px); }
-        .share-trigger-btn:active { transform: scale(0.95); }
+        .opp-card { transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s; animation: fadeUp 0.32s ease both; }
+        .opp-card:hover { border-color: rgba(179,169,97,0.35) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.32); transform: translateY(-1px); }
 
         .range-track { position: relative; height: 4px; border-radius: 9999px; }
-        .range-thumb {
-          -webkit-appearance: none; appearance: none;
-          width: 100%; height: 4px; background: transparent;
-          outline: none; position: absolute; top: 0; left: 0; pointer-events: none;
-        }
-        .range-thumb::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          width: 16px; height: 16px; border-radius: 50%;
-          background: #b3a961; cursor: pointer; pointer-events: all;
-          box-shadow: 0 1px 6px rgba(0,0,0,0.4);
-        }
-        .range-thumb::-moz-range-thumb {
-          width: 16px; height: 16px; border-radius: 50%;
-          background: #b3a961; cursor: pointer; border: none;
-          box-shadow: 0 1px 6px rgba(0,0,0,0.4);
-        }
-
-        @media (max-width: 480px) {
-          .opp-meta-grid { grid-template-columns: 1fr 1fr !important; }
-          .opp-actions   { flex-direction: row !important; flex-wrap: wrap; }
-        }
+        .range-thumb { -webkit-appearance:none; appearance:none; width:100%; height:4px; background:transparent; outline:none; position:absolute; top:0; left:0; pointer-events:none; }
+        .range-thumb::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#b3a961; cursor:pointer; pointer-events:all; box-shadow:0 1px 6px rgba(0,0,0,0.4); }
+        .range-thumb::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:#b3a961; cursor:pointer; border:none; }
       `}</style>
 
       <Sidebar />
 
       {/* ── Share Sheet ── */}
-      <ShareSheet opp={shareOpp} onClose={() => setShareOpp(null)} />
+      {shareOpp && (
+        <ShareSheet opp={shareOpp} onClose={() => setShareOpp(null)} />
+      )}
 
       {/* ── Advanced Filters Sheet ── */}
       {sheetOpen && (
         <>
           <div
-            className="sheet-overlay fixed inset-0 z-[1500] bg-black/40"
             onClick={() => setSheetOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 1500,
+              background: "rgba(0,0,0,0.4)",
+              animation: "ssBackdrop 0.25s ease both",
+            }}
           />
           <div
-            className="sheet-panel fixed top-0 right-0 h-[100dvh] z-[1600] flex flex-col"
             style={{
-              width: "min(100vw, 360px)",
+              position: "fixed",
+              top: 0,
+              right: 0,
+              height: "100dvh",
+              zIndex: 1600,
+              width: "min(100vw,360px)",
               background: C.panelBg,
               borderLeft: `1px solid ${C.border}`,
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
               boxShadow: "-8px 0 40px rgba(0,0,0,0.4)",
+              display: "flex",
+              flexDirection: "column",
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              animation: "slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) both",
             }}
           >
             <div
-              className="flex items-start justify-between px-5 pt-5 pb-4"
-              style={{ borderBottom: `1px solid ${C.inputBorder}` }}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                padding: "20px 20px 16px",
+                borderBottom: `1px solid ${C.inputBorder}`,
+              }}
             >
               <div>
                 <h2
-                  className="text-[16px] font-bold mb-0.5"
-                  style={{ color: C.darkText }}
+                  style={{
+                    margin: "0 0 2px",
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: C.darkText,
+                  }}
                 >
                   Advanced Filters
                 </h2>
-                <p className="text-[12px]" style={{ color: C.lightText }}>
+                <p style={{ margin: 0, fontSize: 12, color: C.lightText }}>
                   Refine your search
                 </p>
               </div>
               <button
                 onClick={() => setSheetOpen(false)}
-                className="adv-btn-close flex items-center justify-center w-7 h-7 rounded-full border-0 outline-none cursor-pointer flex-shrink-0"
                 style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
                   background: "rgba(255,255,255,0.06)",
+                  border: "none",
+                  cursor: "pointer",
                   color: C.lightText,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  transition: "background 0.15s,transform 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                  e.currentTarget.style.transform = "rotate(90deg)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                  e.currentTarget.style.transform = "rotate(0)";
                 }}
               >
                 <X size={14} strokeWidth={2.2} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "16px 20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+              }}
+            >
               {[
                 {
                   label: "Category",
-                  node: (
+                  el: (
                     <StyledSelect
                       value={selectedFilter}
                       onChange={setSelectedFilter}
@@ -1521,7 +1923,7 @@ export default function Opportunities() {
                 },
                 {
                   label: "Location",
-                  node: (
+                  el: (
                     <StyledSelect
                       value={locationFilter}
                       onChange={setLocationFilter}
@@ -1531,7 +1933,7 @@ export default function Opportunities() {
                 },
                 {
                   label: "Project Duration",
-                  node: (
+                  el: (
                     <StyledSelect
                       value={durationFilter}
                       onChange={setDurationFilter}
@@ -1541,7 +1943,7 @@ export default function Opportunities() {
                 },
                 {
                   label: "Posted Within",
-                  node: (
+                  el: (
                     <StyledSelect
                       value={postedFilter}
                       onChange={setPostedFilter}
@@ -1549,22 +1951,33 @@ export default function Opportunities() {
                     />
                   ),
                 },
-              ].map(({ label, node }) => (
-                <div key={label} className="flex flex-col gap-1.5">
+              ].map(({ label, el }) => (
+                <div key={label}>
                   <label
-                    className="text-[12.5px] font-semibold"
-                    style={{ color: C.darkText }}
+                    style={{
+                      display: "block",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: C.darkText,
+                      marginBottom: 6,
+                    }}
                   >
                     {label}
                   </label>
-                  {node}
+                  {el}
                 </div>
               ))}
 
-              <div className="flex flex-col gap-2">
+              {/* Budget range */}
+              <div>
                 <label
-                  className="text-[12.5px] font-semibold"
-                  style={{ color: C.darkText }}
+                  style={{
+                    display: "block",
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: C.darkText,
+                    marginBottom: 8,
+                  }}
                 >
                   Budget:{" "}
                   <span style={{ color: C.gold }}>
@@ -1577,11 +1990,14 @@ export default function Opportunities() {
                   style={{ background: "rgba(255,255,255,0.08)" }}
                 >
                   <div
-                    className="absolute top-0 h-full rounded-full"
                     style={{
+                      position: "absolute",
+                      top: 0,
+                      height: "100%",
+                      borderRadius: 9999,
+                      background: C.gold,
                       left: `${(budgetMin / 30000) * 100}%`,
                       right: `${100 - (budgetMax / 30000) * 100}%`,
-                      background: C.gold,
                     }}
                   />
                   <input
@@ -1615,16 +2031,32 @@ export default function Opportunities() {
             </div>
 
             <div
-              className="px-5 pb-6 pt-3 flex flex-col gap-2"
-              style={{ borderTop: `1px solid ${C.inputBorder}` }}
+              style={{
+                padding: "12px 20px 24px",
+                borderTop: `1px solid ${C.inputBorder}`,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
             >
               <button
                 onClick={() => setSheetOpen(false)}
-                className="filter-sheet-btn w-full py-[11px] rounded-xl text-[13.5px] font-bold border-0 outline-none cursor-pointer"
                 style={{
-                  background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
+                  width: "100%",
+                  padding: "11px",
+                  borderRadius: 10,
+                  border: "none",
+                  cursor: "pointer",
+                  background: `linear-gradient(135deg,${C.gold},#cfc060)`,
                   color: "#1a1d24",
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  transition: "filter 0.15s",
                 }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.filter = "brightness(1.08)")
+                }
+                onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
               >
                 Apply Filters
               </button>
@@ -1638,11 +2070,16 @@ export default function Opportunities() {
                     setBudgetMin(0);
                     setBudgetMax(30000);
                   }}
-                  className="w-full py-[10px] rounded-xl text-[13px] font-semibold border-0 outline-none cursor-pointer"
                   style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: 10,
+                    cursor: "pointer",
                     background: "rgba(255,255,255,0.05)",
-                    color: C.lightText,
                     border: `1px solid ${C.inputBorder}`,
+                    color: C.lightText,
+                    fontSize: 13,
+                    fontWeight: 600,
                   }}
                 >
                   Reset All Filters
@@ -1659,66 +2096,97 @@ export default function Opportunities() {
         onClose={() => setDetailOpp(null)}
         onApply={handleApply}
         applyingId={applyingId}
-        onShare={(opp) => setShareOpp(opp)} // ← NEW
+        onShare={(opp) => {
+          setDetailOpp(null);
+          setShareOpp(opp);
+        }}
       />
 
-      {/* ── Main Content ── */}
+      {/* ── Main content ── */}
       <div
-        className="min-h-screen lg:ml-[248px]"
         style={{
+          minHeight: "100vh",
           background: C.bg,
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontFamily: "'Plus Jakarta Sans',sans-serif",
         }}
+        className="lg:ml-[248px]"
       >
-        <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1100px]">
-          {/* ── Header ── */}
-          <div className="opp-header flex items-center gap-3 mb-5">
+        <div style={{ padding: "24px 16px", maxWidth: 1100, margin: "0 auto" }}>
+          {/* Page header */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 20,
+              animation: "fadeUp 0.3s ease both",
+            }}
+          >
             <button
               onClick={() => navigate("/artist/dashboard")}
-              className="back-btn-opp flex items-center justify-center w-8 h-8 rounded-xl border-0 outline-none cursor-pointer flex-shrink-0"
               style={{
+                width: 32,
+                height: 32,
+                borderRadius: 10,
                 background: "rgba(255,255,255,0.04)",
+                border: "none",
+                cursor: "pointer",
                 color: C.darkText,
-                marginLeft: "10px",
-                marginTop: "30px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                marginTop: 30,
+                marginLeft: 10,
+                transition: "background 0.15s,color 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.07)";
+                e.currentTarget.style.color = C.gold;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                e.currentTarget.style.color = C.darkText;
               }}
             >
               <ArrowLeft size={16} strokeWidth={2} />
             </button>
-            <div className="flex-1 min-w-0">
+            <div
+              style={{ flex: 1, minWidth: 0, marginTop: 30, marginLeft: 10 }}
+            >
               <h1
-                className="font-bold leading-tight mb-0"
                 style={{
+                  margin: "0 0 2px",
+                  fontFamily: "'Playfair Display',serif",
+                  fontWeight: 700,
                   color: C.darkText,
-                  fontFamily: "'Playfair Display', serif",
-                  fontSize: "clamp(18px, 5vw, 28px)",
-                  marginLeft: "10px",
-                  marginTop: "30px",
+                  fontSize: "clamp(18px,5vw,28px)",
                 }}
               >
                 Browse Opportunities
               </h1>
-              <p
-                className="hidden sm:block text-[13px]"
-                style={{ color: C.lightText }}
-              >
+              <p style={{ margin: 0, fontSize: 13, color: C.lightText }}>
                 Find your next creative project
               </p>
             </div>
             <button
               onClick={() => setSheetOpen(true)}
-              className="flex items-center gap-2 rounded-xl font-semibold border outline-none cursor-pointer flex-shrink-0"
               style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 14px",
+                borderRadius: 10,
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 600,
                 background: C.card,
-                borderColor:
-                  activeFilterCount > 0
-                    ? "rgba(179,169,97,0.4)"
-                    : C.inputBorder,
+                border: `1px solid ${activeFilterCount > 0 ? "rgba(179,169,97,0.4)" : C.inputBorder}`,
                 color: activeFilterCount > 0 ? C.gold : C.darkText,
-                padding: "8px 12px",
-                fontSize: "13px",
-                marginLeft: "10px",
-                marginTop: "30px",
+                flexShrink: 0,
+                marginTop: 30,
+                marginLeft: 10,
+                transition: "border-color 0.18s",
               }}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.borderColor = "rgba(179,169,97,0.35)")
@@ -1734,8 +2202,18 @@ export default function Opportunities() {
               <span className="hidden sm:inline">Advanced Filters</span>
               {activeFilterCount > 0 && (
                 <span
-                  className="flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold"
-                  style={{ background: C.gold, color: "#1a1d24" }}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    background: C.gold,
+                    color: "#1a1d24",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
                   {activeFilterCount}
                 </span>
@@ -1743,25 +2221,41 @@ export default function Opportunities() {
             </button>
           </div>
 
-          {/* ── Search ── */}
-          <div className="opp-search relative mb-4">
+          {/* Search bar */}
+          <div
+            style={{
+              position: "relative",
+              marginBottom: 16,
+              animation: "fadeUp 0.32s 0.04s ease both",
+            }}
+          >
             <Search
               size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: C.lightText }}
+              style={{
+                position: "absolute",
+                left: 14,
+                top: "50%",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
+                color: C.lightText,
+              }}
             />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search title, company or category..."
-              className="w-full rounded-xl outline-none"
               style={{
+                width: "100%",
+                borderRadius: 10,
+                outline: "none",
                 background: C.card,
                 border: `1px solid ${C.inputBorder}`,
                 color: C.darkText,
-                padding: "10px 14px 10px 38px",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                padding: "10px 14px 10px 40px",
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
                 fontSize: "13.5px",
+                boxSizing: "border-box",
+                transition: "border-color 0.18s",
               }}
               onFocus={(e) =>
                 (e.target.style.borderColor = "rgba(179,169,97,0.4)")
@@ -1771,10 +2265,21 @@ export default function Opportunities() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full border-0 outline-none cursor-pointer"
                 style={{
+                  position: "absolute",
+                  right: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 20,
+                  height: 20,
+                  borderRadius: "50%",
                   background: "rgba(255,255,255,0.08)",
+                  border: "none",
+                  cursor: "pointer",
                   color: C.lightText,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <X size={11} />
@@ -1782,15 +2287,15 @@ export default function Opportunities() {
             )}
           </div>
 
-          {/* ── Filter Tabs ── */}
+          {/* Filter tabs */}
           <FilterTabs
             filters={FILTERS}
             selected={selectedFilter}
             onSelect={setSelectedFilter}
           />
 
-          {/* ── Result count ── */}
-          <p className="text-[12px] mb-3" style={{ color: C.lightText }}>
+          {/* Result count */}
+          <p style={{ margin: "0 0 12px", fontSize: 12, color: C.lightText }}>
             <span style={{ color: C.gold, fontWeight: 600 }}>
               {filtered.length}
             </span>{" "}
@@ -1803,94 +2308,149 @@ export default function Opportunities() {
             )}
           </p>
 
+          {/* Loading / error states */}
           {isLoading && (
             <div
-              className="text-center py-8 rounded-2xl mb-3"
-              style={{ background: C.card, border: `1px solid ${C.border}` }}
+              style={{
+                textAlign: "center",
+                padding: "32px",
+                borderRadius: 16,
+                background: C.card,
+                border: `1px solid ${C.border}`,
+                marginBottom: 12,
+              }}
             >
-              <p className="text-[13.5px]" style={{ color: C.lightText }}>
+              <p style={{ margin: 0, fontSize: 13.5, color: C.lightText }}>
                 Loading opportunities...
               </p>
             </div>
           )}
-
           {error && (
             <div
-              className="text-center py-3 rounded-2xl mb-3"
               style={{
+                textAlign: "center",
+                padding: "12px",
+                borderRadius: 16,
                 background: C.card,
                 border: "1px solid rgba(239,68,68,0.25)",
+                marginBottom: 12,
               }}
             >
-              <p className="text-[13px] text-red-400">{error}</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#f87171" }}>
+                {error}
+              </p>
             </div>
           )}
 
-          {/* ── Cards ── */}
-          <div className="flex flex-col gap-3">
+          {/* Opportunity cards */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {filtered.map((opp, i) => (
               <div
                 key={opp._id || opp.id}
-                className="opp-card rounded-2xl p-4 sm:p-5"
+                className="opp-card"
                 style={{
+                  borderRadius: 16,
+                  padding: "16px 20px",
                   background: C.card,
                   border: `1px solid ${C.border}`,
                   animationDelay: `${0.05 + i * 0.04}s`,
                 }}
               >
-                {/* Card top row */}
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex flex-col gap-1 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
+                {/* Card top */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    marginBottom: 8,
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        flexWrap: "wrap",
+                        marginBottom: 2,
+                      }}
+                    >
                       <h3
-                        className="font-bold leading-snug"
                         style={{
+                          margin: 0,
+                          fontWeight: 700,
                           color: C.darkText,
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                          fontSize: "clamp(14px,3.5vw,16px)",
+                          lineHeight: 1.3,
                         }}
                       >
                         {opp.title}
                       </h3>
                       <span
-                        className="text-[10.5px] font-semibold px-2 py-[2px] rounded-full flex-shrink-0"
                         style={{
+                          fontSize: 10.5,
+                          fontWeight: 600,
+                          padding: "2px 8px",
+                          borderRadius: 9999,
                           background: C.goldDim,
                           color: C.gold,
-                          border: `1px solid rgba(179,169,97,0.2)`,
+                          border: "1px solid rgba(179,169,97,0.2)",
+                          flexShrink: 0,
                         }}
                       >
                         {opp.type}
                       </span>
                     </div>
-                    <p className="text-[12px]" style={{ color: C.lightText }}>
+                    <p style={{ margin: 0, fontSize: 12, color: C.lightText }}>
                       {opp.company}
                     </p>
                   </div>
                   <span
-                    className="text-[11px] flex-shrink-0 mt-0.5"
-                    style={{ color: C.lightText }}
+                    style={{
+                      fontSize: 11,
+                      color: C.lightText,
+                      flexShrink: 0,
+                      marginTop: 2,
+                    }}
                   >
                     {opp.posted || getPostedLabel(opp.createdAt)}
                   </span>
                 </div>
 
-                {/* Meta info grid */}
-                <div className="opp-meta-grid grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                {/* Meta row */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2,1fr)",
+                    gap: 8,
+                    marginBottom: 16,
+                  }}
+                  className="sm:grid-cols-4"
+                >
                   {[
                     { Icon: MapPin, val: opp.location },
                     { Icon: IndianRupee, val: opp.budget },
                     { Icon: Clock, val: opp.duration },
                     { Icon: Calendar, val: "ASAP" },
                   ].map(({ Icon, val }, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5">
+                    <div
+                      key={idx}
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    >
                       <Icon
                         size={12}
                         strokeWidth={1.8}
                         style={{ color: C.lightText, flexShrink: 0 }}
                       />
                       <span
-                        className="text-[11.5px] truncate"
-                        style={{ color: C.lightText }}
+                        style={{
+                          fontSize: 11.5,
+                          color: C.lightText,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
                       >
                         {val}
                       </span>
@@ -1898,19 +2458,35 @@ export default function Opportunities() {
                   ))}
                 </div>
 
-                {/* Action buttons — Apply | View Details | Share */}
-                <div className="opp-actions flex gap-2 items-center">
+                {/* Actions */}
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  {/* Apply */}
                   <button
                     onClick={() => handleApply(opp._id)}
                     disabled={
                       !opp._id || applyingId === opp._id || opp.hasApplied
                     }
-                    className="apply-btn px-4 py-[8px] rounded-xl font-bold border-0 outline-none cursor-pointer"
                     style={{
-                      background: `linear-gradient(135deg, ${C.gold}, #cfc060)`,
+                      padding: "8px 16px",
+                      borderRadius: 10,
+                      border: "none",
+                      cursor: "pointer",
+                      background: `linear-gradient(135deg,${C.gold},#cfc060)`,
                       color: "#1a1d24",
+                      fontWeight: 700,
+                      fontSize: 12.5,
                       opacity: !opp._id || opp.hasApplied ? 0.65 : 1,
-                      fontSize: "12.5px",
+                      transition: "filter 0.18s,transform 0.18s",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!e.currentTarget.disabled) {
+                        e.currentTarget.style.filter = "brightness(1.1)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.filter = "none";
+                      e.currentTarget.style.transform = "none";
                     }}
                   >
                     {opp.hasApplied
@@ -1919,32 +2495,64 @@ export default function Opportunities() {
                         ? "Applying..."
                         : "Apply Now"}
                   </button>
+
+                  {/* View Details */}
                   <button
                     onClick={() => setDetailOpp(opp)}
-                    className="detail-btn px-4 py-[8px] rounded-xl font-semibold border-0 outline-none cursor-pointer"
                     style={{
+                      padding: "8px 16px",
+                      borderRadius: 10,
+                      cursor: "pointer",
                       background: "transparent",
                       border: `1px solid ${C.inputBorder}`,
                       color: C.darkText,
-                      fontSize: "12.5px",
+                      fontWeight: 600,
+                      fontSize: 12.5,
+                      transition:
+                        "border-color 0.18s,color 0.18s,background 0.18s",
                     }}
+                    onMouseEnter={hoverGold}
+                    onMouseLeave={unhoverGold}
                   >
                     View Details
                   </button>
 
-                  {/* ── Share Button ── */}
+                  {/* Share — right-aligned */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShareOpp(opp);
                     }}
-                    className="share-trigger-btn flex items-center justify-center w-[36px] h-[36px] rounded-xl border-0 outline-none cursor-pointer ml-auto flex-shrink-0"
+                    title="Share this opportunity"
                     style={{
+                      marginLeft: "auto",
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      cursor: "pointer",
                       background: "transparent",
                       border: `1px solid ${C.inputBorder}`,
                       color: C.lightText,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                      transition:
+                        "border-color 0.18s,color 0.18s,background 0.18s,transform 0.15s",
                     }}
-                    title="Share this opportunity"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor =
+                        "rgba(179,169,97,0.5)";
+                      e.currentTarget.style.color = C.gold;
+                      e.currentTarget.style.background = C.goldDim;
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = C.inputBorder;
+                      e.currentTarget.style.color = C.lightText;
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.transform = "none";
+                    }}
                   >
                     <Share2 size={15} strokeWidth={1.8} />
                   </button>
@@ -1955,22 +2563,34 @@ export default function Opportunities() {
             {/* Empty state */}
             {!isLoading && filtered.length === 0 && (
               <div
-                className="text-center py-14 rounded-2xl"
-                style={{ background: C.card, border: `1px solid ${C.border}` }}
+                style={{
+                  textAlign: "center",
+                  padding: "56px 16px",
+                  borderRadius: 16,
+                  background: C.card,
+                  border: `1px solid ${C.border}`,
+                }}
               >
                 <Search
                   size={32}
                   strokeWidth={1.2}
-                  className="mx-auto mb-3"
-                  style={{ color: "rgba(139,163,144,0.3)" }}
+                  style={{
+                    color: "rgba(139,163,144,0.3)",
+                    display: "block",
+                    margin: "0 auto 12px",
+                  }}
                 />
                 <p
-                  className="text-[14px] font-semibold mb-1"
-                  style={{ color: C.darkText }}
+                  style={{
+                    margin: "0 0 4px",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: C.darkText,
+                  }}
                 >
                   No opportunities found
                 </p>
-                <p className="text-[12.5px]" style={{ color: C.lightText }}>
+                <p style={{ margin: 0, fontSize: 12.5, color: C.lightText }}>
                   Try adjusting your filters or search query
                 </p>
               </div>
