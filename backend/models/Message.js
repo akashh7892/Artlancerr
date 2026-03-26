@@ -1,65 +1,105 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const messageSchema = new mongoose.Schema({
-  // Sender (can be Artist or Hirer)
-  sender: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    refPath: 'senderModel'
+const messageSchema = new mongoose.Schema(
+  {
+    /* ================= SENDER ================= */
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      refPath: "senderModel",
+    },
+    senderModel: {
+      type: String,
+      required: true,
+      enum: ["Artist", "Hirer"],
+    },
+
+    /* ================= RECEIVER ================= */
+    receiver: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      refPath: "receiverModel",
+    },
+    receiverModel: {
+      type: String,
+      required: true,
+      enum: ["Artist", "Hirer"],
+    },
+
+    /* ================= MESSAGE CONTENT ================= */
+    content: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    /* ================= ATTACHMENT ================= */
+    attachment: {
+      url: { type: String, trim: true },
+      name: { type: String, trim: true },
+      mimeType: { type: String, trim: true },
+      size: { type: Number },
+    },
+
+    /* ================= OPTIONAL LINKS ================= */
+    opportunity: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Opportunity",
+    },
+    application: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Application",
+    },
+
+    /* ================= READ STATUS ================= */
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
+    readAt: {
+      type: Date,
+    },
   },
-  senderModel: {
-    type: String,
-    required: true,
-    enum: ['Artist', 'Hirer']
+  {
+    timestamps: true,
   },
-  // Receiver
-  receiver: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    refPath: 'receiverModel'
-  },
-  receiverModel: {
-    type: String,
-    required: true,
-    enum: ['Artist', 'Hirer']
-  },
-  // Message content
-  content: {
-    type: String,
-    default: ""
-  },
-  // Optional attachment metadata (chat images/docs/video/audio)
-  attachment: {
-    url: { type: String },
-    name: { type: String },
-    mimeType: { type: String },
-    size: { type: Number },
-  },
-  // Related opportunity (optional)
-  opportunity: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Opportunity'
-  },
-  // Related application (optional)
-  application: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Application'
-  },
-  // Read status
-  isRead: {
-    type: Boolean,
-    default: false
-  },
-  // Read at timestamp
-  readAt: {
-    type: Date
+);
+
+/* ================= VALIDATION ================= */
+// ❗ Prevent empty message (VERY IMPORTANT)
+messageSchema.pre("validate", function (next) {
+  if (!this.content && !this.attachment?.url) {
+    return next(new Error("Message must have content or attachment"));
   }
-}, {
-  timestamps: true
+  next();
 });
 
-// Index for efficient querying
-messageSchema.index({ sender: 1, receiver: 1 });
-messageSchema.index({ receiver: 1, isRead: 1 });
+/* ================= INDEXES ================= */
 
-module.exports = mongoose.model('Message', messageSchema);
+// Fast conversation queries
+messageSchema.index({
+  sender: 1,
+  receiver: 1,
+  createdAt: -1,
+});
+
+// Reverse direction (important!)
+messageSchema.index({
+  receiver: 1,
+  sender: 1,
+  createdAt: -1,
+});
+
+// Unread messages
+messageSchema.index({
+  receiver: 1,
+  isRead: 1,
+});
+
+// Optional: for sorting recent chats
+messageSchema.index({
+  createdAt: -1,
+});
+
+/* ================= EXPORT ================= */
+module.exports = mongoose.model("Message", messageSchema);

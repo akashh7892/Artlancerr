@@ -49,9 +49,10 @@ const formatBytes = (bytes) => {
   return `${(v / 1048576).toFixed(1)} MB`;
 };
 
+// FIX: normalizeMessage now keeps the raw _id string for reliable deduplication
 const normalizeMessage = (msg, currentUserId) => ({
-  id: msg._id,
-  from: msg.sender?._id === currentUserId ? "me" : "them",
+  id: String(msg._id),
+  from: String(msg.sender?._id) === String(currentUserId) ? "me" : "them",
   text: msg.content,
   attachment: msg.attachment || null,
   time: formatMsgTime(msg.createdAt),
@@ -59,7 +60,7 @@ const normalizeMessage = (msg, currentUserId) => ({
 });
 
 const toConversation = (item) => ({
-  id: item.user?._id,
+  id: String(item.user?._id),
   name: item.user?.name || "Unknown user",
   avatar: toInitials(item.user?.name),
   photo: item.user?.avatar || item.user?.photo || "",
@@ -117,7 +118,7 @@ function Avatar({ initials, photo, size = 44 }) {
 export default function Messages() {
   const location = useLocation();
   const currentUser = getUser();
-  const currentUserId = currentUser?._id;
+  const currentUserId = String(currentUser?._id);
 
   /* refs */
   const inputRef = useRef(null);
@@ -141,12 +142,7 @@ export default function Messages() {
 
   useEffect(scrollToBottom, [selectedId, messagesByConv]);
 
-  /* ── Auto-open keyboard when chat view becomes active ──────────────────
-     Three-layer approach so it works on iOS, Android, and desktop:
-     1. focus() after 80 ms — layout and animation have settled
-     2. A second focus() at 300 ms catches slow Android keyboards
-     3. visualViewport resize listener scrolls to bottom after keyboard open
-  ── */
+  /* ── Auto-open keyboard when chat view becomes active ── */
   useEffect(() => {
     if (mobileView !== "chat" || !selectedId) return;
 
@@ -168,9 +164,7 @@ export default function Messages() {
 
   /* ── Visual-viewport resize = keyboard appeared/disappeared ── */
   useEffect(() => {
-    const onViewportResize = () => {
-      scrollToBottom();
-    };
+    const onViewportResize = () => scrollToBottom();
     if (window.visualViewport) {
       window.visualViewport.addEventListener("resize", onViewportResize);
       return () =>
@@ -208,7 +202,6 @@ export default function Messages() {
         const preferred =
           mapped.find((c) => c.id === urlId)?.id || mapped[0]?.id || null;
         setSelectedId((prev) => prev || preferred);
-        /* open chat view directly when coming in from a link */
         if (urlId) setMobileView("chat");
       } catch (e) {
         console.error(e);
@@ -250,14 +243,19 @@ export default function Messages() {
     const socket = connectSocket(token);
 
     const onNew = (msg) => {
-      const senderId = msg.sender?._id;
-      const receiverId = msg.receiver?._id;
+      const senderId = String(msg.sender?._id);
+      const receiverId = String(msg.receiver?._id);
+      const msgId = String(msg._id);
+
+      // The "other" user in this conversation
       const otherId = senderId === currentUserId ? receiverId : senderId;
       if (!otherId) return;
 
+      // FIX: deduplicate by string id BEFORE adding to state
       setMessagesByConv((prev) => {
         const list = prev[otherId] || [];
-        if (list.some((m) => m.id === msg._id)) return prev;
+        // If we already have this message id, skip — avoids double-append
+        if (list.some((m) => m.id === msgId)) return prev;
         return {
           ...prev,
           [otherId]: [...list, normalizeMessage(msg, currentUserId)],
@@ -267,7 +265,9 @@ export default function Messages() {
       setConversations((prev) => {
         const existing = prev.find((c) => c.id === otherId);
         const meSent = senderId === currentUserId;
+        // Only bump unread if it's an incoming message AND this conv isn't open
         const unreadInc = !meSent && selectedId !== otherId ? 1 : 0;
+
         if (!existing) {
           const name = meSent ? msg.receiver?.name : msg.sender?.name;
           return [
@@ -296,7 +296,11 @@ export default function Messages() {
     };
 
     const onRead = ({ conversationWith, readBy }) => {
-      if (readBy === currentUserId || conversationWith !== selectedId) return;
+      if (
+        String(readBy) === currentUserId ||
+        String(conversationWith) !== String(selectedId)
+      )
+        return;
       setMessagesByConv((prev) => ({
         ...prev,
         [conversationWith]: (prev[conversationWith] || []).map((m) =>
@@ -327,17 +331,36 @@ export default function Messages() {
   const selectConv = (id) => {
     setSelectedId(id);
     setMobileView("chat");
-    /* Keyboard focus is handled by the useEffect above */
   };
 
   const handleSend = async () => {
     const content = input.trim();
     if ((!content && !selectedFile) || !selectedId) return;
+
     setInput("");
     const fileToSend = selectedFile;
     setSelectedFile(null);
-    /* Refocus after send so keyboard stays open */
+
+    // Refocus so keyboard stays open on mobile
     setTimeout(() => inputRef.current?.focus(), 50);
+
+    // FIX: Optimistic message uses a temporary id prefixed with "tmp-"
+    // The socket echo will arrive with the real _id; dedup by "tmp-" prefix cleanup below.
+    const tmpId = `tmp-${Date.now()}`;
+    const optimisticMsg = {
+      id: tmpId,
+      from: "me",
+      text: content || (fileToSend ? fileToSend.name : ""),
+      attachment: null,
+      time: formatMsgTime(new Date().toISOString()),
+      read: false,
+    };
+
+    setMessagesByConv((prev) => ({
+      ...prev,
+      [selectedId]: [...(prev[selectedId] || []), optimisticMsg],
+    }));
+
     try {
       let attachment;
       if (fileToSend) {
@@ -353,13 +376,31 @@ export default function Messages() {
           size: fileToSend.size,
         };
       }
-      await messagesAPI.sendMessage({
+
+      const sent = await messagesAPI.sendMessage({
         receiverId: selectedId,
         content: content || attachment?.name || "Attachment",
         attachment,
       });
+
+      // FIX: Replace the optimistic message with the real server message.
+      // This prevents the duplicate that would appear when the socket echo arrives.
+      const realMsg = normalizeMessage(sent, currentUserId);
+      setMessagesByConv((prev) => {
+        const list = prev[selectedId] || [];
+        // Remove the tmp entry, then add the real one (if not already present)
+        const without = list.filter((m) => m.id !== tmpId);
+        if (without.some((m) => m.id === realMsg.id))
+          return { ...prev, [selectedId]: without };
+        return { ...prev, [selectedId]: [...without, realMsg] };
+      });
     } catch (e) {
       console.error(e);
+      // Rollback optimistic message on failure
+      setMessagesByConv((prev) => ({
+        ...prev,
+        [selectedId]: (prev[selectedId] || []).filter((m) => m.id !== tmpId),
+      }));
       setInput(content);
       setSelectedFile(fileToSend);
     }
@@ -387,21 +428,14 @@ export default function Messages() {
         .msg-scroll::-webkit-scrollbar-thumb { background: rgba(201,169,97,0.15); border-radius: 4px; }
         .msg-scroll { scrollbar-width: thin; scrollbar-color: rgba(201,169,97,0.15) transparent; }
 
-        /* ── FAB hide ──
-           When the chat thread is open on mobile, hide the Sidebar FAB
-           so it doesn't sit on top of the message input bar.
-        ── */
+        /* ── FAB hide ── */
         .msg-hide-fab .sb-fab,
         .msg-hide-fab .fab-btn {
           display: none !important;
           pointer-events: none !important;
         }
 
-        /* ── Root ──
-           100dvh = dynamic viewport height — automatically shrinks when
-           the soft keyboard opens on iOS / Android, so the layout
-           compresses upward rather than the keyboard covering the input.
-        ── */
+        /* ── Root ── */
         .msg-root {
           display: flex;
           height: 100dvh;
@@ -410,7 +444,7 @@ export default function Messages() {
           background: #1a1d24;
         }
 
-        /* ── Content wrapper (right of sidebar on desktop) ── */
+        /* ── Content wrapper ── */
         .msg-content {
           flex: 1;
           display: flex;
@@ -434,7 +468,6 @@ export default function Messages() {
         @media (min-width: 768px) {
           .msg-list { width: clamp(240px, 28%, 300px); }
         }
-        /* Hide list on mobile when chat thread is open */
         .msg-list.hidden-mobile { display: none; }
         @media (min-width: 768px) {
           .msg-list.hidden-mobile { display: flex; }
@@ -449,16 +482,12 @@ export default function Messages() {
           min-width: 0;
           background: #1a1d24;
         }
-        /* Hide thread on mobile when list is shown */
         .msg-thread.hidden-mobile { display: none; }
         @media (min-width: 768px) {
           .msg-thread.hidden-mobile { display: flex; }
         }
 
-        /* ── List header ──
-           Mobile: 56px top padding clears the floating hamburger button.
-           Tablet+: normal 24px.
-        ── */
+        /* ── List header ── */
         .msg-list-header {
           padding: 56px 18px 12px;
           flex-shrink: 0;
@@ -466,10 +495,7 @@ export default function Messages() {
         @media (min-width: 640px)  { .msg-list-header { padding: 24px 18px 12px; } }
         @media (min-width: 1024px) { .msg-list-header { padding: 28px 20px 12px; } }
 
-        /* ── Thread header ──
-           Mobile: 56px top padding so back arrow clears the hamburger.
-           Tablet+: normal 14px.
-        ── */
+        /* ── Thread header ── */
         .msg-thread-header {
           display: flex;
           align-items: center;
@@ -495,11 +521,7 @@ export default function Messages() {
           overscroll-behavior: contain;
         }
 
-        /* ── Input bar ──
-           sticky + bottom:0 keeps it glued to the bottom of its flex
-           container, which itself shrinks with 100dvh when the keyboard
-           opens — so the bar rises with the keyboard automatically.
-        ── */
+        /* ── Input bar ── */
         .msg-input-bar {
           display: flex;
           align-items: center;
@@ -600,9 +622,13 @@ export default function Messages() {
         }
         .msg-search:focus { border-color: rgba(201,169,97,0.35); }
         .msg-search::placeholder { color: #3a4e5e; }
+
+        /* ── Optimistic message (slightly dimmed until confirmed) ── */
+        .msg-optimistic {
+          opacity: 0.75;
+        }
       `}</style>
 
-      {/* Root — hides FAB when chat is open */}
       <div className={`msg-root${chatOpen ? " msg-hide-fab" : ""}`}>
         <Sidebar />
 
@@ -613,7 +639,6 @@ export default function Messages() {
           <div
             className={`msg-list${mobileView === "chat" ? " hidden-mobile" : ""}`}
           >
-            {/* Header */}
             <div className="msg-list-header">
               <h1
                 style={{
@@ -784,11 +809,6 @@ export default function Messages() {
               <>
                 {/* ── Thread header ── */}
                 <div className="msg-thread-header">
-                  {/*
-                    Back arrow — gold, clearly visible.
-                    On mobile: returns to conversation list.
-                    On desktop: always shown as a visual nav anchor.
-                  */}
                   <button
                     className="msg-back"
                     onClick={() => setMobileView("list")}
@@ -881,6 +901,10 @@ export default function Messages() {
                     currentMessages.map((msg) => (
                       <div
                         key={msg.id}
+                        // FIX: Optimistic messages get a dimmed class until confirmed
+                        className={
+                          msg.id.startsWith("tmp-") ? "msg-optimistic" : ""
+                        }
                         style={{
                           display: "flex",
                           flexDirection: "column",
@@ -981,15 +1005,8 @@ export default function Messages() {
                   </div>
                 )}
 
-                {/* ── Input bar ──
-                    sticky + bottom:0 keeps the bar glued to the bottom
-                    of the flex container. Since the container uses
-                    100dvh (dynamic viewport), it naturally shrinks when
-                    the soft keyboard appears — the bar rises with the
-                    keyboard without any JS intervention needed.
-                ── */}
+                {/* ── Input bar ── */}
                 <div className="msg-input-bar">
-                  {/* Attach file */}
                   <button
                     type="button"
                     className="msg-attach"
@@ -1009,7 +1026,6 @@ export default function Messages() {
                     }}
                   />
 
-                  {/* Message input — auto-focused when chat opens */}
                   <input
                     ref={inputRef}
                     type="text"
@@ -1018,17 +1034,15 @@ export default function Messages() {
                     onKeyDown={handleKeyDown}
                     onFocus={() => {
                       setInputFocused(true);
-                      /* Extra scroll-to-bottom after keyboard is fully up */
                       setTimeout(scrollToBottom, 250);
                     }}
                     onBlur={() => setInputFocused(false)}
                     placeholder="Type your message…"
                     className="msg-input"
                     autoComplete="off"
-                    enterKeyHint="send" /* shows "Send" on mobile keyboard */
+                    enterKeyHint="send"
                   />
 
-                  {/* Send */}
                   <button
                     className="msg-send"
                     onClick={handleSend}
